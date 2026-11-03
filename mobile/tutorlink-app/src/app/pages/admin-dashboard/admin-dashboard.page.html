@@ -1,0 +1,48 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Admin Dashboard</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()">Logout</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (stats(); as s) {
+    <div class="stats">
+      <div class="stat">
+        <span class="number">{{ s.total_users }}</span>
+        <span class="label">Users</span>
+      </div>
+      <div class="stat">
+        <span class="number">{{ s.approved_tutors }}</span>
+        <span class="label">Approved Tutors</span>
+      </div>
+      <div class="stat highlight">
+        <span class="number">{{ s.pending_applications }}</span>
+        <span class="label">Pending Applications</span>
+      </div>
+      <div class="stat">
+        <span class="number">{{ s.total_bookings }}</span>
+        <span class="label">Total Bookings</span>
+      </div>
+    </div>
+
+    <ion-card button routerLink="/admin/applications">
+      <ion-card-header>
+        <ion-card-title>Tutor Applications</ion-card-title>
+        <ion-card-subtitle>{{ s.pending_applications }}  waiting for review</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        Review students who want to become tutors, and approve or reject each one.
+      </ion-card-content>
+    </ion-card>
+  } @else if (errorMessage()) {
+    <div class="message">
+      <ion-text color="danger"><p>{{ errorMessage() }}</p></ion-text>
+      <ion-button (click)="load()">Try Again</ion-button>
+    </div>
+  } @else {
+    <ion-text color="medium"><p class="message">Loading...</p></ion-text>
+  }
+</ion-content>

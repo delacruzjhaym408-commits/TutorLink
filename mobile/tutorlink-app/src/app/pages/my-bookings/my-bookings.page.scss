@@ -1,0 +1,20 @@
+.when {
+  font-weight: 600;
+}
+
+.notes {
+  color: var(--ion-color-medium);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.empty,
+.message {
+  text-align: center;
+  margin-top: 32px;
+}

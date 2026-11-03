@@ -1,0 +1,57 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>TutorLink</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()">Log Out</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="welcome">
+        <h2>Hello, {{ user()?.full_name }}!</h2>
+    <p>What would you like to do today?</p>
+  </div>
+
+  <ion-card button routerLink="/tutors">
+    <ion-card-header>
+      <ion-card-title>Find a Tutor</ion-card-title>
+      <ion-card-subtitle>By subject, rate, and availability</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      View the approved tutors and choose the one that best fits your needs.
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card button routerLink="/my-bookings">
+    <ion-card-header>
+      <ion-card-title>My Bookings</ion-card-title>
+      <ion-card-subtitle>Check the status of your requests</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      Find out whether your bookings are accepted, rejected, or still pending.
+    </ion-card-content>
+  </ion-card>
+
+  @if (isTutor()) {
+    <ion-card button routerLink="/tutor-dashboard">
+      <ion-card-header>
+        <ion-card-title>Tutor Dashboard</ion-card-title>
+        <ion-card-subtitle>For approved tutors</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        View your booking requests and schedule.
+      </ion-card-content>
+    </ion-card>
+  } @else if (user()?.role === 'student') {
+    <ion-card button routerLink="/tutor-application">
+      <ion-card-header>
+        <ion-card-title>Become a Tutor</ion-card-title>
+        <ion-card-subtitle>Apply with your account now</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        Share your knowledge and earn money. Your application will be reviewed by an admin.
+      </ion-card-content>
+    </ion-card>
+  }
+</ion-content>

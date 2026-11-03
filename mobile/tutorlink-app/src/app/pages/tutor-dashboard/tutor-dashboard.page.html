@@ -1,0 +1,71 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Tutor Dashboard</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loading()) {
+    <ion-text color="medium"><p class="message">Loading...</p></ion-text>
+  } @else if (errorMessage()) {
+    <div class="message">
+      <ion-text color="danger"><p>{{ errorMessage() }}</p></ion-text>
+      <ion-button (click)="load()">Try again</ion-button>
+    </div>
+  } @else {
+    <div class="stats">
+      <div class="stat">
+        <span class="number">{{ pendingCount() }}</span>
+        <span class="label">New Requests</span>
+      </div>
+      <div class="stat">
+        <span class="number">{{ upcomingCount() }}</span>
+        <span class="label">Upcoming Sessions</span>
+      </div>
+      <div class="stat">
+        <span class="number">{{ completedCount() }}</span>
+        <span class="label">Completed</span>
+      </div>
+    </div>
+
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Next Session</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        @if (nextSession(); as next) {
+          <p class="strong">{{ next.student_name }} ({{ next.subject_name }})</p>
+          <p>{{ formatDate(next.session_date) }}</p>
+          <p>{{ formatTime(next.start_time) }} - {{ formatTime(next.end_time) }}</p>
+        } @else {
+          <p class="muted">No scheduled sessions yet.</p>
+        }
+      </ion-card-content>
+    </ion-card>
+
+    @if (application(); as app) {
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Your Tutor Profile</ion-card-title>
+          <ion-card-subtitle>₱{{ app.hourly_rate }} per hour</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          @for (subject of app.subjects; track subject.id) {
+            <ion-chip>{{ subject.name }}</ion-chip>
+          }
+          <p class="muted">{{ app.qualifications }}</p>
+        </ion-card-content>
+      </ion-card>
+    }
+
+    <ion-button expand="block" routerLink="/tutor-requests">
+      View Booking Requests
+    </ion-button>
+    <ion-button expand="block" fill="outline" routerLink="/edit-tutor-profile">
+      Edit Profile
+    </ion-button>
+  }
+</ion-content>

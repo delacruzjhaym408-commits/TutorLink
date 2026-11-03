@@ -1,0 +1,7 @@
+{
+  "name": "tutorlink-app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}

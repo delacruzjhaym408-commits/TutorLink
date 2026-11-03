@@ -1,0 +1,45 @@
+.intro {
+  margin: 0 0 8px;
+  color: var(--ion-color-medium);
+}
+
+ion-textarea,
+ion-select,
+ion-input {
+  margin-top: 16px;
+}
+
+ion-text small {
+  display: block;
+  margin-top: 4px;
+}
+
+.section-title {
+  margin: 24px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.slot-card {
+  margin-top: 12px;
+  padding: 4px 12px 12px;
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 8px;
+}
+
+.time-row {
+  display: flex;
+  gap: 12px;
+
+  ion-input {
+    flex: 1;
+  }
+}
+
+form > ion-button[expand='block'] {
+  margin-top: 24px;
+}
+
+form > ion-button[fill='outline'] {
+  margin-top: 12px;
+}

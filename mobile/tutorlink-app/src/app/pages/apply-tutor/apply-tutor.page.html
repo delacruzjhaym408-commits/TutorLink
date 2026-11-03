@@ -1,0 +1,127 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+       <ion-title>{{ editMode ? 'Edit Tutor Profile' : 'Apply as a Tutor' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+     <p class="intro">
+       {{ editMode ? 'Update your tutor profile. Changes apply immediately.' : 'Use your current account. An admin will review your application before you appear in the list of tutors.' }}
+     </p>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <ion-textarea
+      label="Qualifications"
+      labelPlacement="stacked"
+      fill="outline"
+      placeholder="Example: 3rd Year BS Education, Dean's Lister"
+      [rows]="3"
+      formControlName="qualifications"
+    ></ion-textarea>
+    @if (showError('qualifications')) {
+      <ion-text color="danger">
+        <small>Enter your qualifications (at least 10 characters).</small>
+      </ion-text>
+    }
+
+    <ion-textarea
+      label="About You (Optional)"
+      labelPlacement="stacked"
+      fill="outline"
+      [rows]="3"
+      formControlName="bio"
+    ></ion-textarea>
+
+    <ion-select
+      label="Subjects you can teach"
+      labelPlacement="stacked"
+      fill="outline"
+      interface="popover"
+      placeholder="Select a subject"
+      [multiple]="true"
+      formControlName="subjectIds"
+    >
+      @for (subject of subjects(); track subject.id) {
+        <ion-select-option [value]="subject.id">{{ subject.name }}</ion-select-option>
+      }
+    </ion-select>
+    @if (showError('subjectIds')) {
+      <ion-text color="danger"><small>Please select at least one subject.</small></ion-text>
+    }
+
+    <ion-input
+      label="Rate (₱ kada oras)"
+      labelPlacement="stacked"
+      fill="outline"
+      type="number"
+      inputmode="numeric"
+      formControlName="hourlyRate"
+    ></ion-input>
+    @if (showError('hourlyRate')) {
+      <ion-text color="danger"><small>The rate must be at least ₱50.</small></ion-text>
+    }
+
+    <h3 class="section-title">Availability</h3>
+    <div formArrayName="availability">
+      @for (slot of availability.controls; track $index; let i = $index) {
+        <div class="slot-card" [formGroupName]="i">
+          <ion-select
+            label="Day"
+            labelPlacement="stacked"
+            fill="outline"
+            interface="popover"
+            formControlName="day"
+          >
+            @for (d of days; track d[0]) {
+              <ion-select-option [value]="d[0]">{{ d[1] }}</ion-select-option>
+            }
+          </ion-select>
+
+          <div class="time-row">
+            <ion-input
+              label="Start"
+              labelPlacement="stacked"
+              fill="outline"
+              type="time"
+              formControlName="start"
+            ></ion-input>
+            <ion-input
+              label="End"
+              labelPlacement="stacked"
+              fill="outline"
+              type="time"
+              formControlName="end"
+            ></ion-input>
+          </div>
+
+          @if (slotTimeError(i)) {
+            <ion-text color="danger">
+              <small>The end time must be later than the start time.</small>
+            </ion-text>
+          }
+
+          @if (availability.length > 1) {
+            <ion-button size="small" fill="clear" color="danger" (click)="removeSlot(i)">
+              Remove
+            </ion-button>
+          }
+        </div>
+      }
+    </div>
+
+    <ion-button fill="outline" size="small" (click)="addSlot()">
+      + Add Time
+    </ion-button>
+
+    @if (errorMessage()) {
+      <ion-text color="danger"><p>{{ errorMessage() }}</p></ion-text>
+    }
+
+    <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting()">
+      {{ submitting() ? 'Sending...' : 'Submit Application' }}
+    </ion-button>
+  </form>
+</ion-content>

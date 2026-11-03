@@ -1,0 +1,47 @@
+<ion-content class="ion-padding">
+  <div class="auth-container">
+    <div class="brand">
+      <h1>TutorLink</h1>
+      <p>Find the right tutor for you</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <ion-input
+        label="Email"
+        labelPlacement="floating"
+        fill="outline"
+        type="email"
+        autocomplete="email"
+        formControlName="email"
+      ></ion-input>
+      @if (showError('email')) {
+        <ion-text color="danger"><small>Please enter a valid email address.</small></ion-text>
+      }
+
+      <ion-input
+        label="Password"
+        labelPlacement="floating"
+        fill="outline"
+        type="password"
+        autocomplete="current-password"
+        formControlName="password"
+      ></ion-input>
+      @if (showError('password')) {
+        <ion-text color="danger"><small>Password must be at least 8 characters long.</small></ion-text>
+      }
+
+      @if (errorMessage()) {
+        <ion-text color="danger"><p>{{ errorMessage() }}</p></ion-text>
+      }
+
+      <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting()">
+        {{ submitting() ? 'Logging in...' : 'Log In' }}
+      </ion-button>
+    </form>
+
+    <p class="switch">
+      Don't have an account yet?
+      <a routerLink="/register">Sign Up</a>
+    </p>
+  </div>
+</ion-content>

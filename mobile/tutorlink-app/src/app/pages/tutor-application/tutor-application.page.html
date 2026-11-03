@@ -1,0 +1,79 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Tutor Application</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loading()) {
+    <ion-text color="medium"><p class="message">Loading...</p></ion-text>
+  } @else if (errorMessage()) {
+    <div class="message">
+      <ion-text color="danger"><p>{{ errorMessage() }}</p></ion-text>
+      <ion-button (click)="load()">Try Again</ion-button>
+    </div>
+  } @else if (application(); as app) {
+    <div class="status">
+      <ion-chip [color]="colors[app.status]">{{ labels[app.status] }}</ion-chip>
+
+      @if (app.status === 'pending') {
+        <p>An admin is still reviewing your application. You will see the result here.</p>
+      } @else if (app.status === 'approved') {
+        <p>Congratulations! You are now an approved tutor. Keep using the same account.</p>
+        <ion-button routerLink="/tutor-dashboard">Go to Tutor Dashboard</ion-button>
+      } @else {
+        <p>Your application was not approved.</p>
+        @if (app.admin_remarks) {
+          <p class="remarks">Admin Remarks: {{ app.admin_remarks }}</p>
+        }
+        <ion-button routerLink="/apply-tutor">Apply Again</ion-button>
+      }
+    </div>
+
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Application Details</ion-card-title>
+        <ion-card-subtitle>
+          Submitted on {{ app.submitted_at | date: 'longDate' }}
+        </ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <h4>Qualifications</h4>
+        <p>{{ app.qualifications }}</p>
+
+        @if (app.bio) {
+          <h4>About You</h4>
+          <p>{{ app.bio }}</p>
+        }
+
+        <h4>Rate</h4>
+        <p>₱{{ app.hourly_rate }} per hour</p>
+
+        <h4>Subjects</h4>
+        @for (subject of app.subjects; track subject.id) {
+          <ion-chip>{{ subject.name }}</ion-chip>
+        }
+
+        <h4>Availability</h4>
+        @for (slot of app.availability; track $index) {
+          <div class="slot">
+            <span>{{ dayLabels[slot.day_of_week] }}</span>
+            <span>{{ formatTime(slot.start_time) }} - {{ formatTime(slot.end_time) }}</span>
+          </div>
+        }
+      </ion-card-content>
+    </ion-card>
+  } @else {
+    <div class="empty">
+      <p>You have not yet applied as a tutor.</p>
+      <p class="hint">
+        You can become a tutor with your current account. You do not need to
+        create a new one.
+      </p>
+      <ion-button routerLink="/apply-tutor">Apply as Tutor</ion-button>
+    </div>
+  }
+</ion-content>

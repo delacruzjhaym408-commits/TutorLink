@@ -1,0 +1,109 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tutors"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Booking Request</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loading()) {
+    <ion-text color="medium"><p class="message">Loading...</p></ion-text>
+  } @else if (tutor(); as t) {
+    <div class="summary">
+      <h2>{{ t.full_name }}</h2>
+      <p>₱{{ t.hourly_rate }} per hour</p>
+    </div>
+
+    <section class="availability">
+      <h3>Availability of the Tutor</h3>
+      @for (slot of t.availability; track slot.id) {
+        <div class="slot">
+          <span>{{ dayLabels[slot.day_of_week] }}</span>
+          <span>{{ formatTime(slot.start_time) }} - {{ formatTime(slot.end_time) }}</span>
+        </div>
+      }
+    </section>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <ion-select
+        label="Subject"
+        labelPlacement="stacked"
+        fill="outline"
+        interface="popover"
+        placeholder="Select a subject"
+        formControlName="subjectId"
+      >
+        @for (subject of t.subjects; track subject.id) {
+          <ion-select-option [value]="subject.id">{{ subject.name }}</ion-select-option>
+        }
+      </ion-select>
+      @if (showError('subjectId')) {
+        <ion-text color="danger"><small>Select a subject.</small></ion-text>
+      }
+
+      <ion-input
+        label="Session Date"
+        labelPlacement="stacked"
+        fill="outline"
+        type="date"
+        [min]="today"
+        formControlName="sessionDate"
+      ></ion-input>
+      @if (showError('sessionDate')) {
+        <ion-text color="danger"><small>Select a session date.</small></ion-text>
+      }
+      @if (showPastDate()) {
+        <ion-text color="danger"><small>Past dates are not allowed.</small></ion-text>
+      }
+
+      <ion-input
+        label="Start Time"
+        labelPlacement="stacked"
+        fill="outline"
+        type="time"
+        formControlName="startTime"
+      ></ion-input>
+      @if (showError('startTime')) {
+        <ion-text color="danger"><small>Enter the start time.</small></ion-text>
+      }
+
+      <ion-input
+        label="End Time"
+        labelPlacement="stacked"
+        fill="outline"
+        type="time"
+        formControlName="endTime"
+      ></ion-input>
+      @if (showError('endTime')) {
+        <ion-text color="danger"><small>Enter the end time.</small></ion-text>
+      }
+      @if (showTimeOrder()) {
+        <ion-text color="danger">
+          <small>The end time must be later than the start time.</small>
+        </ion-text>
+      }
+
+      <ion-textarea
+        label="Notes for the Tutor (Optional)"
+        labelPlacement="stacked"
+        fill="outline"
+        [rows]="3"
+        formControlName="notes"
+      ></ion-textarea>
+
+      @if (errorMessage()) {
+        <ion-text color="danger"><p>{{ errorMessage() }}</p></ion-text>
+      }
+
+      <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting()">
+        {{ submitting() ? 'Sending...' : 'Send Booking Request' }}
+      </ion-button>
+    </form>
+  } @else {
+    <ion-text color="medium">
+      <p class="message">Tutor not found.</p>
+    </ion-text>
+  }
+</ion-content>

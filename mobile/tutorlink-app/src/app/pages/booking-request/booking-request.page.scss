@@ -1,0 +1,51 @@
+.summary {
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--ion-color-primary);
+    font-weight: 600;
+  }
+}
+
+.availability {
+  margin-bottom: 20px;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+}
+
+.slot {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ion-color-light-shade);
+}
+
+ion-select,
+ion-input,
+ion-textarea {
+  margin-top: 16px;
+}
+
+ion-text small {
+  display: block;
+  margin-top: 4px;
+}
+
+ion-button {
+  margin-top: 24px;
+}
+
+.message {
+  text-align: center;
+  margin-top: 32px;
+}

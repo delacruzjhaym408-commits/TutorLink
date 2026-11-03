@@ -1,0 +1,43 @@
+ion-segment {
+  margin-bottom: 8px;
+}
+
+.meta {
+  color: var(--ion-color-medium);
+}
+
+h4 {
+  margin: 12px 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 4px;
+}
+
+.slot {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ion-color-light-shade);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.result {
+  margin-top: 12px;
+}
+
+.remarks {
+  color: var(--ion-color-danger);
+}
+
+.message {
+  text-align: center;
+  margin-top: 32px;
+}

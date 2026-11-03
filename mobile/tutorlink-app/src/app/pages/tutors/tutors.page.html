@@ -1,0 +1,76 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Find a Tutor</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="filters">
+    <ion-select
+      label="Subject"
+      labelPlacement="floating"
+      fill="outline"
+      interface="popover"
+      [value]="subjectId"
+      (ionChange)="onSubjectChange($event)"
+    >
+      <ion-select-option [value]="0">All subjects</ion-select-option>
+      @for (subject of subjects(); track subject.id) {
+        <ion-select-option [value]="subject.id">{{ subject.name }}</ion-select-option>
+      }
+    </ion-select>
+
+    <ion-select
+      label="Day Available"
+      labelPlacement="floating"
+      fill="outline"
+      interface="popover"
+      [value]="day"
+      (ionChange)="onDayChange($event)"
+    >
+      <ion-select-option value="all">Any day</ion-select-option>
+      @for (d of days; track d[0]) {
+        <ion-select-option [value]="d[0]">{{ d[1] }}</ion-select-option>
+      }
+    </ion-select>
+
+    <ion-input
+      label="Maximum Rate (₱ per Hour)"
+      labelPlacement="floating"
+      fill="outline"
+      type="number"
+      inputmode="numeric"
+      (ionInput)="onRateInput($event)"
+    ></ion-input>
+  </div>
+
+  @if (loading()) {
+    <ion-text color="medium"><p class="message">Loading...</p></ion-text>
+  } @else if (errorMessage()) {
+    <div class="message">
+      <ion-text color="danger"><p>{{ errorMessage() }}</p></ion-text>
+      <ion-button (click)="loadTutors()">Try Again</ion-button>
+    </div>
+  } @else if (tutors().length === 0) {
+    <ion-text color="medium">
+      <p class="message">No tutors found. Try changing the filters.</p>
+    </ion-text>
+  } @else {
+    @for (tutor of tutors(); track tutor.id) {
+      <ion-card button [routerLink]="['/tutors', tutor.id]">
+        <ion-card-header>
+          <ion-card-title>{{ tutor.full_name }}</ion-card-title>
+          <ion-card-subtitle>₱{{ tutor.hourly_rate }} per hour</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          @for (subject of tutor.subjects; track subject.id) {
+            <ion-chip>{{ subject.name }}</ion-chip>
+          }
+        </ion-card-content>
+      </ion-card>
+    }
+  }
+</ion-content>
