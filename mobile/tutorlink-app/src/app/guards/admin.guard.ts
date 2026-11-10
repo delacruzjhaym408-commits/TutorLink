@@ -1,17 +1,24 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { Router, CanActivateFn } from '@angular/router';
 
-import { SessionService } from '../services/session.service';
-
-// Admin lang ang pinapapasok. Ang ordinaryong user ay dadalhin sa Home, ang hindi naka-login sa Login.
-// Paalala: pampaganda lang ito ng UI. Ang backend ang tunay na humaharang sa mga hindi admin.
-export const adminGuard: CanActivateFn = async () => {
-  const session = inject(SessionService);
+export const adminGuard: CanActivateFn = (route, state) => {
   const router = inject(Router);
-
-  await session.restore();
-  if (session.isAdmin()) {
-    return true;
+  
+  const userJson = localStorage.getItem('user');
+  if (userJson) {
+    try {
+      const user = JSON.parse(userJson);
+      // Check kung admin ang role
+      if (user.role === 'admin') {
+        return true;
+      }
+    } catch (e) {
+      console.error('Error parsing user data', e);
+    }
   }
-  return router.createUrlTree([session.isLoggedIn() ? '/home' : '/login']);
+  
+  // Kung hindi admin, ibalik sa home
+  console.warn('Access denied: Admin only');
+  router.navigate(['/home']);
+  return false;
 };

@@ -1,0 +1,65 @@
+<ion-menu id="main-menu" contentId="main-content" side="end">
+  <ion-header><ion-toolbar color="primary"><ion-title>Menu</ion-title></ion-toolbar></ion-header>
+  <ion-content>
+    <ion-list>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToHome()" button><ion-icon name="home-outline" slot="start"></ion-icon><ion-label>Home</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToProfile()" button><ion-icon name="person-outline" slot="start"></ion-icon><ion-label>Profile</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToMyLesson()" button><ion-icon name="book-outline" slot="start"></ion-icon><ion-label>My Lesson</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToSettings()" button><ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="logout()" button color="danger"><ion-icon name="log-out-outline" slot="start"></ion-icon><ion-label>Log Out</ion-label></ion-item></ion-menu-toggle>
+    </ion-list>
+  </ion-content>
+</ion-menu>
+
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar color="primary" class="header-toolbar">
+    <ion-buttons slot="start"><ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button></ion-buttons>
+    <ion-title class="app-title">Messages</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="menuController.toggle()" class="menu-btn">
+        <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content id="main-content" class="bg-content ion-padding">
+  
+  <div *ngIf="loading()" class="ion-text-center ion-padding loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading messages...</p>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div *ngIf="!loading() && conversations().length === 0" class="ion-text-center ion-padding empty-state">
+    <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
+    <h3>No conversations yet</h3>
+    <p>Start messaging a tutor from the Home Page!</p>
+  </div>
+
+  <!-- MESSAGES LIST -->
+  <div class="messages-list" *ngIf="!loading() && conversations().length > 0">
+    <div *ngFor="let conv of conversations()" class="message-card" (click)="openChat(conv)">
+      
+      <ion-avatar class="msg-avatar">
+        <img [src]="conv.other_user_picture || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
+      </ion-avatar>
+
+      <div class="msg-content">
+        <div class="msg-header">
+          <h2>{{ conv.other_user_name }}</h2>
+        </div>
+        <p class="msg-preview">{{ conv.lastMessage }}</p>
+      </div>
+
+      <div class="msg-end">
+        <ion-badge *ngIf="conv.unread_count > 0" color="danger" class="unread-badge">
+          {{ conv.unread_count }}
+        </ion-badge>
+        <ion-button fill="clear" color="danger" class="delete-btn" (click)="confirmDelete(conv, $event)">
+          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+  </div>
+</ion-content>

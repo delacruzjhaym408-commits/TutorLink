@@ -1,57 +1,133 @@
-<ion-header>
-  <ion-toolbar color="primary">
-    <ion-title>TutorLink</ion-title>
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar color="primary" class="header-toolbar">
+    <ion-title class="app-title">TutorLink</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="logout()">Log Out</ion-button>
+      <ion-button (click)="openMenu()" class="menu-btn">
+        <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
+      </ion-button>
     </ion-buttons>
+  </ion-toolbar>
+  <ion-toolbar class="search-toolbar">
+    <ion-searchbar
+      placeholder="Search tutors or subjects..."
+      (ionInput)="onSearchChange($event)"
+      [debounce]="500"
+      class="modern-search"
+    ></ion-searchbar>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <div class="welcome">
-        <h2>Hello, {{ user()?.full_name }}!</h2>
-    <p>What would you like to do today?</p>
+<ion-content [fullscreen]="true" class="bg-content">
+  <div *ngIf="loading" class="ion-text-center ion-padding loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Finding best tutors...</p>
   </div>
 
-  <ion-card button routerLink="/tutors">
-    <ion-card-header>
-      <ion-card-title>Find a Tutor</ion-card-title>
-      <ion-card-subtitle>By subject, rate, and availability</ion-card-subtitle>
-    </ion-card-header>
-    <ion-card-content>
-      View the approved tutors and choose the one that best fits your needs.
-    </ion-card-content>
-  </ion-card>
+  <div *ngIf="!loading && posts.length === 0" class="ion-text-center ion-padding empty-state">
+    <ion-icon name="people-outline" class="empty-icon"></ion-icon>
+    <h3>No tutors found</h3>
+    <p>Try searching for a different subject.</p>
+    <ion-button (click)="goToCreatePost()" fill="solid" color="primary">
+      <ion-icon name="add-outline" slot="start"></ion-icon>
+      Create First Post
+    </ion-button>
+  </div>
 
-  <ion-card button routerLink="/my-bookings">
-    <ion-card-header>
-      <ion-card-title>My Bookings</ion-card-title>
-      <ion-card-subtitle>Check the status of your requests</ion-card-subtitle>
-    </ion-card-header>
-    <ion-card-content>
-      Find out whether your bookings are accepted, rejected, or still pending.
-    </ion-card-content>
-  </ion-card>
+  <div class="cards-container" *ngIf="!loading && posts.length > 0">
+    <ion-card *ngFor="let post of posts" class="modern-card" style="padding: 0; overflow: hidden; border-radius: 12px; margin-bottom: 16px;">
+      
+      <div *ngIf="post.post_pictures" style="width: 100%; height: 220px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+        <img 
+          [src]="parseImages(post.post_pictures)[0]" 
+          alt="Course Cover" 
+          style="max-width: 100%; max-height: 100%; object-fit: contain;" 
+        />
+      </div>
 
-  @if (isTutor()) {
-    <ion-card button routerLink="/tutor-dashboard">
-      <ion-card-header>
-        <ion-card-title>Tutor Dashboard</ion-card-title>
-        <ion-card-subtitle>For approved tutors</ion-card-subtitle>
-      </ion-card-header>
-      <ion-card-content>
-        View your booking requests and schedule.
-      </ion-card-content>
+      <div style="padding: 16px;">
+        <h2 class="subject-title" style="font-size: 1.4rem; font-weight: 800; color: #1a1a1a; margin: 0 0 8px 0; line-height: 1.2;">
+          {{ post.subject }}
+        </h2>
+        
+        <p class="tutor-subtitle" style="color: #6b7280; font-size: 0.95rem; margin-bottom: 12px;">
+          Tutor: <strong>{{ post.tutor_name || 'Unknown' }}</strong>
+        </p>
+
+        <p *ngIf="post.description" class="description" style="color: #4b5563; font-size: 0.9rem; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+          {{ post.description }}
+        </p>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <div class="stats-row" style="display: flex; gap: 12px; align-items: center;">
+            <div class="rating" style="display: flex; align-items: center; gap: 4px; color: #f59e0b; font-weight: bold;">
+              <ion-icon name="star"></ion-icon>
+              <span>{{ post.rating }} ({{ post.total_reviews || 0 }})</span>
+            </div>
+            <div class="learners" style="display: flex; align-items: center; gap: 4px; color: #6b7280; font-size: 0.85rem;">
+              <ion-icon name="people-outline"></ion-icon>
+              <span>{{ post.learners_count || 0 }} learners</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rate-display" style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px;">
+          <h3 class="rate-text" style="font-size: 1.3rem; font-weight: 800; color: #2563eb; margin: 0;">
+            ₱{{ post.hourly_rate }} <span style="font-size: 0.9rem; font-weight: 500; color: #6b7280;">/ hour</span>
+          </h3>
+          <span class="session-rate" *ngIf="post.session_rate" style="font-size: 0.85rem; color: #9ca3af;">
+            ₱{{ post.session_rate }} / session
+          </span>
+        </div>
+
+        <div class="card-actions" style="display: flex; gap: 8px;">
+          <ion-button expand="block" fill="solid" color="primary" class="learn-btn" style="flex: 1; margin: 0;" (click)="goToTutorDetails(post)">
+            Learn More
+          </ion-button>
+          <!-- IDINAGDAG: Ginawang openReportModal -->
+          <ion-button expand="block" fill="clear" color="danger" class="report-btn" style="margin: 0; width: 50px;" (click)="openReportModal(post)">
+            <ion-icon name="flag-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
     </ion-card>
-  } @else if (user()?.role === 'student') {
-    <ion-card button routerLink="/tutor-application">
-      <ion-card-header>
-        <ion-card-title>Become a Tutor</ion-card-title>
-        <ion-card-subtitle>Apply with your account now</ion-card-subtitle>
-      </ion-card-header>
-      <ion-card-content>
-        Share your knowledge and earn money. Your application will be reviewed by an admin.
-      </ion-card-content>
-    </ion-card>
-  }
+  </div>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="modern-fab">
+    <ion-fab-button (click)="goToCreatePost()" color="primary">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 </ion-content>
+
+<!-- REPORT MODAL (BAGONG DAGDAG) -->
+<ion-modal #reportModal>
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="danger">
+        <ion-title>Report Post</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="reportModal.dismiss()">Close</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <p style="color: #666; margin-bottom: 16px;">Please tell us why you are reporting this post.</p>
+      <ion-textarea 
+        label="Reason for reporting" 
+        labelPlacement="stacked" 
+        fill="outline" 
+        [(ngModel)]="reportReason" 
+        placeholder="e.g., Inappropriate content, Scam, etc." 
+        rows="4">
+      </ion-textarea>
+      <ion-button 
+        expand="block" 
+        color="danger" 
+        style="margin-top: 24px;" 
+        (click)="submitReport()" 
+        [disabled]="!reportReason.trim()">
+        Submit Report
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>

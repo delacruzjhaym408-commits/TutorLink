@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">tutorlink-app</string>
+    <string name="title_activity_main">tutorlink-app</string>
+    <string name="package_name">com.tutorlink.app</string>
+    <string name="custom_url_scheme">com.tutorlink.app</string>
+</resources>

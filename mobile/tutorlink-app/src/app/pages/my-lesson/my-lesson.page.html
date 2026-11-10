@@ -1,0 +1,270 @@
+<ion-menu id="main-menu" contentId="main-content" side="end">
+  <ion-header><ion-toolbar color="primary"><ion-title>Menu</ion-title></ion-toolbar></ion-header>
+  <ion-content>
+    <ion-list>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToHome()" button><ion-icon name="home-outline" slot="start"></ion-icon><ion-label>Home</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToProfile()" button><ion-icon name="person-outline" slot="start"></ion-icon><ion-label>Profile</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToMessagesPage()" button><ion-icon name="chatbubble-outline" slot="start"></ion-icon><ion-label>Messages</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToMyLesson()" button><ion-icon name="book-outline" slot="start"></ion-icon><ion-label>My Lesson</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToSettings()" button><ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="logout()" button color="danger"><ion-icon name="log-out-outline" slot="start"></ion-icon><ion-label>Log Out</ion-label></ion-item></ion-menu-toggle>
+    </ion-list>
+  </ion-content>
+</ion-menu>
+
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar color="primary" class="header-toolbar">
+    <ion-buttons slot="start"><ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button></ion-buttons>
+    <ion-title class="app-title">My Lessons</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="menuController.open('main-menu')" class="menu-btn">
+        <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content id="main-content" class="bg-content">
+  
+  <!-- SEGMENTS / TABS -->
+  <div style="background: #fff; padding: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10;">
+    <ion-segment [value]="activeTab()" (ionChange)="activeTab.set($any($event).detail.value)" color="primary" mode="md">
+      <ion-segment-button value="gc">
+        <ion-label>Group Chats</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="students">
+        <ion-label>Students</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="payments">
+        <ion-label>Payments</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
+
+  <div class="ion-padding">
+    <!-- TAB 1: GROUP CHATS -->
+    <div *ngIf="activeTab() === 'gc'">
+      <div style="margin-bottom: 20px;">
+        <ion-button expand="block" fill="solid" color="primary" (click)="openCreateGcModal()" class="create-btn">
+          <ion-icon name="add-outline" slot="start"></ion-icon>
+          Create Group Chat
+        </ion-button>
+      </div>
+
+      <div *ngIf="loading()" class="ion-text-center ion-padding loading-container">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Loading groups...</p>
+      </div>
+
+      <div *ngIf="!loading() && enrollments().length === 0" class="ion-text-center ion-padding empty-state">
+        <ion-icon name="people-outline" class="empty-icon"></ion-icon>
+        <h3>No Group Chats yet</h3>
+        <p>Click "Create Group Chat" above to start a lesson group.</p>
+      </div>
+
+      <div class="lessons-container" *ngIf="!loading() && enrollments().length > 0">
+        <div *ngFor="let item of enrollments()" class="lesson-card" style="display: flex; flex-direction: column; align-items: stretch;">
+          
+          <div style="display: flex; align-items: center; cursor: pointer;" (click)="openChat(item)">
+            <ion-avatar class="lesson-avatar" style="margin-right: 12px;">
+              <img [src]="item.lesson.photo || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
+            </ion-avatar>
+
+            <div class="lesson-info" style="flex: 1;">
+              <div class="lesson-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h2 class="lesson-title" style="margin: 0;">{{ item.lesson.gc_name }}</h2>
+                  <!-- 🔥 IDINAGDAG: OWNER BADGE -->
+                  <ion-badge *ngIf="isTutor(item)" color="success" style="font-size: 0.65rem; padding: 4px 6px;">OWNER</ion-badge>
+                </div>
+                <ion-badge *ngIf="item.unread_count > 0" color="danger" class="unread-badge">
+                  {{ item.unread_count }}
+                </ion-badge>
+              </div>
+              
+              <div class="lesson-schedule" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <strong style="color: #374151; font-size: 0.85rem;">Next meeting:</strong>
+                <ion-icon name="calendar-outline" color="primary" style="font-size: 1rem;"></ion-icon>
+                <span style="font-size: 0.85rem;">{{ item.lesson.next_meeting_date || 'TBA' }}</span>
+                <ion-icon name="time-outline" color="primary" style="font-size: 1rem;"></ion-icon>
+                <span style="font-size: 0.85rem;">{{ item.lesson.next_meeting_time || 'TBA' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 🔥 TINANGGAL NA ANG MANAGE PAYMENTS BUTTON DITO -->
+
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: STUDENTS (Naka-group by GC) -->
+    <div *ngIf="activeTab() === 'students'">
+      <div *ngIf="tutorStudents().length === 0" class="ion-text-center ion-padding empty-state">
+        <ion-icon name="person-outline" class="empty-icon"></ion-icon>
+        <h3>No Students Yet</h3>
+        <p>Share your Group Chats to get students!</p>
+      </div>
+
+      <div *ngFor="let group of tutorStudents()" style="margin-bottom: 24px;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #111827; margin-bottom: 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 4px;">
+          {{ group.gc_name }}
+        </h3>
+        
+        <ion-list lines="full" style="background: transparent;">
+          <ion-item *ngFor="let s of group.students" style="--background: #fff; border-radius: 8px; margin-bottom: 8px; --padding-start: 12px;">
+            <ion-avatar slot="start" style="width: 40px; height: 40px;">
+              <img [src]="s.profile_picture || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
+            </ion-avatar>
+            <ion-label>
+              <h2 style="font-weight: 600; font-size: 1rem;">{{ s.full_name }}</h2>
+              <p style="font-size: 0.8rem; color: #6b7280; text-transform: capitalize;">
+                Status: <strong>{{ s.status === 'enrolled' ? 'Active Student' : s.status }}</strong>
+              </p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </div>
+    </div>
+
+    <!-- TAB 3: PAYMENTS (Dito na mapupunta ang approvals) -->
+    <div *ngIf="activeTab() === 'payments'">
+      
+      <!-- DROPDOWN PARA SA GC -->
+      <div class="input-group" style="margin-bottom: 16px;">
+        <label style="font-size: 0.9rem; font-weight: 600; color: #374151;">Select Group Chat to View Payments</label>
+        <select 
+          style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db; margin-top: 4px; font-size: 1rem; background: #fff;"
+          (change)="onSelectPaymentGc($any($event).target.value)"
+          [value]="selectedLessonId() || ''"
+        >
+          <option value="" disabled>-- Choose Group Chat --</option>
+          <ng-container *ngFor="let item of enrollments()">
+            <option *ngIf="isTutor(item)" [value]="item.lesson.id">
+              {{ item.lesson.gc_name }}
+            </option>
+          </ng-container>
+        </select>
+      </div>
+
+      <!-- FILTER BUTTONS -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <ion-button size="small" [fill]="paymentFilter() === 'pending' ? 'solid' : 'outline'" color="warning" (click)="paymentFilter.set('pending')">Pending</ion-button>
+        <ion-button size="small" [fill]="paymentFilter() === 'approved' ? 'solid' : 'outline'" color="success" (click)="paymentFilter.set('approved')">Approved</ion-button>
+        <ion-button size="small" [fill]="paymentFilter() === 'rejected' ? 'solid' : 'outline'" color="danger" (click)="paymentFilter.set('rejected')">Rejected</ion-button>
+      </div>
+
+      <div *ngIf="!selectedLessonId()" class="ion-text-center ion-padding" style="margin-top: 40px; color: #9ca3af;">
+        <ion-icon name="cash-outline" style="font-size: 60px; opacity: 0.5;"></ion-icon>
+        <h3>Select a Group Chat</h3>
+        <p>Choose a group above to see its payment applications.</p>
+      </div>
+
+      <div *ngIf="selectedLessonId() && getFilteredMembers().length === 0" class="ion-text-center ion-padding" style="margin-top: 40px;">
+        <ion-icon name="checkmark-done-circle-outline" color="success" style="font-size: 60px;"></ion-icon>
+        <h3>No {{ paymentFilter() }} applications</h3>
+      </div>
+
+      <!-- MGA APPLICATIONS -->
+      <div *ngIf="selectedLessonId() && getFilteredMembers().length > 0">
+        <ion-card *ngFor="let m of getFilteredMembers()" style="margin-bottom: 16px;">
+          <ion-card-header>
+            <ion-card-title style="font-size: 1.1rem; display: flex; align-items: center;">
+              <ion-avatar style="width: 30px; height: 30px; margin-right: 8px;">
+                <img [src]="m.profile_picture || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
+              </ion-avatar>
+              {{ m.full_name }}
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            
+            <div style="margin-bottom: 8px;">
+              <ion-badge [color]="m.status === 'pending_payment' ? 'warning' : (m.status === 'enrolled' ? 'success' : 'danger')">
+                {{ m.status === 'pending_payment' ? 'WAITING FOR APPROVAL' : m.status | uppercase }}
+              </ion-badge>
+            </div>
+
+            <div *ngIf="m.payment_status === 'pending' && m.payment_proof">
+              <p style="font-size: 0.9rem; margin-bottom: 4px;">
+                <strong>Reference:</strong> {{ m.payment_reference }}
+              </p>
+              <p style="font-size: 0.9rem; margin-bottom: 8px;">
+                <strong>Receipt:</strong>
+              </p>
+              <ion-img [src]="m.payment_proof" style="width: 100%; max-height: 300px; object-fit: contain; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 12px;"></ion-img>
+              
+              <div style="display: flex; gap: 8px;" *ngIf="m.status === 'pending_payment'">
+                <ion-button expand="block" color="success" style="flex: 1;" (click)="approveStudent(m.student_id)">
+                  <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon> Approve
+                </ion-button>
+                <ion-button expand="block" color="danger" style="flex: 1;" (click)="rejectStudent(m.student_id)">
+                  <ion-icon name="close-circle-outline" slot="start"></ion-icon> Reject
+                </ion-button>
+              </div>
+            </div>
+
+            <!-- KUNG REJECTED, IPAKITA ANG REASON -->
+            <div *ngIf="m.status === 'rejected'">
+               <p style="color: #ef4444; font-size: 0.9rem;">
+                 <strong>Reason:</strong> {{ m.rejection_reason || 'No reason provided.' }}
+               </p>
+            </div>
+
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+    </div>
+  </div>
+</ion-content>
+
+<!-- CREATE GC MODAL -->
+<ion-modal #createGcModal>
+  <ng-template>
+    <ion-header class="modal-header">
+      <ion-toolbar color="primary">
+        <ion-title>Create Group Chat</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="createGcModal.dismiss()">Cancel</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="modal-content ion-padding">
+      <div class="gc-photo-container">
+        <div class="gc-photo-wrapper" (click)="pickGcImage()">
+          <img *ngIf="newGcPhoto()" [src]="newGcPhoto()" />
+          <ion-icon *ngIf="!newGcPhoto()" name="camera"></ion-icon>
+          <div class="add-icon">
+            <ion-icon name="add"></ion-icon>
+          </div>
+        </div>
+        <p>Add GC Photo</p>
+      </div>
+
+      <div class="input-group">
+        <label>GC/Class Name</label>
+        <ion-input [(ngModel)]="newGcName" placeholder="Enter Name" fill="outline" class="custom-input"></ion-input>
+      </div>
+
+      <div class="input-group">
+        <label>GCash Number</label>
+        <ion-input [(ngModel)]="newGcNumber" placeholder="e.g. 09123456789" fill="outline" class="custom-input"></ion-input>
+      </div>
+
+      <div class="input-group">
+        <label>Monthly Rate (₱)</label>
+        <ion-input type="number" [(ngModel)]="newMonthlyRate" placeholder="e.g. 1500" fill="outline" class="custom-input"></ion-input>
+      </div>
+
+      <div class="input-group">
+        <label>Description (Optional)</label>
+        <ion-textarea [(ngModel)]="newGcDescription" placeholder="Add group description..." fill="outline" [autoGrow]="true" rows="4" class="custom-input"></ion-textarea>
+      </div>
+
+      <ion-button expand="block" color="primary" (click)="saveGroupChat()" class="create-gc-btn">
+        CREATE GROUP
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>

@@ -1,0 +1,196 @@
+<ion-menu id="main-menu" contentId="main-content" side="end">
+  <ion-header><ion-toolbar color="primary"><ion-title>Menu</ion-title></ion-toolbar></ion-header>
+  <ion-content>
+    <ion-list>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToHome()" button><ion-icon name="home-outline" slot="start"></ion-icon><ion-label>Home</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToProfile()" button><ion-icon name="person-outline" slot="start"></ion-icon><ion-label>Profile</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToMessagesPage()" button><ion-icon name="chatbubble-outline" slot="start"></ion-icon><ion-label>Messages</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToMyLesson()" button><ion-icon name="book-outline" slot="start"></ion-icon><ion-label>My Lesson</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToSettings()" button><ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label></ion-item></ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false"><ion-item (click)="logout()" button color="danger"><ion-icon name="log-out-outline" slot="start"></ion-icon><ion-label>Log Out</ion-label></ion-item></ion-menu-toggle>
+    </ion-list>
+  </ion-content>
+</ion-menu>
+
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar color="primary" class="header-toolbar">
+    <ion-buttons slot="start"><ion-back-button defaultHref="/home"></ion-back-button></ion-buttons>
+    <ion-title class="app-title">Tutor Details</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="reportModal.present()" color="light" class="menu-btn">
+        <ion-icon name="flag-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      <ion-button (click)="menuController.toggle('main-menu')" class="menu-btn">
+        <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content id="main-content" class="bg-content ion-padding">
+  <div *ngIf="loading()" class="ion-text-center ion-padding loading-container">
+    <ion-spinner name="crescent"></ion-spinner><p>Loading details...</p>
+  </div>
+  <div *ngIf="!loading() && errorMessage()" class="ion-text-center ion-padding"><p>{{ errorMessage() }}</p></div>
+
+  <div *ngIf="!loading() && post()" class="tutor-profile">
+    <div class="profile-card">
+      <ion-avatar class="profile-avatar">
+        <img [src]="getImageUrl(post()?.tutor_picture)" alt="Tutor" />
+      </ion-avatar>
+      <h2 class="tutor-name">{{ post()?.tutor_name || 'Tutor' }}</h2>
+      <p class="tutor-subject">{{ post()?.subject }} Tutor</p>
+      
+      <!-- RATING SECTION -->
+      <div class="rating-badge" (click)="hasConversation() ? ratingModal.present() : null">
+        <div style="display: flex; gap: 4px; margin-bottom: 4px; justify-content: center;">
+          <ion-icon *ngFor="let star of [1,2,3,4,5]" [name]="star <= tutorStats().average ? 'star' : (star - 0.5 <= tutorStats().average ? 'star-half' : 'star-outline')" color="warning" style="font-size: 1.4rem;"></ion-icon>
+        </div>
+        <div style="font-size: 1rem; font-weight: 700; color: #111827;">{{ tutorStats().average }} / 5.0</div>
+        <div style="color: #6b7280; font-size: 0.8rem; margin-top: 2px;">({{ tutorStats().total_reviews }} reviews)</div>
+        
+        <!-- NOTE KAPAG WALANG CONVERSATION -->
+        <div *ngIf="!hasConversation()" style="font-size: 0.75rem; color: #ef4444; margin-top: 8px; font-weight: 600;">
+          (Message the tutor to leave a review)
+        </div>
+      </div>
+    </div>
+
+    <div class="details-card">
+      <div class="info-row">
+        <ion-icon name="book-outline" color="primary"></ion-icon>
+        <div class="info-text"><p>Subject</p><h3>{{ post()?.subject }}</h3></div>
+      </div>
+      <div class="info-row">
+        <ion-icon name="school-outline" color="primary"></ion-icon>
+        <div class="info-text"><p>Education Level</p><h3>{{ post()?.education_level }}</h3></div>
+      </div>
+      <div class="info-row">
+        <ion-icon name="cash-outline" color="primary"></ion-icon>
+        <div class="info-text">
+          <p>Hourly Rate</p>
+          <h3>₱{{ post()?.hourly_rate }} / hour</h3>
+          <p style="margin-top: 4px; font-size: 0.9rem; color: #6b7280;" *ngIf="post()?.session_rate">₱{{ post()?.session_rate }} / session</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="description-card">
+      <h3 class="section-title">About the Tutor</h3>
+      <p class="description-text">{{ post()?.tutor_description || post()?.description || 'No description provided.' }}</p>
+      
+      <div *ngIf="post()?.tutor_description_picture" style="width: 100%; height: 220px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-top: 12px; overflow: hidden;">
+        <img [src]="getImageUrl(post()?.tutor_description_picture)" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+      </div>
+    </div>
+
+    <div class="description-card" *ngIf="post()?.post_pictures">
+      <h3 class="section-title">Tutor's Posts</h3>
+      <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+        <div *ngFor="let img of parsePostPictures(post()?.post_pictures)" style="width: 120px; height: 120px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
+          <img [src]="img" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+        </div>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <ion-button fill="outline" color="primary" class="action-btn" (click)="goToMessages()">
+        <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Message
+      </ion-button>
+      <ion-button fill="solid" color="primary" class="action-btn" (click)="applyLesson()">
+        <ion-icon name="book-outline" slot="start"></ion-icon> Apply Lesson
+      </ion-button>
+    </div>
+  </div>
+</ion-content>
+
+<!-- RATING MODAL -->
+<ion-modal #ratingModal>
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary"><ion-title>Rate this Tutor</ion-title><ion-buttons slot="end"><ion-button (click)="ratingModal.dismiss()">Close</ion-button></ion-buttons></ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <h3 style="text-align: center;">How was your experience?</h3>
+      <div style="display: flex; justify-content: center; gap: 12px; font-size: 3rem; margin: 24px 0;">
+        <ion-icon *ngFor="let starNum of [1,2,3,4,5]" [name]="starNum <= newRating ? 'star' : 'star-outline'" [color]="starNum <= newRating ? 'warning' : 'medium'" (click)="setRating(starNum)" style="cursor: pointer;"></ion-icon>
+      </div>
+      <ion-textarea label="Leave a comment (Optional)" labelPlacement="stacked" fill="outline" [(ngModel)]="reviewComment" placeholder="Tell us what you think..." rows="3"></ion-textarea>
+      <ion-button expand="block" color="primary" style="margin-top: 24px;" (click)="submitReview()">Submit Rating</ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- REPORT MODAL -->
+<ion-modal #reportModal>
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="danger"><ion-title>Report Tutor/Post</ion-title><ion-buttons slot="end"><ion-button (click)="reportModal.dismiss()">Close</ion-button></ion-buttons></ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <p style="color: #666; margin-bottom: 16px;">Please tell us why you are reporting this user.</p>
+      <ion-textarea label="Reason for reporting" labelPlacement="stacked" fill="outline" [(ngModel)]="reportReason" placeholder="e.g., Inappropriate behavior, Scam, etc." rows="4"></ion-textarea>
+      <ion-button expand="block" color="danger" style="margin-top: 24px;" (click)="submitReport()" [disabled]="!reportReason.trim()">Submit Report</ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- PAYMENT MODAL (Walang Open GCash App button) -->
+<ion-modal #paymentModal>
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary"><ion-title>Enroll & Pay</ion-title><ion-buttons slot="end"><ion-button (click)="paymentModal.dismiss()">Close</ion-button></ion-buttons></ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      
+      <h3>Select Group Chat</h3>
+      <ion-list lines="none">
+        <ion-item *ngFor="let lesson of tutorLessons()" (click)="selectLesson(lesson)" [color]="selectedLesson?.id === lesson.id ? 'primary' : ''">
+          <ion-label>
+            <h2>{{ lesson.gc_name }}</h2>
+            <p>₱{{ lesson.monthly_rate || post()?.hourly_rate }} / month</p> 
+          </ion-label>
+          <ion-icon name="checkmark-circle" slot="end" *ngIf="selectedLesson?.id === lesson.id" color="success"></ion-icon>
+        </ion-item>
+      </ion-list>
+
+      <div *ngIf="selectedLesson" style="margin-top: 24px;">
+        <ion-item lines="none" color="light" style="border-radius: 8px;">
+          <ion-label class="ion-text-wrap">
+            <h2 style="font-weight: bold; color: #3880ff;">Payment Details</h2>
+            
+            <p>
+              <strong>GCash Number:</strong> {{ selectedLesson.gcash_number || 'Not provided' }}
+              <ion-button fill="clear" size="small" (click)="copyGcashNumber()" style="height: 20px; margin-left: 4px;">
+                <ion-icon name="copy-outline" slot="icon-only" color="primary"></ion-icon>
+              </ion-button>
+            </p>
+            
+            <p><strong>Amount:</strong> ₱{{ selectedLesson.monthly_rate || post()?.hourly_rate }}</p>
+          </ion-label>
+        </ion-item>
+
+        <div class="input-group" style="margin-top: 16px;">
+          <label>GCash Reference Number</label>
+          <ion-input fill="outline" [(ngModel)]="paymentRef" placeholder="e.g., 1234 5678 9012"></ion-input>
+        </div>
+
+        <div class="input-group" style="margin-top: 16px;">
+          <label>Upload Receipt Screenshot</label>
+          <div class="upload-box" (click)="pickReceipt()" style="text-align: center; padding: 16px; border: 2px dashed #ccc; border-radius: 8px;">
+            <img *ngIf="paymentReceipt()" [src]="paymentReceipt()" style="max-width: 100%; max-height: 200px; border-radius: 8px;" />
+            <div *ngIf="!paymentReceipt()">
+              <ion-icon name="camera-outline" style="font-size: 40px; color: #666;"></ion-icon>
+              <p style="color: #666; font-size: 0.9rem;">Tap to upload receipt</p>
+            </div>
+          </div>
+        </div>
+
+        <ion-button expand="block" color="primary" style="margin-top: 24px;" (click)="submitPayment()">
+          Submit Payment & Apply
+        </ion-button>
+      </div>
+
+    </ion-content>
+  </ng-template>
+</ion-modal>

@@ -3,3 +3,25 @@
    *.pyc
    .env
    node_modules/
+
+   # Environment Variables
+.env
+backend/.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
+
+# Uploads
+backend/uploads/
+
+# Extra folders
+TutorLink/
+.vscode/
+
+# Database backup
+*.sql

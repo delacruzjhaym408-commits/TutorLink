@@ -1,25 +1,16 @@
 import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common'; // <-- IDINAGDAG
 import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
+  AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
-  IonButton,
-  IonContent,
-  IonInput,
-  IonSelect,
-  IonSelectOption,
-  IonText,
+  IonButton, IonContent, IonInput, IonText, IonIcon, IonSpinner // <-- IDINAGDAG
 } from '@ionic/angular';
 
 import { SessionService } from '../../services/session.service';
 import { apiErrorMessage } from '../../utils/api-error';
 
-// Sinusuri kung pareho ang password at ang confirm password
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   const password = group.get('password')?.value;
   const confirm = group.get('confirmPassword')?.value;
@@ -30,15 +21,11 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   selector: 'app-register',
   templateUrl: './register.page.html',
   styleUrls: ['./register.page.scss'],
+  standalone: true,
   imports: [
-    IonContent,
-    IonInput,
-    IonButton,
-    IonText,
-    IonSelect,
-    IonSelectOption,
-    ReactiveFormsModule,
-    RouterLink,
+    CommonModule, // <-- IDINAGDAG
+    IonContent, IonInput, IonButton, IonText, IonIcon, IonSpinner, // <-- IDINAGDAG
+    ReactiveFormsModule, RouterLink
   ],
 })
 export class RegisterPage {
@@ -52,8 +39,8 @@ export class RegisterPage {
   form = this.fb.nonNullable.group(
     {
       fullName: ['', [Validators.required, Validators.minLength(2)]],
+      phoneNumber: [''],
       email: ['', [Validators.required, Validators.email]],
-      role: ['student', Validators.required],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', Validators.required],
     },
@@ -86,9 +73,8 @@ export class RegisterPage {
         email: value.email.trim(),
         password: value.password,
         full_name: value.fullName.trim(),
-        role: value.role as 'student' | 'parent',
+        phone_number: value.phoneNumber?.trim() || null,
       });
-      // Pagkatapos magparehistro, awtomatiko na siyang ilo-login
       await this.session.login(value.email, value.password);
       await this.router.navigateByUrl('/home', { replaceUrl: true });
     } catch (error) {

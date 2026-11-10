@@ -1,116 +1,165 @@
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload, selectinload
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+from sqlalchemy import or_
 
 from app.database import get_db
 from app.dependencies import require_admin
 from app.models import (
-    ApplicationStatus,
-    Booking,
-    TutorApplication,
-    TutorProfile,
-    User,
+    User, TutorPost, Report, Conversation, Message,
+    Enrollment, Review, AdminMessage, Lesson, LessonMessage
 )
-from app.schemas import UserOut, user_to_out
-from app.schemas_tutor import AdminApplicationOut, AdminStats, RejectIn
-from app.tutor_utils import admin_application_to_out
+from app.schemas import UserOut, TutorPostOut, ReportOut, user_to_out
 
-# Ang dependencies sa router ay nalalapat sa LAHAT ng endpoint dito: admin lamang
-router = APIRouter(
-    prefix="/admin",
-    tags=["Admin"],
-    dependencies=[Depends(require_admin)],
-)
+router = APIRouter(prefix="/admin", tags=["Admin"])
 
-
-@router.get("/users", response_model=list[UserOut])
-def list_users(db: Session = Depends(get_db)):
-    users = (
-        db.query(User).options(joinedload(User.tutor_profile)).order_by(User.id).all()
-    )
+# 1. Manage Users (List at Delete)
+@router.get("/users", response_model=List[UserOut])
+def get_all_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    users = db.query(User).all()
     return [user_to_out(u) for u in users]
 
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own admin account")
+    
+    try:
+        # 1. Delete Conversations & Messages
+        convs = db.query(Conversation).filter(
+            or_(Conversation.participant1_id == user_id, Conversation.participant2_id == user_id)
+        ).all()
+        for c in convs:
+            db.query(Message).filter(Message.conversation_id == c.id).delete()
+            db.delete(c)
+        
+        # 2. Delete Enrollments
+        db.query(Enrollment).filter(Enrollment.student_id == user_id).delete()
+        
+        # 3. Delete Reports
+        db.query(Report).filter(Report.reporter_id == user_id).delete()
+        db.query(Report).filter(Report.reported_user_id == user_id).delete()
+        
+        # 4. Delete Reviews
+        db.query(Review).filter(Review.tutor_id == user_id).delete()
+        db.query(Review).filter(Review.reviewer_id == user_id).delete()
+        
+        # 5. Delete Admin Messages
+        db.query(AdminMessage).filter(AdminMessage.user_id == user_id).delete()
+        
+        # 6. Delete Posts
+        posts = db.query(TutorPost).filter(TutorPost.user_id == user_id).all()
+        for p in posts:
+            db.query(Report).filter(Report.reported_post_id == p.id).delete()
+            db.delete(p)
+        
+        # 7. Delete Lessons
+        lessons = db.query(Lesson).filter(Lesson.tutor_id == user_id).all()
+        for l in lessons:
+            db.query(LessonMessage).filter(LessonMessage.lesson_id == l.id).delete()
+            db.query(Enrollment).filter(Enrollment.lesson_id == l.id).delete()
+            db.delete(l)
+        
+        # 8. Delete User
+        db.delete(user)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"ERROR DELETING USER {user_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+    return None
 
-@router.get("/stats", response_model=AdminStats)
-def get_stats(db: Session = Depends(get_db)):
-    return AdminStats(
-        total_users=db.query(func.count(User.id)).scalar() or 0,
-        approved_tutors=db.query(func.count(TutorProfile.id))
-        .filter(TutorProfile.is_approved.is_(True))
-        .scalar()
-        or 0,
-        pending_applications=db.query(func.count(TutorApplication.id))
-        .filter(TutorApplication.status == ApplicationStatus.pending)
-        .scalar()
-        or 0,
-        total_bookings=db.query(func.count(Booking.id)).scalar() or 0,
-    )
+# 2. Manage Posts (List at Delete)
+@router.get("/posts", response_model=List[TutorPostOut])
+def get_all_posts(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    posts = db.query(TutorPost).order_by(TutorPost.created_at.desc()).all()
+    result = []
+    for post in posts:
+        post_dict = TutorPostOut.model_validate(post).model_dump()
+        post_dict['tutor_name'] = post.owner.full_name if post.owner else "Unknown"
+        post_dict['tutor_picture'] = post.owner.profile_picture if post.owner else None
+        result.append(post_dict)
+    return result
 
+@router.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(post_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    post = db.query(TutorPost).filter(TutorPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    try:
+        db.query(Report).filter(Report.reported_post_id == post_id).delete()
+        db.delete(post)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+    return None
 
-@router.get("/applications", response_model=list[AdminApplicationOut])
-def list_applications(
-    status_filter: Optional[ApplicationStatus] = Query(default=None, alias="status"),
-    db: Session = Depends(get_db),
-):
-    query = db.query(TutorApplication).options(
-        joinedload(TutorApplication.tutor_profile).joinedload(TutorProfile.user),
-        joinedload(TutorApplication.tutor_profile).selectinload(TutorProfile.subjects),
-        joinedload(TutorApplication.tutor_profile).selectinload(TutorProfile.availability),
-    )
-    if status_filter is not None:
-        query = query.filter(TutorApplication.status == status_filter)
+# 3. Manage Reports (List)
+@router.get("/reports", response_model=List[ReportOut])
+def get_all_reports(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    reports = db.query(Report).order_by(Report.created_at.desc()).all()
+    result = []
+    
+    for r in reports:
+        total_reports_for_user = 0
+        if r.reported_user_id:
+            total_reports_for_user = db.query(Report).filter(Report.reported_user_id == r.reported_user_id).count()
+            
+        # IDINAGDAG: Post Details
+        post_details = None
+        if r.reported_post:
+            post_details = {
+                "id": r.reported_post.id,
+                "subject": r.reported_post.subject,
+                "description": r.reported_post.description,
+                "tutor_name": r.reported_post.owner.full_name if r.reported_post.owner else "Unknown",
+                "tutor_email": r.reported_post.owner.email if r.reported_post.owner else "Unknown",
+                "post_pictures": r.reported_post.post_pictures,
+                "hourly_rate": r.reported_post.hourly_rate
+            }
+            
+        # IDINAGDAG: User Details
+        user_details = None
+        if r.reported_user:
+            user_details = {
+                "id": r.reported_user.id,
+                "full_name": r.reported_user.full_name,
+                "email": r.reported_user.email,
+                "profile_picture": r.reported_user.profile_picture,
+                "description": r.reported_user.description
+            }
 
-    applications = query.order_by(TutorApplication.submitted_at.desc()).all()
-    return [admin_application_to_out(a) for a in applications]
+        report_dict = {
+            "id": r.id,
+            "reporter_id": r.reporter_id,
+            "reporter_name": r.reporter.full_name if r.reporter else "Unknown",
+            "reported_user_id": r.reported_user_id,
+            "reported_user_name": r.reported_user.full_name if r.reported_user else None,
+            "reported_post_id": r.reported_post_id,
+            "reported_post_subject": r.reported_post.subject if r.reported_post else None,
+            "reason": r.reason,
+            "status": r.status,
+            "created_at": r.created_at,
+            "total_user_reports": total_reports_for_user,
+            "post_details": post_details,
+            "user_details": user_details
+        }
+        result.append(report_dict)
+    return result
 
-
-def get_pending_application(db: Session, application_id: int) -> TutorApplication:
-    # Ni-lock ang row para hindi magkasabay ang dalawang admin sa pagsusuri
-    application = (
-        db.query(TutorApplication)
-        .filter(TutorApplication.id == application_id)
-        .with_for_update()
-        .first()
-    )
-    if application is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Application not found")
-    if application.status != ApplicationStatus.pending:
-        raise HTTPException(status.HTTP_409_CONFLICT, "This application has already been reviewed")
-    return application
-
-
-@router.post("/applications/{application_id}/approve", response_model=AdminApplicationOut)
-def approve_application(
-    application_id: int,
-    admin: User = Depends(require_admin),
-    db: Session = Depends(get_db),
-):
-    application = get_pending_application(db, application_id)
-    application.status = ApplicationStatus.approved
-    application.admin_remarks = None
-    application.reviewed_by = admin.id
-    application.reviewed_at = func.now()
-    # Dito nagiging tutor ang user: lalabas na siya sa listahan
-    application.tutor_profile.is_approved = True
+@router.put("/reports/{report_id}/resolve")
+def resolve_report(report_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    report = db.query(Report).filter(Report.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    report.status = "resolved"
     db.commit()
-    db.refresh(application)
-    return admin_application_to_out(application)
-
-
-@router.post("/applications/{application_id}/reject", response_model=AdminApplicationOut)
-def reject_application(
-    application_id: int,
-    data: RejectIn,
-    admin: User = Depends(require_admin),
-    db: Session = Depends(get_db),
-):
-    application = get_pending_application(db, application_id)
-    application.status = ApplicationStatus.rejected
-    application.admin_remarks = data.remarks
-    application.reviewed_by = admin.id
-    application.reviewed_at = func.now()
-    db.commit()
-    db.refresh(application)
-    return admin_application_to_out(application)
+    return {"status": "success"}

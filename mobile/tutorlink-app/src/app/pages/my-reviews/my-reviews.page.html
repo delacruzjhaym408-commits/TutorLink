@@ -1,0 +1,65 @@
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar color="primary" class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/profile" class="menu-btn"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="app-title">My Reviews</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-content ion-padding">
+  
+  <div *ngIf="loading()" class="ion-text-center ion-padding loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading reviews...</p>
+  </div>
+
+  <!-- SUMMARY CARD -->
+  <div *ngIf="!loading() && reviews().length > 0" class="summary-card">
+    <h2 class="summary-title">Overall Rating</h2>
+    <div class="summary-stars">
+      <ion-icon *ngFor="let star of [1,2,3,4,5]" 
+                [name]="star <= averageRating() ? 'star' : 'star-outline'" 
+                color="warning">
+      </ion-icon>
+    </div>
+    <div class="average-score">
+      {{ averageRating() }} <span>/ 5</span>
+    </div>
+    <p class="total-reviews">Based on {{ reviews().length }} reviews</p>
+  </div>
+
+  <!-- NO REVIEWS -->
+  <div *ngIf="!loading() && reviews().length === 0" class="ion-text-center empty-state">
+    <ion-icon name="chatbubble-outline" class="empty-icon"></ion-icon>
+    <h3>No reviews yet</h3>
+    <p>Once students rate you, their reviews will appear here.</p>
+  </div>
+
+  <!-- LIST OF REVIEWS -->
+  <div class="reviews-list" *ngIf="!loading() && reviews().length > 0">
+    <div *ngFor="let review of reviews()" class="review-card">
+      
+      <div class="review-header">
+        <div class="reviewer-avatar">
+          {{ review.reviewer_name?.charAt(0) || '?' }}
+        </div>
+        <div class="reviewer-info">
+          <h2>{{ review.reviewer_name }}</h2>
+          <span class="review-date">{{ review.created_at | date:'mediumDate' }}</span>
+        </div>
+      </div>
+
+      <div class="review-stars">
+        <ion-icon *ngFor="let s of [1,2,3,4,5]" 
+                  [name]="s <= review.rating ? 'star' : 'star-outline'" 
+                  color="warning">
+        </ion-icon>
+      </div>
+
+      <p class="review-comment" *ngIf="review.comment">"{{ review.comment }}"</p>
+      <p class="review-comment no-comment" *ngIf="!review.comment">No comment provided.</p>
+      
+    </div>
+  </div>
+</ion-content>

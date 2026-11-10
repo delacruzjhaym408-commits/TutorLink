@@ -1,0 +1,122 @@
+<ion-menu id="main-menu" contentId="main-content" side="end">
+  <ion-header><ion-toolbar color="primary"><ion-title>Menu</ion-title></ion-toolbar></ion-header>
+  <ion-content>
+    <ion-list>
+      <ion-item routerLink="/home" button (click)="menuController.close()"><ion-icon name="home-outline" slot="start"></ion-icon><ion-label>Home</ion-label></ion-item>
+      <ion-item routerLink="/profile" button (click)="menuController.close()"><ion-icon name="person-outline" slot="start"></ion-icon><ion-label>Profile</ion-label></ion-item>
+      <ion-item routerLink="/messages" button (click)="menuController.close()"><ion-icon name="chatbubble-outline" slot="start"></ion-icon><ion-label>Messages</ion-label></ion-item>
+      <ion-item routerLink="/my-lesson" button (click)="menuController.close()"><ion-icon name="book-outline" slot="start"></ion-icon><ion-label>My Lesson</ion-label></ion-item>
+      <ion-item (click)="logout()" button color="danger"><ion-icon name="log-out-outline" slot="start"></ion-icon><ion-label>Log Out</ion-label></ion-item>
+    </ion-list>
+  </ion-content>
+</ion-menu>
+
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar color="primary" class="header-toolbar">
+    <ion-buttons slot="start"><ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button></ion-buttons>
+    <ion-title class="app-title">Settings</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openMenu()" class="menu-btn">
+        <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content id="main-content" class="bg-content ion-padding">
+  <div class="form-container">
+    <h2 class="form-title">Account Settings</h2>
+    <p class="form-subtitle">Manage your personal information and security.</p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="profile-pic-section">
+        <ion-avatar class="profile-avatar" (click)="pickImage()">
+          <img [src]="selectedImage() || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
+        </ion-avatar>
+        <ion-button fill="clear" size="small" (click)="pickImage()" class="change-pic-btn">
+          <ion-icon name="camera-outline" slot="start"></ion-icon> Change Picture
+        </ion-button>
+      </div>
+
+      <div class="section-divider"><h3>Personal Information</h3></div>
+
+      <div class="input-group">
+        <label>Full Name</label>
+        <ion-input fill="outline" formControlName="full_name" class="custom-input">
+          <ion-icon name="person-outline" slot="start"></ion-icon>
+        </ion-input>
+        @if (showError('full_name')) { <ion-text color="danger"><small>Required.</small></ion-text> }
+      </div>
+
+      <div class="input-group">
+        <label>Phone Number</label>
+        <ion-input fill="outline" formControlName="phone_number" class="custom-input">
+          <ion-icon name="call-outline" slot="start"></ion-icon>
+        </ion-input>
+      </div>
+
+      <!-- IDINAGDAG ANG GCASH NUMBER -->
+      <div class="input-group">
+        <label>GCash Number (for receiving payments)</label>
+        <ion-input fill="outline" formControlName="gcash_number" placeholder="e.g. 09123456789" class="custom-input">
+          <ion-icon name="cash-outline" slot="start"></ion-icon>
+        </ion-input>
+      </div>
+
+      <div class="input-group">
+        <label>Email (Cannot be changed)</label>
+        <ion-input fill="outline" [value]="user()?.email" readonly class="custom-input readonly-input">
+          <ion-icon name="mail-outline" slot="start"></ion-icon>
+        </ion-input>
+      </div>
+
+      <div class="input-group">
+        <label>Description (Optional)</label>
+        <ion-textarea fill="outline" formControlName="description" [autoGrow]="true" rows="3" class="custom-input"></ion-textarea>
+      </div>
+
+      <div class="desc-pic-section">
+        <label>Description Picture (Optional)</label>
+        <div class="upload-box" (click)="pickDescImage()">
+          <ion-avatar class="desc-avatar" *ngIf="!selectedDescImage()">
+            <ion-icon name="camera-outline"></ion-icon>
+          </ion-avatar>
+          <div *ngIf="selectedDescImage()" class="desc-preview">
+            <img [src]="selectedDescImage()" />
+            <ion-button fill="clear" size="small" (click)="pickDescImage()">Change</ion-button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"><h3>Change Password (Optional)</h3></div>
+
+      <div class="input-group">
+        <label>Current Password</label>
+        <ion-input fill="outline" type="password" formControlName="current_password" class="custom-input">
+          <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+        </ion-input>
+      </div>
+
+      <div class="input-group">
+        <label>New Password</label>
+        <ion-input fill="outline" type="password" formControlName="new_password" class="custom-input">
+          <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+        </ion-input>
+      </div>
+
+      <div class="input-group">
+        <label>Confirm New Password</label>
+        <ion-input fill="outline" type="password" formControlName="confirm_new_password" class="custom-input">
+          <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+        </ion-input>
+      </div>
+
+      @if (errorMessage()) { <ion-text color="danger"><p class="error-text">{{ errorMessage() }}</p></ion-text> }
+
+      <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting()" class="submit-btn">
+        <ion-spinner *ngIf="submitting()" name="crescent" slot="start"></ion-spinner>
+        {{ submitting() ? 'Saving...' : 'Save Changes' }}
+      </ion-button>
+    </form>
+  </div>
+</ion-content>

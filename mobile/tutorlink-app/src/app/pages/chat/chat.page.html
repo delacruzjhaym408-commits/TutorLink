@@ -1,0 +1,110 @@
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar color="primary" class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/messages" class="menu-btn"></ion-back-button>
+    </ion-buttons>
+    
+    <ion-title class="chat-title">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <ion-avatar style="width: 36px; height: 36px; border: 2px solid #e5e7eb;">
+          <img [src]="otherUserPicture() || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
+        </ion-avatar>
+        <span class="chat-name">{{ otherUserName() }}</span>
+      </div>
+    </ion-title>
+    
+    <ion-buttons slot="end">
+      <ion-button (click)="startCall()" class="menu-btn">
+        <ion-icon name="call-outline"></ion-icon>
+      </ion-button>
+      <ion-button (click)="startVideoCall()" class="menu-btn">
+        <ion-icon name="videocam-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-content">
+  <div *ngIf="loading()" class="ion-text-center loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading messages...</p>
+  </div>
+
+  <div class="messages-container" *ngIf="!loading()">
+    <div 
+      *ngFor="let msg of messages()" 
+      class="message-row"
+      [class.mine]="isMine(msg)"
+    >
+      <ion-avatar class="sender-avatar" *ngIf="!isMine(msg)">
+        <img [src]="msg.sender_picture || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
+      </ion-avatar>
+
+      <div class="message-bubble">
+        <span class="sender-name" *ngIf="!isMine(msg)">{{ msg.sender_name }}</span>
+        
+        <!-- POST REFERENCE CARD -->
+        <div 
+          *ngIf="msg.post_subject" 
+          class="post-ref-card" 
+          (click)="goToPost(msg.post_id)"
+        >
+          <img 
+            *ngIf="msg.post_picture" 
+            [src]="msg.post_picture" 
+            class="post-ref-thumb" 
+            alt="post" 
+          />
+          <div class="post-ref-body">
+            <span class="post-ref-label">📌 Referring to post</span>
+            <span class="post-ref-subject">{{ msg.post_subject }}</span>
+            <span class="post-ref-cta">Tap to view →</span>
+          </div>
+        </div>
+
+        <!-- NORMAL MESSAGE TEXT -->
+        <div *ngIf="msg.content.includes('[ROOM:'); else normalMessage">
+          <p class="message-text">
+            {{ msg.content.split('[ROOM:')[0] }}
+          </p>
+          <ion-button expand="block" color="success" size="small" style="margin-top: 8px;" (click)="joinCall(msg.content)">
+            Join Now
+          </ion-button>
+        </div>
+
+        <ng-template #normalMessage>
+          <p class="message-text">{{ msg.content }}</p>
+        </ng-template>
+
+        <small class="message-time">{{ msg.created_at | date:'shortTime' }}</small>
+      </div>
+    </div>
+    
+    <div *ngIf="messages().length === 0" class="ion-text-center empty-state">
+      <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
+      <h3>No messages yet</h3>
+      <p>Say hello to start the conversation! 👋</p>
+    </div>
+  </div>
+</ion-content>
+
+<ion-footer class="modern-footer">
+  <ion-toolbar class="footer-toolbar">
+    <div class="input-container">
+      <ion-input
+        [(ngModel)]="newMessage"
+        placeholder="Type a message..."
+        (keyup.enter)="send()"
+        class="chat-input"
+      ></ion-input>
+      <ion-button 
+        (click)="send()" 
+        [disabled]="sending() || !newMessage.trim()"
+        class="send-btn"
+        shape="round"
+      >
+        <ion-icon name="send" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>

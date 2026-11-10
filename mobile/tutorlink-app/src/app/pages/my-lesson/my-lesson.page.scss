@@ -1,0 +1,229 @@
+/* MODERN HEADER */
+.modern-header {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  z-index: 10;
+}
+.header-toolbar {
+  --background: #ffffff;
+  --color: #1a1a1a;
+}
+.app-title {
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+.menu-btn {
+  --color: #1a1a1a;
+}
+
+/* BACKGROUND */
+.bg-content {
+  --background: #f8f9fa;
+}
+
+/* CREATE BUTTON */
+.create-btn {
+  --border-radius: 12px;
+  height: 48px;
+  font-weight: 600;
+  text-transform: none;
+  font-size: 1rem;
+  --box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+/* LESSONS CONTAINER */
+.lessons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* LESSON CARD */
+.lesson-card {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.02);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.lesson-avatar {
+  width: 60px;
+  height: 60px;
+  margin-right: 16px;
+  border: 2px solid #e5e7eb;
+  img { object-fit: cover; }
+}
+
+.lesson-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lesson-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lesson-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #111827;
+  margin: 0;
+}
+
+.unread-badge {
+  border-radius: 50%;
+  padding: 4px 8px;
+  font-weight: bold;
+  font-size: 0.75rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.lesson-schedule {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3f4f6;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
+  width: fit-content;
+
+  ion-icon {
+    font-size: 1rem;
+  }
+}
+
+/* LOADING & EMPTY STATE */
+.loading-container {
+  margin-top: 50px;
+  color: #888;
+}
+.empty-state {
+  margin-top: 80px;
+  .empty-icon {
+    font-size: 80px;
+    color: #d1d5db;
+    margin-bottom: 16px;
+  }
+  h3 { color: #4b5563; font-weight: 600; }
+  p { color: #9ca3af; }
+}
+
+/* MODAL DESIGN */
+.modal-header {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.modal-content {
+  --background: #f8f9fa;
+}
+
+.gc-photo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 16px;
+  margin-bottom: 32px;
+
+  p {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+  }
+}
+
+.gc-photo-wrapper {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  cursor: pointer;
+  border: 2px dashed #9ca3af;
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ffffff;
+  }
+
+  ion-icon[name="camera"] {
+    font-size: 40px;
+    color: #6b7280;
+  }
+
+  .add-icon {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: #2563eb;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #f8f9fa;
+
+    ion-icon {
+      color: white;
+      font-size: 20px;
+    }
+  }
+}
+
+.input-group {
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    margin-left: 4px;
+  }
+}
+
+.custom-input {
+  --background: #ffffff;
+  --border-radius: 12px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  --border-color: #e5e7eb;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+.create-gc-btn {
+  --border-radius: 12px;
+  height: 50px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 16px;
+  --box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}

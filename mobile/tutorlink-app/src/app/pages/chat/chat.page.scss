@@ -1,0 +1,230 @@
+/* MODERN HEADER */
+.modern-header {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  z-index: 10;
+}
+.header-toolbar {
+  --background: #ffffff;
+  --color: #1a1a1a;
+}
+.menu-btn {
+  --color: #1a1a1a;
+}
+.chat-title {
+  display: flex;
+  align-items: center;
+}
+.chat-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #111827;
+}
+
+/* BACKGROUND */
+.bg-content {
+  --background: #f8f9fa;
+}
+
+/* LOADING & EMPTY STATE */
+.loading-container {
+  margin-top: 50px;
+  color: #888;
+}
+.empty-state {
+  margin-top: 80px;
+  .empty-icon {
+    font-size: 80px;
+    color: #d1d5db;
+    margin-bottom: 16px;
+  }
+  h3 { color: #4b5563; font-weight: 600; }
+  p { color: #9ca3af; }
+}
+
+/* MESSAGES CONTAINER */
+.messages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  padding-bottom: 32px;
+}
+
+/* MESSAGE ROW (Flex container para sa avatar at bubble) */
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 80%;
+
+  &.mine {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+}
+
+/* AVATAR SA CHAT */
+.sender-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  margin-bottom: 4px;
+  img { object-fit: cover; }
+}
+
+/* CHAT BUBBLES */
+.message-bubble {
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+
+  .sender-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 2px;
+  }
+
+  .message-text {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #111827;
+    line-height: 1.4;
+  }
+
+  .message-time {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    margin-top: 4px;
+    align-self: flex-end;
+  }
+}
+
+/* KAPAG IKAW ANG NAG-SEND */
+.message-row.mine .message-bubble {
+  background: #2563eb; /* Primary blue */
+  border: none;
+  
+  .message-text {
+    color: #ffffff;
+  }
+  
+  .message-time {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* MODERN FOOTER */
+.modern-footer {
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+}
+.footer-toolbar {
+  --background: #ffffff;
+  padding: 8px 0;
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.chat-input {
+  --background: #f3f4f6;
+  --border-radius: 24px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.send-btn {
+  --background: #2563eb;
+  --background-activated: #1d4ed8;
+  --box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  
+  ion-icon {
+    font-size: 1.2rem;
+  }
+} /* <-- NAITAMA NA: Sarado na nang maayos ang .send-btn */
+
+
+/* ===== POST REFERENCE CARD ===== */
+/* Inilabas ko na sa labas ng .send-btn para gumana nang tama */
+.post-ref-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:active {
+    background: rgba(0, 0, 0, 0.12);
+  }
+
+  .post-ref-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .post-ref-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+    gap: 2px; /* Espasyo para hindi magkadikit ang text */
+  }
+
+  .post-ref-label {
+    font-size: 10px;
+    color: #6b7280;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .post-ref-subject {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .post-ref-cta {
+    font-size: 11px;
+    color: #3b82f6;
+    margin-top: 2px;
+    font-weight: 600;
+  }
+}
+
+/* Para sa "mine" bubbles (asul ang background) — puti ang text sa card */
+.message-row.mine .post-ref-card {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.35);
+
+  .post-ref-label { color: rgba(255, 255, 255, 0.9); }
+  .post-ref-subject { color: #fff; }
+  .post-ref-cta { color: #fff; }
+}

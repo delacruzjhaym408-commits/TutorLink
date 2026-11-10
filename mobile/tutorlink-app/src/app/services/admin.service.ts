@@ -1,33 +1,48 @@
-import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../config';
-import { AdminApplication, AdminStats } from '../models/admin.model';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class AdminService {
   private http = inject(HttpClient);
+  private apiUrl = API_BASE_URL;
 
-  getApplications(): Promise<AdminApplication[]> {
-    return firstValueFrom(
-      this.http.get<AdminApplication[]>(`${API_BASE_URL}/admin/applications`),
-    );
+  private getHeaders() {
+    const token = localStorage.getItem('access_token');
+    return new HttpHeaders({ Authorization: `Bearer ${token}` });
   }
 
-  getStats(): Promise<AdminStats> {
-    return firstValueFrom(this.http.get<AdminStats>(`${API_BASE_URL}/admin/stats`));
+  // Users
+  getUsers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/admin/users`, { headers: this.getHeaders() });
   }
 
-  async approve(id: number): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${API_BASE_URL}/admin/applications/${id}/approve`, {}),
-    );
+  deleteUser(userId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/admin/users/${userId}`, { headers: this.getHeaders() });
   }
 
-  async reject(id: number, remarks: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${API_BASE_URL}/admin/applications/${id}/reject`, { remarks }),
-    );
+  // Posts
+  getPosts(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/admin/posts`, { headers: this.getHeaders() });
+  }
+
+  deletePost(postId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/admin/posts/${postId}`, { headers: this.getHeaders() });
+  }
+
+  // 🔥 INayos: Tinanggal ang /admin sa reports
+  getReports(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/reports`, { headers: this.getHeaders() });
+  }
+
+  resolveReport(reportId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/reports/${reportId}/resolve`, {}, { headers: this.getHeaders() });
+  }
+
+  sendAdminMessage(userId: number, message: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/admin-messages`, { user_id: userId, message }, { headers: this.getHeaders() });
   }
 }

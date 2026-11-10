@@ -1,48 +1,58 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar color="dark">
     <ion-title>Admin Dashboard</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="logout()">Logout</ion-button>
+      <ion-button (click)="logout()">
+        <ion-icon name="log-out-outline"></ion-icon>
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  @if (stats(); as s) {
-    <div class="stats">
-      <div class="stat">
-        <span class="number">{{ s.total_users }}</span>
-        <span class="label">Users</span>
-      </div>
-      <div class="stat">
-        <span class="number">{{ s.approved_tutors }}</span>
-        <span class="label">Approved Tutors</span>
-      </div>
-      <div class="stat highlight">
-        <span class="number">{{ s.pending_applications }}</span>
-        <span class="label">Pending Applications</span>
-      </div>
-      <div class="stat">
-        <span class="number">{{ s.total_bookings }}</span>
-        <span class="label">Total Bookings</span>
-      </div>
-    </div>
+  <h2>Welcome, Admin</h2>
+  <p>Overview of the TutorLink System</p>
 
-    <ion-card button routerLink="/admin/applications">
-      <ion-card-header>
-        <ion-card-title>Tutor Applications</ion-card-title>
-        <ion-card-subtitle>{{ s.pending_applications }}  waiting for review</ion-card-subtitle>
-      </ion-card-header>
-      <ion-card-content>
-        Review students who want to become tutors, and approve or reject each one.
-      </ion-card-content>
-    </ion-card>
-  } @else if (errorMessage()) {
-    <div class="message">
-      <ion-text color="danger"><p>{{ errorMessage() }}</p></ion-text>
-      <ion-button (click)="load()">Try Again</ion-button>
-    </div>
-  } @else {
-    <ion-text color="medium"><p class="message">Loading...</p></ion-text>
-  }
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-md="4">
+        <ion-card (click)="goToUsers()" style="cursor: pointer; background: #e3f2fd;">
+          <ion-card-header>
+            <ion-icon name="people-outline" size="large" color="primary"></ion-icon>
+            <ion-card-title>Manage Users</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <h1>{{ totalUsers() }}</h1>
+            <p>Total Users</p>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+
+      <ion-col size="12" size-md="4">
+        <ion-card (click)="goToPosts()" style="cursor: pointer; background: #e8f5e9;">
+          <ion-card-header>
+            <ion-icon name="document-text-outline" size="large" color="success"></ion-icon>
+            <ion-card-title>Manage Posts</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <h1>{{ totalPosts() }}</h1>
+            <p>Total Posts</p>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+
+      <ion-col size="12" size-md="4">
+        <ion-card (click)="goToReports()" style="cursor: pointer; background: #ffebee;">
+          <ion-card-header>
+            <ion-icon name="warning-outline" size="large" color="danger"></ion-icon>
+            <ion-card-title>Reports</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <h1>{{ totalReports() }}</h1>
+            <p>Total Reports</p>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>

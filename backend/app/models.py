@@ -2,18 +2,14 @@ import enum
 
 from sqlalchemy import (
     Boolean,
-    CheckConstraint,
     Column,
-    Date,
     DateTime,
     Enum,
     ForeignKey,
     Integer,
     Numeric,
     String,
-    Table,
     Text,
-    Time,
     func,
 )
 from sqlalchemy.orm import relationship
@@ -21,38 +17,14 @@ from sqlalchemy.orm import relationship
 from app.database import Base
 
 
-# ---------- Mga pagpipilian (enums) ----------
+# ---------- User Roles ----------
 class UserRole(str, enum.Enum):
     student = "student"
-    parent = "parent"
+    tutor = "tutor"
     admin = "admin"
 
 
-class ApplicationStatus(str, enum.Enum):
-    pending = "pending"
-    approved = "approved"
-    rejected = "rejected"
-
-
-class BookingStatus(str, enum.Enum):
-    pending = "pending"
-    accepted = "accepted"
-    rejected = "rejected"
-    cancelled = "cancelled"
-    completed = "completed"
-
-
-class DayOfWeek(str, enum.Enum):
-    monday = "monday"
-    tuesday = "tuesday"
-    wednesday = "wednesday"
-    thursday = "thursday"
-    friday = "friday"
-    saturday = "saturday"
-    sunday = "sunday"
-
-
-# ---------- Users at profiles ----------
+# ---------- Users ----------
 class User(Base):
     __tablename__ = "users"
 
@@ -60,205 +32,195 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     full_name = Column(String(150), nullable=False)
+    phone_number = Column(String(30), nullable=True)
+    profile_picture = Column(String(500), nullable=True)
     role = Column(Enum(UserRole), nullable=False, default=UserRole.student)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-
-    student_profile = relationship(
-        "StudentProfile", back_populates="user", uselist=False
+    description = Column(Text, nullable=True)
+    description_picture = Column(String(500), nullable=True)
+    gcash_number = Column(String(50), nullable=True)
+    updated_at = Column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
-    parent_profile = relationship(
-        "ParentProfile", back_populates="user", uselist=False
+
+    posts = relationship(
+        "TutorPost", back_populates="owner", cascade="all, delete-orphan"
     )
-    tutor_profile = relationship(
-        "TutorProfile", back_populates="user", uselist=False
+    sent_messages = relationship(
+        "Message", foreign_keys="Message.sender_id", back_populates="sender"
     )
-    bookings = relationship("Booking", back_populates="booked_by")
 
 
-class StudentProfile(Base):
-    __tablename__ = "student_profiles"
+# ---------- Tutor Posts (CORE FEATURE) ----------
+class TutorPost(Base):
+    __tablename__ = "tutor_posts"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        unique=True,
-        nullable=False,
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    school_name = Column(String(150), nullable=True)
-    year_level = Column(String(50), nullable=True)
-    contact_number = Column(String(30), nullable=True)
-
-    user = relationship("User", back_populates="student_profile")
-
-
-class ParentProfile(Base):
-    __tablename__ = "parent_profiles"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        unique=True,
-        nullable=False,
-    )
-    contact_number = Column(String(30), nullable=True)
-    address = Column(String(255), nullable=True)
-
-    user = relationship("User", back_populates="parent_profile")
-
-
-# ---------- Subjects ----------
-class Subject(Base):
-    __tablename__ = "subjects"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), unique=True, nullable=False)
-    description = Column(String(255), nullable=True)
-
-    tutors = relationship(
-        "TutorProfile", secondary="tutor_subjects", back_populates="subjects"
-    )
-
-
-# Pivot table: maraming tutor ang pwedeng magturo ng maraming subject
-tutor_subjects = Table(
-    "tutor_subjects",
-    Base.metadata,
-    Column(
-        "tutor_profile_id",
-        Integer,
-        ForeignKey("tutor_profiles.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-    Column(
-        "subject_id",
-        Integer,
-        ForeignKey("subjects.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-)
-
-
-# ---------- Tutors ----------
-class TutorProfile(Base):
-    __tablename__ = "tutor_profiles"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        unique=True,
-        nullable=False,
-    )
-    qualifications = Column(Text, nullable=False)
-    bio = Column(Text, nullable=True)
+    tutor_picture = Column(String(500), nullable=True)
+    subject = Column(String(150), nullable=False)
     hourly_rate = Column(Numeric(10, 2), nullable=False)
-    is_approved = Column(Boolean, nullable=False, default=False)
+    session_rate = Column(Numeric(10, 2), nullable=True)
+    education_level = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    post_pictures = Column(Text, nullable=True)
+    gcash_number = Column(String(50), nullable=True)
+    rating = Column(Numeric(2, 1), nullable=False, default=5.0)
+    status = Column(String(20), nullable=False, default="published")
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
-    user = relationship("User", back_populates="tutor_profile")
-    subjects = relationship(
-        "Subject", secondary="tutor_subjects", back_populates="tutors"
-    )
-    availability = relationship(
-        "TutorAvailability",
-        back_populates="tutor_profile",
-        cascade="all, delete-orphan",
-    )
-    applications = relationship("TutorApplication", back_populates="tutor_profile")
-    bookings = relationship("Booking", back_populates="tutor_profile")
+    owner = relationship("User", back_populates="posts")
 
 
-class TutorApplication(Base):
-    __tablename__ = "tutor_applications"
+# ---------- Conversations & Messages ----------
+class Conversation(Base):
+    __tablename__ = "conversations"
 
     id = Column(Integer, primary_key=True, index=True)
-    tutor_profile_id = Column(
-        Integer,
-        ForeignKey("tutor_profiles.id", ondelete="CASCADE"),
-        nullable=False,
+    participant1_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    status = Column(
-        Enum(ApplicationStatus), nullable=False, default=ApplicationStatus.pending
-    )
-    admin_remarks = Column(Text, nullable=True)
-    reviewed_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    submitted_at = Column(DateTime, nullable=False, server_default=func.now())
-    reviewed_at = Column(DateTime, nullable=True)
-
-    tutor_profile = relationship("TutorProfile", back_populates="applications")
-
-
-class TutorAvailability(Base):
-    __tablename__ = "tutor_availability"
-    __table_args__ = (
-        CheckConstraint("end_time > start_time", name="ck_availability_time_order"),
-    )
-
-    id = Column(Integer, primary_key=True, index=True)
-    tutor_profile_id = Column(
-        Integer,
-        ForeignKey("tutor_profiles.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    day_of_week = Column(Enum(DayOfWeek), nullable=False)
-    start_time = Column(Time, nullable=False)
-    end_time = Column(Time, nullable=False)
-
-    tutor_profile = relationship("TutorProfile", back_populates="availability")
-
-
-# ---------- Bookings at reviews ----------
-class Booking(Base):
-    __tablename__ = "bookings"
-    __table_args__ = (
-        CheckConstraint("end_time > start_time", name="ck_booking_time_order"),
-    )
-
-    id = Column(Integer, primary_key=True, index=True)
-    booked_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    tutor_profile_id = Column(
-        Integer, ForeignKey("tutor_profiles.id"), nullable=False
-    )
-    subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=False)
-    session_date = Column(Date, nullable=False)
-    start_time = Column(Time, nullable=False)
-    end_time = Column(Time, nullable=False)
-    notes = Column(Text, nullable=True)
-    status = Column(
-        Enum(BookingStatus), nullable=False, default=BookingStatus.pending
+    participant2_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
+    participant1_last_read = Column(DateTime, nullable=True)
+    participant2_last_read = Column(DateTime, nullable=True)
 
-    booked_by = relationship("User", back_populates="bookings")
-    tutor_profile = relationship("TutorProfile", back_populates="bookings")
-    subject = relationship("Subject")
-    review = relationship("Review", back_populates="booking", uselist=False)
+    is_deleted_by_p1 = Column(Boolean, default=False)
+    is_deleted_by_p2 = Column(Boolean, default=False)
+
+    participant1 = relationship("User", foreign_keys=[participant1_id])
+    participant2 = relationship("User", foreign_keys=[participant2_id])
+    messages = relationship(
+        "Message", back_populates="conversation", cascade="all, delete-orphan"
+    )
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(
+        Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+    )
+    sender_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    # ---- POST REFERENCE (bagong dagdag) ----
+    post_id = Column(
+        Integer, ForeignKey("tutor_posts.id", ondelete="SET NULL"), nullable=True
+    )
+    post_subject = Column(String(150), nullable=True)
+    post_picture = Column(String(500), nullable=True)
+    # ----------------------------------------
+
+    conversation = relationship("Conversation", back_populates="messages")
+    sender = relationship(
+        "User", foreign_keys=[sender_id], back_populates="sent_messages"
+    )
+
+
+# ---------- Lessons & Group Messages ----------
+class Lesson(Base):
+    __tablename__ = "lessons"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tutor_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    gc_name = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    photo = Column(Text, nullable=True)
+    gcash_number = Column(String(50), nullable=True)
+    monthly_rate = Column(Numeric(10, 2), nullable=True)
+    next_meeting_date = Column(String(50), nullable=True)
+    next_meeting_time = Column(String(50), nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    tutor = relationship("User", foreign_keys=[tutor_id])
+    messages = relationship("LessonMessage", back_populates="lesson", cascade="all, delete-orphan")
+    enrollments = relationship("Enrollment", back_populates="lesson", cascade="all, delete-orphan")
+
+
+class LessonMessage(Base):
+    __tablename__ = "lesson_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lesson_id = Column(Integer, ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False)
+    sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    lesson = relationship("Lesson", back_populates="messages")
+    sender = relationship("User", foreign_keys=[sender_id])
+
+
+class Enrollment(Base):
+    __tablename__ = "enrollments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    lesson_id = Column(Integer, ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False)
+    status = Column(String(20), nullable=False, default="enrolled")
+    payment_status = Column(String(20), nullable=False, default="unpaid")
+    payment_proof = Column(Text, nullable=True)
+    payment_reference = Column(String(100), nullable=True)
+    rejection_reason = Column(String(255), nullable=True)
+    enrolled_at = Column(DateTime, nullable=False, server_default=func.now())
+    last_read_at = Column(DateTime, nullable=True)
+
+    lesson = relationship("Lesson", back_populates="enrollments")
+    student = relationship("User", foreign_keys=[student_id])
+
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    reporter_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    reported_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    reported_post_id = Column(Integer, ForeignKey("tutor_posts.id", ondelete="CASCADE"), nullable=True)
+    reason = Column(String(255), nullable=False)
+    status = Column(String(50), nullable=False, default="pending")
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    reporter = relationship("User", foreign_keys=[reporter_id])
+    reported_user = relationship("User", foreign_keys=[reported_user_id])
+    reported_post = relationship("TutorPost")
 
 
 class Review(Base):
     __tablename__ = "reviews"
-    __table_args__ = (
-        CheckConstraint("rating BETWEEN 1 AND 5", name="ck_review_rating_range"),
-    )
 
     id = Column(Integer, primary_key=True, index=True)
-    booking_id = Column(
-        Integer,
-        ForeignKey("bookings.id", ondelete="CASCADE"),
-        unique=True,
-        nullable=False,
-    )
+    tutor_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    reviewer_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     rating = Column(Integer, nullable=False)
-    comment = Column(Text, nullable=True)
+    comment = Column(String(500), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
-    booking = relationship("Booking", back_populates="review")
+    tutor = relationship("User", foreign_keys=[tutor_id])
+    reviewer = relationship("User", foreign_keys=[reviewer_id])
+
+
+class AdminMessage(Base):
+    __tablename__ = "admin_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    message = Column(Text, nullable=False)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    user = relationship("User", foreign_keys=[user_id])

@@ -1,12 +1,14 @@
-export type UserRole = 'student' | 'parent' | 'admin';
-
 export interface AuthUser {
   id: number;
   email: string;
   full_name: string;
-  role: UserRole;
+  phone_number: string | null;
+  profile_picture: string | null;
+  description: string | null;
+  description_picture: string | null;
+  gcash_number: string | null;
+  role: 'student' | 'tutor' | 'admin';
   is_active: boolean;
-  is_approved_tutor: boolean;
   created_at: string;
 }
 
@@ -20,5 +22,5 @@ export interface RegisterData {
   email: string;
   password: string;
   full_name: string;
-  role: 'student' | 'parent';
+  phone_number?: string | null;
 }

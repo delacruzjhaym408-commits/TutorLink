@@ -1,0 +1,41 @@
+<ion-header>
+  <ion-toolbar color="danger">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/profile"></ion-back-button>
+    </ion-buttons>
+    <ion-title>System Messages</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div *ngIf="loading()" class="ion-text-center ion-padding">
+    <ion-spinner></ion-spinner>
+  </div>
+
+  <div *ngIf="!loading() && messages().length === 0" class="ion-text-center ion-padding" style="margin-top: 50px;">
+    <ion-icon name="shield-checkmark-outline" style="font-size: 80px; color: #ccc;"></ion-icon>
+    <h3 style="color: #666;">No messages from Admin</h3>
+    <p style="color: #888;">You're all good! System messages will appear here.</p>
+  </div>
+
+  <div *ngIf="!loading() && messages().length > 0">
+    <!-- INFO BANNER -->
+    <div style="background: #ffebee; border-left: 4px solid #f44336; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+      <p style="margin: 0; font-size: 0.85rem; color: #c62828;">
+        <strong>Note:</strong> These are official messages from TutorLink Admin. You cannot reply to this thread.
+      </p>
+    </div>
+
+    <!-- MESSAGES LIST -->
+    <div *ngFor="let msg of messages()" style="margin-bottom: 12px;">
+      <div style="background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid #c62828;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <ion-icon name="shield-checkmark-outline" color="danger" style="font-size: 1.4rem;"></ion-icon>
+          <strong style="color: #c62828; font-size: 1rem;">TutorLink Admin</strong>
+        </div>
+        <p style="margin: 0; color: #333; white-space: pre-wrap; line-height: 1.5;">{{ msg.message }}</p>
+        <small style="display: block; margin-top: 12px; color: #999; font-size: 0.75rem; text-align: right;">{{ msg.created_at | date:'medium' }}</small>
+      </div>
+    </div>
+  </div>
+</ion-content>

@@ -1,115 +1,33 @@
 import { Routes } from '@angular/router';
-
-import { adminGuard } from './guards/admin.guard';
 import { authGuard } from './guards/auth.guard';
-import { tutorGuard } from './guards/tutor.guard';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'login', loadComponent: () => import('./pages/login/login.page').then((m) => m.LoginPage) },
+  { path: 'register', loadComponent: () => import('./pages/register/register.page').then((m) => m.RegisterPage) },
+  { path: 'home', canActivate: [authGuard], loadComponent: () => import('./home/home.page').then((m) => m.HomePage) },
+  { path: 'create-post', canActivate: [authGuard], loadComponent: () => import('./pages/create-post/create-post.page').then((m) => m.CreatePostPage) },
+  { path: 'tutor-details/:id', canActivate: [authGuard], loadComponent: () => import('./pages/tutor-details/tutor-details.page').then((m) => m.TutorDetailsPage) },
+  { path: 'edit-post/:id', canActivate: [authGuard], loadComponent: () => import('./pages/edit-post/edit-post.page').then((m) => m.EditPostPage) },
+  { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile.page').then((m) => m.ProfilePage) },
+  { path: 'messages', canActivate: [authGuard], loadComponent: () => import('./pages/messages/messages.page').then((m) => m.MessagesPage) },
+  { path: 'chat/:id', canActivate: [authGuard], loadComponent: () => import('./pages/chat/chat.page').then((m) => m.ChatPage) },
+  { path: 'my-lesson', canActivate: [authGuard], loadComponent: () => import('./pages/my-lesson/my-lesson.page').then((m) => m.MyLessonPage) },
+  { path: 'settings', canActivate: [authGuard], loadComponent: () => import('./pages/settings/settings.page').then((m) => m.SettingsPage) },
+  { path: 'lesson-chat/:id', canActivate: [authGuard], loadComponent: () => import('./pages/lesson-chat/lesson-chat.page').then((m) => m.LessonChatPage) },
+
+  // IDINAGDAG: RUTA PARA SA MY REVIEWS
+  { path: 'my-reviews', canActivate: [authGuard], loadComponent: () => import('./pages/my-reviews/my-reviews.page').then((m) => m.MyReviewsPage) },
+
+  // ============ ADMIN ROUTES ============
+  { path: 'admin/dashboard', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin-dashboard/admin-dashboard.page').then((m) => m.AdminDashboardPage) },
+  { path: 'admin/users', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin-users/admin-users.page').then((m) => m.AdminUsersPage) },
+  { path: 'admin/posts', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin-posts/admin-posts.page').then((m) => m.AdminPostsPage) },
+  { path: 'admin/reports', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin-reports/admin-reports.page').then((m) => m.AdminReportsPage) },
+  { path: 'admin-chat', canActivate: [authGuard], loadComponent: () => import('./pages/admin-chat/admin-chat.page').then((m) => m.AdminChatPage) },
   {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full',
-  },
-  {
-    path: 'login',
-    loadComponent: () =>
-      import('./pages/login/login.page').then((m) => m.LoginPage),
-  },
-  {
-    path: 'register',
-    loadComponent: () =>
-      import('./pages/register/register.page').then((m) => m.RegisterPage),
-  },
-  {
-    path: 'home',
-    canActivate: [authGuard],
-    loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
-  },
-  {
-    path: 'tutors',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/tutors/tutors.page').then((m) => m.TutorsPage),
-  },
-  {
-    path: 'tutors/:id',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/tutor-profile/tutor-profile.page').then(
-        (m) => m.TutorProfilePage,
-      ),
-  },
-  {
-    path: 'book/:tutorId',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/booking-request/booking-request.page').then(
-        (m) => m.BookingRequestPage,
-      ),
-  },
-  {
-    path: 'my-bookings',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/my-bookings/my-bookings.page').then(
-        (m) => m.MyBookingsPage,
-      ),
-  },
-  {
-    path: 'apply-tutor',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/apply-tutor/apply-tutor.page').then(
-        (m) => m.ApplyTutorPage,
-      ),
-  },
-  {
-    path: 'tutor-application',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/tutor-application/tutor-application.page').then(
-        (m) => m.TutorApplicationPage,
-      ),
-  },
-  {
-    path: 'tutor-dashboard',
-    canActivate: [authGuard, tutorGuard],
-    loadComponent: () =>
-      import('./pages/tutor-dashboard/tutor-dashboard.page').then(
-        (m) => m.TutorDashboardPage,
-      ),
-  },
-  {
-    path: 'tutor-requests',
-    canActivate: [authGuard, tutorGuard],
-    loadComponent: () =>
-      import('./pages/tutor-requests/tutor-requests.page').then(
-        (m) => m.TutorRequestsPage,
-      ),
-  },
-    {
-    path: 'edit-tutor-profile',
-    canActivate: [authGuard, tutorGuard],
-    data: { mode: 'edit' },
-    loadComponent: () =>
-      import('./pages/apply-tutor/apply-tutor.page').then(
-        (m) => m.ApplyTutorPage,
-      ),
-  },
-  {
-    path: 'admin',
-    canActivate: [adminGuard],
-    loadComponent: () =>
-      import('./pages/admin-dashboard/admin-dashboard.page').then(
-        (m) => m.AdminDashboardPage,
-      ),
-  },
-  {
-    path: 'admin/applications',
-    canActivate: [adminGuard],
-    loadComponent: () =>
-      import('./pages/admin-applications/admin-applications.page').then(
-        (m) => m.AdminApplicationsPage,
-      ),
+    path: 'video-call/:roomName',
+    loadComponent: () => import('./pages/video-call/video-call.page').then( m => m.VideoCallPage)
   },
 ];

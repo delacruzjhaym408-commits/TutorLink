@@ -1,0 +1,131 @@
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar color="primary" class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/profile" class="menu-btn"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="app-title">Edit Post</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-content ion-padding">
+  <div *ngIf="loading()" class="ion-text-center ion-padding loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading post details...</p>
+  </div>
+
+  <div class="form-container" *ngIf="!loading()">
+    <h2 class="form-title">Update Listing</h2>
+    <p class="form-subtitle">Make changes to your tutor post below.</p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      
+      <div class="input-group">
+        <label>Subject</label>
+        <ion-input
+          fill="outline"
+          type="text"
+          placeholder="e.g. Mathematics, English"
+          formControlName="subject"
+          class="custom-input"
+        ></ion-input>
+        @if (showError('subject')) {
+          <ion-text color="danger"><small>Please enter a subject.</small></ion-text>
+        }
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label>Hourly Rate (₱)</label>
+          <ion-input
+            fill="outline"
+            type="number"
+            placeholder="e.g. 150"
+            formControlName="hourly_rate"
+            min="1"
+            class="custom-input"
+          ></ion-input>
+          @if (showError('hourly_rate')) {
+            <ion-text color="danger"><small>Must be at least 1.</small></ion-text>
+          }
+        </div>
+
+        <div class="input-group">
+          <label>Per Session (₱) - Optional</label>
+          <ion-input
+            fill="outline"
+            type="number"
+            placeholder="e.g. 500"
+            formControlName="session_rate"
+            min="0"
+            class="custom-input"
+          ></ion-input>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Education Level</label>
+        <ion-input
+          fill="outline"
+          type="text"
+          placeholder="e.g. College Graduate, Licensed"
+          formControlName="education_level"
+          class="custom-input"
+        ></ion-input>
+        @if (showError('education_level')) {
+          <ion-text color="danger"><small>Please enter your education level.</small></ion-text>
+        }
+      </div>
+
+      <div class="input-group">
+        <label>Description (Optional)</label>
+        <ion-textarea
+          fill="outline"
+          placeholder="Tell students about your teaching experience..."
+          formControlName="description"
+          [autoGrow]="true"
+          rows="4"
+          class="custom-input"
+        ></ion-textarea>
+      </div>
+
+      <!-- IMAGE UPLOAD SECTION -->
+      <div class="image-section">
+        <label>Post Pictures</label>
+        
+        <div class="image-upload-btn" (click)="pickAndUploadImages()" *ngIf="!uploadingImages()">
+          <ion-icon name="camera-outline"></ion-icon>
+          <span>Add / Change Pictures</span>
+        </div>
+
+        <div class="uploading-state" *ngIf="uploadingImages()">
+          <ion-spinner name="crescent" color="primary"></ion-spinner>
+          <span>Uploading images...</span>
+        </div>
+
+        <!-- IMAGE PREVIEWS -->
+        <div class="image-previews" *ngIf="uploadedImageUrls().length > 0">
+          <div *ngFor="let img of uploadedImageUrls(); let i = index" class="image-preview-wrapper">
+            <img [src]="img" />
+            <div class="remove-icon" (click)="removeImage(i)">
+              <ion-icon name="close"></ion-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      @if (errorMessage()) {
+        <ion-text color="danger"><p class="error-text">{{ errorMessage() }}</p></ion-text>
+      }
+
+      <ion-button
+        expand="block"
+        type="submit"
+        [disabled]="form.invalid || submitting() || uploadingImages()"
+        class="submit-btn"
+      >
+        <ion-spinner *ngIf="submitting()" name="crescent" slot="start"></ion-spinner>
+        {{ submitting() ? 'Saving...' : 'Save Changes' }}
+      </ion-button>
+    </form>
+  </div>
+</ion-content>

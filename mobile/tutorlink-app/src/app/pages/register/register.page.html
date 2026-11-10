@@ -1,82 +1,112 @@
-<ion-content class="ion-padding">
+<ion-content class="register-bg">
   <div class="auth-container">
+    
+    <!-- BRAND HEADER -->
     <div class="brand">
-      <h1>Create an Account</h1>
-      <p>For students and parents</p>
+      <div class="logo-circle">
+        <ion-icon name="person-add-outline"></ion-icon>
+      </div>
+      <h1>Create Account</h1>
+      <p>Join TutorLink today</p>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <ion-input
-        label="Full name"
-        labelPlacement="floating"
-        fill="outline"
-        type="text"
-        autocomplete="name"
-        formControlName="fullName"
-      ></ion-input>
-      @if (showError('fullName')) {
-        <ion-text color="danger"><small>Enter your full name.</small></ion-text>
-      }
+    <!-- REGISTER CARD -->
+    <div class="auth-card">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        
+        <div class="input-group">
+          <label>Full Name</label>
+          <ion-input
+            fill="outline"
+            type="text"
+            autocomplete="name"
+            formControlName="fullName"
+            placeholder="Juan Dela Cruz"
+            class="custom-input"
+          ></ion-input>
+          @if (showError('fullName')) {
+            <ion-text color="danger"><small>Enter your full name.</small></ion-text>
+          }
+        </div>
 
-      <ion-input
-        label="Email"
-        labelPlacement="floating"
-        fill="outline"
-        type="email"
-        autocomplete="email"
-        formControlName="email"
-      ></ion-input>
-      @if (showError('email')) {
-        <ion-text color="danger"><small>Please enter a valid email address.</small></ion-text>
-      }
+        <div class="input-group">
+          <label>Phone Number (Optional)</label>
+          <ion-input
+            fill="outline"
+            type="tel"
+            autocomplete="tel"
+            formControlName="phoneNumber"
+            placeholder="09123456789"
+            class="custom-input"
+          ></ion-input>
+        </div>
 
-      <ion-select
-        label="Register as"
-        labelPlacement="floating"
-        fill="outline"
-        interface="popover"
-        formControlName="role"
-      >
-        <ion-select-option value="student">Student</ion-select-option>
-        <ion-select-option value="parent">Parent</ion-select-option>
-      </ion-select>
+        <div class="input-group">
+          <label>Email Address</label>
+          <ion-input
+            fill="outline"
+            type="email"
+            autocomplete="email"
+            formControlName="email"
+            placeholder="name@example.com"
+            class="custom-input"
+          ></ion-input>
+          @if (showError('email')) {
+            <ion-text color="danger"><small>Please enter a valid email address.</small></ion-text>
+          }
+        </div>
 
-      <ion-input
-        label="Password"
-        labelPlacement="floating"
-        fill="outline"
-        type="password"
-        autocomplete="new-password"
-        formControlName="password"
-      ></ion-input>
-      @if (showError('password')) {
-        <ion-text color="danger"><small>Password must be at least 8 characters long.</small></ion-text>
-      }
+        <div class="input-group">
+          <label>Password</label>
+          <ion-input
+            fill="outline"
+            type="password"
+            autocomplete="new-password"
+            formControlName="password"
+            placeholder="Min. 8 characters"
+            class="custom-input"
+          ></ion-input>
+          @if (showError('password')) {
+            <ion-text color="danger"><small>Password must be at least 8 characters long.</small></ion-text>
+          }
+        </div>
 
-      <ion-input
-        label="Confirm Password"
-        labelPlacement="floating"
-        fill="outline"
-        type="password"
-        autocomplete="new-password"
-        formControlName="confirmPassword"
-      ></ion-input>
-      @if (showMismatch()) {
-        <ion-text color="danger"><small>Passwords do not match.</small></ion-text>
-      }
+        <div class="input-group">
+          <label>Confirm Password</label>
+          <ion-input
+            fill="outline"
+            type="password"
+            autocomplete="new-password"
+            formControlName="confirmPassword"
+            placeholder="Re-enter password"
+            class="custom-input"
+          ></ion-input>
+          @if (showMismatch()) {
+            <ion-text color="danger"><small>Passwords do not match.</small></ion-text>
+          }
+        </div>
 
-      @if (errorMessage()) {
-        <ion-text color="danger"><p>{{ errorMessage() }}</p></ion-text>
-      }
+        @if (errorMessage()) {
+          <ion-text color="danger" class="error-box">
+            <p>{{ errorMessage() }}</p>
+          </ion-text>
+        }
 
-      <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting()">
-        {{ submitting() ? 'Creating account...' : 'Create Account' }}
-      </ion-button>
-    </form>
+        <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting()" class="submit-btn">
+          <ion-spinner *ngIf="submitting()" name="crescent" slot="start"></ion-spinner>
+          {{ submitting() ? 'Creating account...' : 'Create Account' }}
+        </ion-button>
+      </form>
 
-    <p class="switch">
-      Already have an account?
-      <a routerLink="/login">Log In</a>
-    </p>
+      <div class="divider">
+        <span>OR</span>
+      </div>
+
+      <p class="switch">
+        Already have an account? 
+        <a routerLink="/login" class="login-link">Log In</a>
+      </p>
+    </div>
+
   </div>
 </ion-content>

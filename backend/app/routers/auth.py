@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import ParentProfile, StudentProfile, User, UserRole
+from app.models import User, UserRole
 from app.schemas import TokenOut, UserCreate, UserOut, user_to_out
 from app.security import (
     DUMMY_HASH,
@@ -31,13 +31,9 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
         email=email,
         password_hash=hash_password(data.password),
         full_name=data.full_name,
-        role=UserRole(data.role),
+        phone_number=data.phone_number,
+        role=UserRole.student,
     )
-    # Awtomatikong gumagawa ng profile ayon sa napiling role
-    if data.role == "student":
-        user.student_profile = StudentProfile()
-    else:
-        user.parent_profile = ParentProfile()
 
     db.add(user)
     try:
@@ -51,10 +47,8 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=TokenOut)
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # Ang "username" sa form ay ang email
     user = db.query(User).filter(User.email == form.username.strip().lower()).first()
 
-    # Laging sinusuri ang password para pareho ang bilis kahit walang ganoong email
     password_hash = user.password_hash if user else DUMMY_HASH
     password_ok = verify_password(form.password, password_hash)
 

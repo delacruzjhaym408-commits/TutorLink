@@ -1,0 +1,132 @@
+/* MODERN HEADER */
+.modern-header {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  z-index: 10;
+}
+.header-toolbar {
+  --background: #ffffff;
+  --color: #1a1a1a;
+}
+.app-title {
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+.menu-btn {
+  --color: #1a1a1a;
+}
+
+/* BACKGROUND */
+.bg-content {
+  --background: #f8f9fa;
+}
+
+/* LOADING & EMPTY STATE */
+.loading-container {
+  margin-top: 50px;
+  color: #888;
+}
+.empty-state {
+  margin-top: 80px;
+  .empty-icon {
+    font-size: 80px;
+    color: #d1d5db;
+    margin-bottom: 16px;
+  }
+  h3 { color: #4b5563; font-weight: 600; margin: 0; }
+  p { color: #9ca3af; margin-top: 8px; }
+}
+
+/* MESSAGES LIST */
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* MESSAGE CARD */
+.message-card {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.02);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.msg-avatar {
+  width: 56px;
+  height: 56px;
+  margin-right: 14px;
+  border: 2px solid #e5e7eb;
+  img { object-fit: cover; }
+}
+
+.msg-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.msg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  h2 {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #111827;
+    margin: 0;
+  }
+}
+
+.msg-preview {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+
+.msg-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.unread-badge {
+  border-radius: 50%;
+  padding: 4px 8px;
+  font-weight: bold;
+  font-size: 0.75rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.delete-btn {
+  --padding-start: 0;
+  --padding-end: 0;
+  margin: 0;
+  height: 28px;
+  width: 28px;
+  opacity: 0.4;
+  
+  &:hover {
+    opacity: 1;
+  }
+}

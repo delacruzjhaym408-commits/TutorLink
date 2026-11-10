@@ -1,71 +1,66 @@
-import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import {
-  IonButton,
-  IonButtons,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
-  IonContent,
-  IonHeader,
-  IonText,
-  IonTitle,
-  IonToolbar,
+  IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol,
+  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonIcon, IonButton,
+  IonButtons
 } from '@ionic/angular';
-
-import { AdminStats } from '../../models/admin.model';
+import { addIcons } from 'ionicons';
+import { peopleOutline, documentTextOutline, warningOutline, logOutOutline } from 'ionicons/icons';
 import { AdminService } from '../../services/admin.service';
 import { SessionService } from '../../services/session.service';
-import { apiErrorMessage } from '../../utils/api-error';
 
 @Component({
   selector: 'app-admin-dashboard',
   templateUrl: './admin-dashboard.page.html',
   styleUrls: ['./admin-dashboard.page.scss'],
+  standalone: true,
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonButtons,
-    IonButton,
-    IonContent,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardSubtitle,
-    IonCardContent,
-    IonText,
-    RouterLink,
+    CommonModule, IonHeader, IonToolbar, IonTitle, IonContent,
+    IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle,
+    IonCardContent, IonIcon, IonButton, IonButtons
   ],
 })
-export class AdminDashboardPage {
+export class AdminDashboardPage implements OnInit {
   private adminService = inject(AdminService);
   private session = inject(SessionService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
-  stats = signal<AdminStats | null>(null);
-  errorMessage = signal('');
+  totalUsers = signal(0);
+  totalPosts = signal(0);
+  totalReports = signal(0);
 
-  // Tumatakbo tuwing papasok ang admin sa pahinang ito
-  ionViewWillEnter() {
-    this.load();
+  constructor() {
+    addIcons({ peopleOutline, documentTextOutline, warningOutline, logOutOutline });
   }
 
-  async load() {
-    this.errorMessage.set('');
-    try {
-      this.stats.set(await this.adminService.getStats());
-    } catch (error) {
-      this.errorMessage.set(
-        apiErrorMessage(error, 'Could not load the numbers. Please try again.'),
-      );
-    }
+  ngOnInit() {
+    this.loadStats();
   }
 
-  async logout() {
+  loadStats() {
+    this.adminService.getUsers().subscribe(users => {
+      this.totalUsers.set(users.length);
+      this.cdr.detectChanges();
+    });
+    this.adminService.getPosts().subscribe(posts => {
+      this.totalPosts.set(posts.length);
+      this.cdr.detectChanges();
+    });
+    this.adminService.getReports().subscribe(reports => {
+      this.totalReports.set(reports.length);
+      this.cdr.detectChanges();
+    });
+  }
+
+  goToUsers() { this.router.navigate(['/admin/users']); }
+  goToPosts() { this.router.navigate(['/admin/posts']); }
+  goToReports() { this.router.navigate(['/admin/reports']); }
+
+  logout() {
     this.session.logout();
-    await this.router.navigateByUrl('/login');
+    this.router.navigate(['/login']);
   }
 }

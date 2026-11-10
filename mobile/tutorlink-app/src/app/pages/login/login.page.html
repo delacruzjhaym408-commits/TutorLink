@@ -1,47 +1,70 @@
-<ion-content class="ion-padding">
+<ion-content class="login-bg">
   <div class="auth-container">
+    
+    <!-- BRAND HEADER -->
     <div class="brand">
+      <div class="logo-circle">
+        <ion-icon name="school-outline"></ion-icon>
+      </div>
       <h1>TutorLink</h1>
       <p>Find the right tutor for you</p>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <ion-input
-        label="Email"
-        labelPlacement="floating"
-        fill="outline"
-        type="email"
-        autocomplete="email"
-        formControlName="email"
-      ></ion-input>
-      @if (showError('email')) {
-        <ion-text color="danger"><small>Please enter a valid email address.</small></ion-text>
-      }
+    <!-- LOGIN CARD -->
+    <div class="auth-card">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        
+        <div class="input-group">
+          <label>Email Address</label>
+          <ion-input
+            fill="outline"
+            type="email"
+            autocomplete="email"
+            formControlName="email"
+            placeholder="name@example.com"
+            class="custom-input"
+          ></ion-input>
+          @if (showError('email')) {
+            <ion-text color="danger"><small>Please enter a valid email address.</small></ion-text>
+          }
+        </div>
 
-      <ion-input
-        label="Password"
-        labelPlacement="floating"
-        fill="outline"
-        type="password"
-        autocomplete="current-password"
-        formControlName="password"
-      ></ion-input>
-      @if (showError('password')) {
-        <ion-text color="danger"><small>Password must be at least 8 characters long.</small></ion-text>
-      }
+        <div class="input-group">
+          <label>Password</label>
+          <ion-input
+            fill="outline"
+            type="password"
+            autocomplete="current-password"
+            formControlName="password"
+            placeholder="Enter your password"
+            class="custom-input"
+          ></ion-input>
+          @if (showError('password')) {
+            <ion-text color="danger"><small>Password must be at least 8 characters long.</small></ion-text>
+          }
+        </div>
 
-      @if (errorMessage()) {
-        <ion-text color="danger"><p>{{ errorMessage() }}</p></ion-text>
-      }
+        @if (errorMessage()) {
+          <ion-text color="danger" class="error-box">
+            <p>{{ errorMessage() }}</p>
+          </ion-text>
+        }
 
-      <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting()">
-        {{ submitting() ? 'Logging in...' : 'Log In' }}
-      </ion-button>
-    </form>
+        <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting()" class="submit-btn">
+          <ion-spinner *ngIf="submitting()" name="crescent" slot="start"></ion-spinner>
+          {{ submitting() ? 'Logging in...' : 'Log In' }}
+        </ion-button>
+      </form>
 
-    <p class="switch">
-      Don't have an account yet?
-      <a routerLink="/register">Sign Up</a>
-    </p>
+      <div class="divider">
+        <span>OR</span>
+      </div>
+
+      <p class="switch">
+        Don't have an account? 
+        <a routerLink="/register" class="signup-link">Sign Up</a>
+      </p>
+    </div>
+
   </div>
 </ion-content>

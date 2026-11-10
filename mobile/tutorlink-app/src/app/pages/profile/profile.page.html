@@ -1,0 +1,166 @@
+<ion-menu id="main-menu" contentId="main-content" side="end">
+  <ion-header>
+    <ion-toolbar color="primary">
+      <ion-title>Menu</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content>
+    <ion-list>
+      <ion-item routerLink="/home" button (click)="menuController.close()">
+        <ion-icon name="home-outline" slot="start"></ion-icon><ion-label>Home</ion-label>
+      </ion-item>
+      <ion-item routerLink="/messages" button (click)="menuController.close()">
+        <ion-icon name="chatbubble-outline" slot="start"></ion-icon><ion-label>Messages</ion-label>
+      </ion-item>
+      <ion-item routerLink="/my-lesson" button (click)="menuController.close()">
+        <ion-icon name="book-outline" slot="start"></ion-icon><ion-label>My Lesson</ion-label>
+      </ion-item>
+      <ion-item routerLink="/settings" button (click)="menuController.close()">
+        <ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label>
+      </ion-item>
+      <ion-item (click)="logout()" button color="danger">
+        <ion-icon name="log-out-outline" slot="start"></ion-icon><ion-label>Log Out</ion-label>
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-menu>
+
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar color="primary" class="header-toolbar">
+    <ion-buttons slot="start"><ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button></ion-buttons>
+    <ion-title class="app-title">My Profile</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openMenu()" class="menu-btn">
+        <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content id="main-content" class="bg-content ion-padding">
+  
+  <!-- PROFILE CARD -->
+  <div class="profile-card">
+    <ion-avatar class="profile-avatar">
+      <img [src]="getProfilePictureUrl()" alt="Profile" />
+    </ion-avatar>
+    <h2>{{ user()?.full_name || 'Loading...' }}</h2>
+    <p class="profile-desc" *ngIf="user()?.description">{{ user()?.description }}</p>
+    
+    <!-- Description Picture -->
+    <div *ngIf="getDescriptionPictureUrl()" style="width: 100%; height: 220px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-top: 12px; overflow: hidden;">
+      <img 
+        [src]="getDescriptionPictureUrl()" 
+        style="max-width: 100%; max-height: 100%; object-fit: contain;" 
+      />
+    </div>
+    
+    <div class="user-info-grid">
+      <div class="info-item">
+        <ion-icon name="mail-outline" color="primary"></ion-icon>
+        <div>
+          <p>Email</p>
+          <h3>{{ user()?.email }}</h3>
+        </div>
+      </div>
+      <div class="info-item">
+        <ion-icon name="call-outline" color="primary"></ion-icon>
+        <div>
+          <p>Phone</p>
+          <h3>{{ user()?.phone_number || 'Not set' }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="action-buttons">
+    <ion-button expand="block" fill="outline" color="tertiary" (click)="goToMyReviews()" class="custom-btn">
+      <ion-icon name="star-outline" slot="start"></ion-icon>
+      View My Reviews
+    </ion-button>
+    <ion-button expand="block" fill="outline" color="danger" (click)="goToAdminChat()" class="custom-btn">
+      <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
+      System Messages
+    </ion-button>
+  </div>
+
+  <!-- MY POSTS SECTION -->
+  <div class="section-header">
+    <h3>My Posts ({{ myPosts().length }})</h3>
+    <ion-button size="small" fill="solid" color="primary" (click)="goToCreatePost()" class="new-post-btn">
+      <ion-icon name="add-outline" slot="start"></ion-icon>New Post
+    </ion-button>
+  </div>
+
+  <div *ngIf="loading()" class="ion-text-center ion-padding loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading posts...</p>
+  </div>
+  
+  <div *ngIf="!loading() && myPosts().length === 0" class="ion-text-center ion-padding empty-state">
+    <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
+    <h3>No posts yet</h3>
+    <p>Click "New Post" to create your first tutor listing.</p>
+  </div>
+
+  <!-- POSTS LIST (UDEMY STYLE) -->
+  <div class="cards-container" *ngIf="!loading() && myPosts().length > 0">
+    <ion-card *ngFor="let post of myPosts()" class="modern-card" style="padding: 0; overflow: hidden; border-radius: 12px; margin-bottom: 16px;">
+      
+      <!-- MALAKING IMAGE SA TAAS -->
+      <div *ngIf="post.post_pictures" style="width: 100%; height: 220px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+        <img 
+          [src]="parseImages(post.post_pictures)[0]" 
+          alt="Course Cover" 
+          style="max-width: 100%; max-height: 100%; object-fit: contain;" 
+        />
+      </div>
+
+      <div style="padding: 16px;">
+        <!-- HIGHLIGHTED SUBJECT -->
+        <h2 class="subject-title" style="font-size: 1.4rem; font-weight: 800; color: #1a1a1a; margin: 0 0 8px 0; line-height: 1.2;">
+          {{ post.subject }}
+        </h2>
+        
+        <p class="tutor-subtitle" style="color: #6b7280; font-size: 0.95rem; margin-bottom: 12px;">
+          Tutor: <strong>You</strong>
+        </p>
+
+        <p *ngIf="post.description" class="description" style="color: #4b5563; font-size: 0.9rem; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+          {{ post.description }}
+        </p>
+
+        <!-- STATS -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <div class="stats-row" style="display: flex; gap: 12px; align-items: center;">
+            <div class="rating" style="display: flex; align-items: center; gap: 4px; color: #f59e0b; font-weight: bold;">
+              <ion-icon name="star"></ion-icon>
+              <span>{{ post.rating }} ({{ post.total_reviews || 0 }})</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RATE -->
+        <div class="rate-display" style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px;">
+          <h3 class="rate-text" style="font-size: 1.3rem; font-weight: 800; color: #2563eb; margin: 0;">
+            ₱{{ post.hourly_rate }} <span style="font-size: 0.9rem; font-weight: 500; color: #6b7280;">/ hour</span>
+          </h3>
+          <span class="session-rate" *ngIf="post.session_rate" style="font-size: 0.85rem; color: #9ca3af;">
+            ₱{{ post.session_rate }} / session
+          </span>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="card-actions" style="display: flex; gap: 8px;">
+          <ion-button fill="outline" color="primary" style="flex: 1; margin: 0;" (click)="goToEditPost(post)">
+            <ion-icon name="create-outline" slot="start"></ion-icon>Edit
+          </ion-button>
+          <ion-button fill="outline" color="danger" style="flex: 1; margin: 0;" (click)="confirmDeletePost(post)">
+            <ion-icon name="trash-outline" slot="start"></ion-icon>Delete
+          </ion-button>
+        </div>
+      </div>
+    </ion-card>
+  </div>
+</ion-content>
