@@ -179,3 +179,29 @@ ion-app {
   min-width: 16px;
   text-align: center;
 }
+
+/* 🔥 ACTIVE INDICATOR SA BURGER MENU */
+.active-menu-item {
+  --background: rgba(37, 99, 235, 0.1);
+  --color: #2563eb;
+  border-radius: 8px;
+  margin: 4px 8px;
+  
+  ion-icon {
+    color: #2563eb !important;
+  }
+}
+
+/* 🔥 ACTIVE INDICATOR SA BOTTOM TAB BAR */
+.tab-btn.active-tab {
+  --color: #ffffff;
+  --color-selected: #ffffff;
+  --background: #2563eb;
+  border-radius: 12px;
+  margin: 4px 8px;
+  transition: all 0.2s ease;
+
+  ion-icon {
+    transform: translateY(-2px);
+  }
+}

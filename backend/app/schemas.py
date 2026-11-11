@@ -120,13 +120,14 @@ class ConversationOut(BaseModel):
     other_user_name: Optional[str] = None
     other_user_picture: Optional[str] = None
     lastMessage: Optional[str] = None
+    last_sender_id: Optional[int] = None #
     unread_count: Optional[int] = 0
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 class MessageCreate(BaseModel):
-    content: str = Field(min_length=1, max_length=2000)
+    content: str = Field(min_length=1, max_length=5000000)
 
 class MessageOut(BaseModel):
     id: int
@@ -164,7 +165,7 @@ class LessonOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class LessonMessageCreate(BaseModel):
-    content: str = Field(min_length=1, max_length=2000)
+    content: str = Field(min_length=1, max_length=5000000)
 
 class LessonMessageOut(BaseModel):
     id: int

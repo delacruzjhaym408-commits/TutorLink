@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem,
   IonLabel, IonAvatar, IonButton, IonIcon, IonBackButton, IonButtons,
-  AlertController, ToastController, IonSpinner, IonSearchbar
+  AlertController, ToastController, IonSpinner, IonSearchbar,
+  IonRefresher, IonRefresherContent // 🔥 IDINAGDAG
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { trashOutline } from 'ionicons/icons';
@@ -20,7 +21,8 @@ import { API_BASE_URL } from '../../config';
     CommonModule, FormsModule,
     IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem,
     IonLabel, IonAvatar, IonButton, IonIcon, IonBackButton, IonButtons,
-    IonSpinner, IonSearchbar
+    IonSpinner, IonSearchbar,
+    IonRefresher, IonRefresherContent // 🔥 IDINAGDAG
   ],
 })
 export class AdminUsersPage implements OnInit {
@@ -39,6 +41,20 @@ export class AdminUsersPage implements OnInit {
 
   ngOnInit() {
     this.loadUsers();
+  }
+
+  // 🔥 IDINAGDAG
+  doRefresh(event: any) {
+    this.adminService.getUsers().subscribe({
+      next: (users) => {
+        this.users.set(users);
+        this.cdr.detectChanges();
+        event.target.complete();
+      },
+      error: () => {
+        event.target.complete();
+      }
+    });
   }
 
   loadUsers() {
@@ -66,19 +82,9 @@ export class AdminUsersPage implements OnInit {
 
   getProfilePictureUrl(pic: string | null | undefined): string {
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
-    
-    if (pic.startsWith('/uploads/')) {
-      return `${API_BASE_URL}${pic}`;
-    }
-    
-    if (pic.includes('localhost:8000')) {
-      return pic.replace('localhost:8000', 'localhost:8000');
-    }
-    
-    if (!pic.startsWith('http')) {
-      return `${API_BASE_URL}/uploads/${pic}`;
-    }
-    
+    if (pic.startsWith('/uploads/')) return `${API_BASE_URL}${pic}`;
+    if (!pic.startsWith('http')) return `${API_BASE_URL}/uploads/${pic}`;
+    if (pic.includes('localhost')) return pic.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
     return pic;
   }
 

@@ -8,17 +8,19 @@ import {
 } from '@ionic/angular';
 import { 
   sendOutline, callOutline, videocamOutline,
-  // 🔥 IDINAGDAG
-  chatbubblesOutline
+  chatbubblesOutline,
+  cameraOutline // 🔥 IDINAGDAG
 } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { Subscription } from 'rxjs';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'; // 🔥 IDINAGDAG
 
 import { MessageService, Message } from '../../services/message.service';
 import { AuthUser } from '../../models/user.model';
 import { WebSocketService } from '../../services/websocket.service';
 import { AppStateService } from '../../services/app-state.service';
 import { SessionService } from '../../services/session.service';
+import { API_BASE_URL } from '../../config'; 
 
 @Component({
   selector: 'app-chat',
@@ -54,7 +56,16 @@ export class ChatPage implements OnInit, OnDestroy {
   private wsSubscription!: Subscription;
 
   constructor() {
-    addIcons({ sendOutline, callOutline, videocamOutline, chatbubblesOutline });
+    // 🔥 IDINAGDAG ANG cameraOutline
+    addIcons({ sendOutline, callOutline, videocamOutline, chatbubblesOutline, cameraOutline });
+  }
+
+  getImageUrl(pic: string | null | undefined): string {
+    if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
+    if (pic.startsWith('/uploads/')) return `${API_BASE_URL}${pic}`;
+    if (pic.includes('localhost')) return pic.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
+    if (!pic.startsWith('http')) return `${API_BASE_URL}/uploads/${pic}`;
+    return pic;
   }
 
   ngOnInit() {
@@ -92,7 +103,7 @@ export class ChatPage implements OnInit, OnDestroy {
         const currentConv = convs.find(c => c.id === this.conversationId);
         if (currentConv) {
           this.otherUserName.set(currentConv.other_user_name);
-          this.otherUserPicture.set(currentConv.other_user_picture);
+          this.otherUserPicture.set(this.getImageUrl(currentConv.other_user_picture)); 
           this.cdr.detectChanges();
         }
       },
@@ -118,7 +129,6 @@ export class ChatPage implements OnInit, OnDestroy {
         });
       },
       error: (err) => {
-        // 🔥 FIX: Handle 401
         if (err?.status === 401) {
           this.session.logout();
           this.router.navigate(['/login']);
@@ -144,6 +154,35 @@ export class ChatPage implements OnInit, OnDestroy {
       },
       error: () => { this.sending.set(false); },
     });
+  }
+
+  // 🔥 IDINAGDAG: FUNCTION PARA MAG-SEND NG IMAGE
+  async sendImage() {
+    try {
+      const image = await Camera.getPhoto({
+        quality: 80,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Photos
+      });
+
+      if (image.dataUrl) {
+        const content = `[IMAGE]${image.dataUrl}`;
+        this.sending.set(true);
+
+        this.messageService.sendMessage(this.conversationId, content).subscribe({
+          next: (msg) => {
+            this.messages.update((m) => [...m, msg]);
+            this.sending.set(false);
+            this.cdr.detectChanges();
+            setTimeout(() => this.content?.scrollToBottom(300), 100);
+          },
+          error: () => { this.sending.set(false); }
+        });
+      }
+    } catch (e) {
+      console.log('Camera cancelled', e);
+    }
   }
 
   startCall() {

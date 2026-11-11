@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Subject } from 'rxjs';
+import { API_BASE_URL } from '../config'; // 🔥 IDINAGDAG PARA SA DYNAMIC URL
 
 @Injectable({
   providedIn: 'root'
@@ -26,7 +27,12 @@ export class WebSocketService {
       this.ws.close();
     }
 
-    this.ws = new WebSocket(`ws://localhost:8000:8000/ws?token=${token}`);
+    // 🔥 FIXED: Ginawang dynamic ang URL (wss:// para sa Render, ws:// para sa local)
+    // Kinukuha natin ang API_BASE_URL, tapos pinapalitan ang http/https ng ws/wss
+    const wsUrl = API_BASE_URL.replace(/^http/, 'ws') + `/ws?token=${token}`;
+    console.log('🔌 Connecting to WebSocket:', wsUrl);
+    
+    this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
       console.log('🟢 WebSocket Connected');

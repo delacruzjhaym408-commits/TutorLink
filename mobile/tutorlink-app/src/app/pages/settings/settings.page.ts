@@ -6,7 +6,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput,
   IonTextarea, IonText, IonButtons, IonBackButton, IonIcon, 
   ToastController, IonMenu, IonAvatar, MenuController, IonSpinner,
-  IonList, IonItem, IonLabel
+  IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { personOutline, callOutline, lockClosedOutline, cameraOutline, menuOutline, homeOutline, chatbubbleOutline, bookOutline, settingsOutline, logOutOutline, mailOutline, cashOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
@@ -26,7 +26,7 @@ import { AuthUser } from '../../models/user.model';
     CommonModule, ReactiveFormsModule, IonHeader, IonToolbar, IonTitle,
     IonContent, IonButton, IonInput, IonTextarea, IonText, IonButtons,
     IonBackButton, IonIcon, IonMenu, IonAvatar, IonSpinner,
-    IonList, IonItem, IonLabel
+    IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent
   ],
 })
 export class SettingsPage implements OnInit {
@@ -75,20 +75,50 @@ export class SettingsPage implements OnInit {
     }
   }
 
+    doRefresh(event: any) {
+    const token = localStorage.getItem('access_token');
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    
+    this.http.get<AuthUser>(`${API_BASE_URL}/users/me`, { headers }).subscribe({
+      next: (user) => {
+        this.user.set(user);
+        this.session.currentUser.set(user);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        this.selectedImage.set(this.getFullImageUrl(user.profile_picture));
+        this.selectedDescImage.set(this.getFullImageUrl(user.description_picture));
+        
+        this.form.patchValue({
+          full_name: user.full_name,
+          phone_number: user.phone_number || '',
+          description: user.description || '',
+          gcash_number: user.gcash_number || '',
+        });
+        
+        event.target.complete();
+      },
+      error: () => {
+        event.target.complete();
+      }
+    });
+  }
+
   // IDINAGDAG: Function para mag-convert ng path to full URL
   getFullImageUrl(pic: string | null | undefined): string | null {
-    if (!pic) return null;
-    if (pic.startsWith('/uploads/')) {
-      return `${API_BASE_URL}${pic}`;
-    }
-    if (pic.includes('localhost:8000')) {
-      return pic.replace('localhost:8000', 'localhost:8000');
-    }
-    if (!pic.startsWith('http')) {
-      return `${API_BASE_URL}/uploads/${pic}`;
-    }
-    return pic;
+  if (!pic) return null;
+  if (pic.startsWith('/uploads/')) {
+    return `${API_BASE_URL}${pic}`;
   }
+  if (!pic.startsWith('http')) {
+    return `${API_BASE_URL}/uploads/${pic}`;
+  }
+  
+  // 🔥 AYUSIN: Palitan ang lumang localhost sa API_BASE_URL
+  if (pic.includes('localhost')) {
+    return pic.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
+  }
+  return pic;
+}
 
   async openMenu() { await this.menuController.open('main-menu'); }
 

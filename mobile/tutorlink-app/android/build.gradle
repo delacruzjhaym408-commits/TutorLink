@@ -1,7 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    
     repositories {
         google()
         mavenCentral()
@@ -9,9 +8,8 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:8.13.0'
         classpath 'com.google.gms:google-services:4.4.4'
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+        // 🔥 IDINAGDAG: Kailangan ito para makilala ang KotlinCompile tasks sa ibaba
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21"
     }
 }
 
@@ -21,6 +19,26 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+// 🔥 ITO ANG PINAKA-MAHALAGANG PARTE
+subprojects {
+    afterEvaluate {
+        if (it.hasProperty('android')) {
+            // 1. I-force ang Java sa version 17
+            it.android.compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+            
+            // 2. I-force din ang Kotlin sa version 17 (para magtugma sila)
+            it.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                kotlinOptions {
+                    jvmTarget = "17"
+                }
+            }
+        }
     }
 }
 

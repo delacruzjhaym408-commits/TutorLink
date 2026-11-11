@@ -5,19 +5,20 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem,
   IonLabel, IonAvatar, IonButtons, IonBackButton, IonSpinner, IonIcon,
   IonButton, AlertController, ToastController, IonMenu, MenuController,
-  IonMenuToggle, IonBadge 
+  IonMenuToggle, IonBadge, IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { 
   trashOutline, homeOutline, personOutline, chatbubbleOutline, 
   bookOutline, settingsOutline, logOutOutline, menuOutline,
   chatbubblesOutline,
-  send // 🔥 IDINAGDAG PARA SA <ion-icon name="send">
+  send
 } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 
 import { MessageService } from '../../services/message.service';
 import { AuthUser } from '../../models/user.model';
 import { SessionService } from '../../services/session.service';
+import { API_BASE_URL } from '../../config';
 
 @Component({
   selector: 'app-messages',
@@ -27,7 +28,7 @@ import { SessionService } from '../../services/session.service';
   imports: [
     CommonModule, IonHeader, IonToolbar, IonTitle, IonContent,
     IonList, IonItem, IonLabel, IonAvatar, IonButtons, IonBackButton,
-    IonSpinner, IonIcon, IonButton, IonMenu, IonMenuToggle, IonBadge
+    IonSpinner, IonIcon, IonButton, IonMenu, IonMenuToggle, IonBadge, IonRefresher, IonRefresherContent
   ],
 })
 export class MessagesPage implements OnInit, OnDestroy {
@@ -49,7 +50,7 @@ export class MessagesPage implements OnInit, OnDestroy {
       trashOutline, homeOutline, personOutline, chatbubbleOutline, 
       bookOutline, settingsOutline, logOutOutline, menuOutline,
       chatbubblesOutline,
-      send // 🔥 IDINAGDAG DITO
+      send
     });
   }
 
@@ -68,6 +69,14 @@ export class MessagesPage implements OnInit, OnDestroy {
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
     }
+  }
+
+  getImageUrl(pic: string | null | undefined): string {
+    if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
+    if (pic.startsWith('/uploads/')) return `${API_BASE_URL}${pic}`;
+    if (pic.includes('localhost')) return pic.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
+    if (!pic.startsWith('http')) return `${API_BASE_URL}/uploads/${pic}`;
+    return pic;
   }
 
   loadConversations() {
@@ -130,6 +139,18 @@ export class MessagesPage implements OnInit, OnDestroy {
         this.cdr.detectChanges();
         const toast = await this.toastCtrl.create({ message: 'Deleted', duration: 2000, color: 'success' });
         await toast.present();
+      }
+    });
+  }
+
+  doRefresh(event: any) {
+    this.messageService.getMyConversations().subscribe({
+      next: (convs) => {
+        this.conversations.set(convs);
+        event.target.complete();
+      },
+      error: () => {
+        event.target.complete();
       }
     });
   }

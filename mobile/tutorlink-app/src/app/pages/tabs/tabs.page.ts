@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { homeOutline, chatbubbleOutline, personOutline, settingsOutline } from 'ionicons/icons';
+import { homeOutline, chatbubbleOutline, personOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-tabs',
@@ -11,6 +11,7 @@ import { homeOutline, chatbubbleOutline, personOutline, settingsOutline } from '
 })
 export class TabsPage {
   constructor() {
-    addIcons({ homeOutline, chatbubbleOutline, personOutline, settingsOutline });
+    // 🔥 TINANGGAL ANG settingsOutline
+    addIcons({ homeOutline, chatbubbleOutline, personOutline });
   }
 }

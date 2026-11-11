@@ -27,7 +27,7 @@ export interface StartConversationOptions {
 })
 export class MessageService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8000';
+  private apiUrl = 'https://tutorlink-api-9lcu.onrender.com';
 
   getMyConversations(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/conversations`);

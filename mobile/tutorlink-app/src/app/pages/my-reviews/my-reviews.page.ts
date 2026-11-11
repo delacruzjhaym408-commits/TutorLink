@@ -2,8 +2,8 @@ import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/c
 import { CommonModule } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonIcon,
-  IonBackButton, IonButtons, IonSpinner
-} from '@ionic/angular'; // <-- INALIS ANG IonList, IonItem, IonLabel, IonAvatar, IonNote
+  IonBackButton, IonButtons, IonSpinner, IonRefresher, IonRefresherContent
+} from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { star, starOutline, chatbubbleOutline } from 'ionicons/icons';
 import { TutorPostService } from '../../services/tutor-post.service';
@@ -15,8 +15,7 @@ import { TutorPostService } from '../../services/tutor-post.service';
   standalone: true,
   imports: [
     CommonModule, IonHeader, IonToolbar, IonTitle, IonContent, IonIcon,
-    IonBackButton, IonButtons, IonSpinner
-    // <-- INALIS DIN SILA DITO
+    IonBackButton, IonButtons, IonSpinner, IonRefresher, IonRefresherContent
   ],
 })
 export class MyReviewsPage implements OnInit {
@@ -34,6 +33,24 @@ export class MyReviewsPage implements OnInit {
   ngOnInit() {
     this.loadReviews();
   }
+
+    doRefresh(event: any) {
+    this.tutorPostService.getMyReviews().subscribe({
+      next: (data) => {
+        this.reviews.set(data);
+        if (data.length > 0) {
+          const total = data.reduce((sum: number, r: any) => sum + r.rating, 0);
+          this.averageRating.set(Number((total / data.length).toFixed(1)));
+        }
+        this.cdr.detectChanges();
+        event.target.complete();
+      },
+      error: () => {
+        event.target.complete();
+      }
+    });
+  }
+
 
   loadReviews() {
     this.loading.set(true);

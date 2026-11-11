@@ -25,6 +25,9 @@
 </ion-header>
 
 <ion-content id="main-content" class="bg-content">
+    <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
   
   <!-- SEGMENTS / TABS -->
   <div style="background: #fff; padding: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10;">

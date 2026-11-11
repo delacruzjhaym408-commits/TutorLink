@@ -8,7 +8,7 @@ import {
 } from '@ionic/angular';
 import { Camera } from '@capacitor/camera';
 import { addIcons } from 'ionicons';
-import { cameraOutline, closeCircleOutline, close } from 'ionicons/icons'; // 🔥 IDINAGDAG ANG close
+import { cameraOutline, closeCircleOutline, close } from 'ionicons/icons';
 import { firstValueFrom } from 'rxjs';
 
 import { TutorPostService } from '../../services/tutor-post.service';
@@ -43,11 +43,11 @@ export class CreatePostPage implements OnInit {
     hourly_rate: [0, [Validators.required, Validators.min(1)]],
     session_rate: [0],
     education_level: ['', [Validators.required, Validators.minLength(2)]],
+    gcash_number: [''], // 🔥 IDINAGDAG
     description: ['']
   });
 
   constructor() {
-    // 🔥 IDINAGDAG ANG close DITO
     addIcons({ cameraOutline, closeCircleOutline, close });
   }
 
@@ -130,6 +130,7 @@ export class CreatePostPage implements OnInit {
             hourly_rate: Number(value.hourly_rate),
             session_rate: value.session_rate ? Number(value.session_rate) : undefined,
             education_level: value.education_level.trim(),
+            gcash_number: value.gcash_number?.trim() || null, // 🔥 IDINAGDAG
             description: value.description?.trim() || null,
             post_pictures: imagesJson,
             tutor_picture: null

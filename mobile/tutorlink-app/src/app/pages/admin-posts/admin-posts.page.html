@@ -8,6 +8,9 @@
 </ion-header>
 
 <ion-content class="ion-padding">
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+  <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
   <div *ngIf="loading()" class="ion-text-center ion-padding"><ion-spinner></ion-spinner></div>
 
   <div *ngIf="!loading() && posts().length === 0" class="ion-text-center ion-padding">

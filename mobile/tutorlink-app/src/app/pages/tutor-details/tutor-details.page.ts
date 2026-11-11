@@ -6,7 +6,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonIcon,
   IonAvatar, IonSpinner, IonButtons, IonBackButton, IonList,
   IonItem, IonLabel, AlertController, IonMenu, MenuController,
-  IonMenuToggle, ToastController, IonModal, IonTextarea, IonInput,
+  IonMenuToggle, ToastController, IonModal, IonTextarea, IonInput, IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
@@ -36,6 +36,7 @@ import { API_BASE_URL } from '../../config';
     IonButton, IonIcon, IonAvatar, IonSpinner, IonButtons,
     IonBackButton, IonList, IonItem, IonLabel,
     IonMenuToggle, IonMenu, IonModal, IonTextarea, IonInput,
+    IonRefresher, IonRefresherContent
   ],
 })
 export class TutorDetailsPage implements OnInit {
@@ -81,8 +82,8 @@ export class TutorDetailsPage implements OnInit {
       return `${API_BASE_URL}/uploads/${pic}`;
     }
     // 🔥 FIX: Palitan ang lumang IP kung meron man
-    if (pic.includes('192.168.1.19')) {
-      return pic.replace(/http:\/\/192\.168\.1\.19:\d+/, API_BASE_URL);
+    if (pic.includes('http://localhost:8100')) {
+      return pic.replace(/http:\/\/localhost:8100/, API_BASE_URL);
     }
     return pic;
   }
@@ -288,6 +289,28 @@ export class TutorDetailsPage implements OnInit {
   async showToast(msg: string) {
     const toast = await this.toastCtrl.create({ message: msg, duration: 2000, color: 'primary' });
     await toast.present();
+  }
+
+    doRefresh(event: any) {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.tutorPostService.getPostById(Number(id)).subscribe({
+        next: (post) => {
+          this.post.set(post);
+          if (post.user_id) {
+            this.loadTutorGallery(post.user_id);
+            this.loadTutorStats(post.user_id);
+            this.checkConversation(post.user_id);
+          }
+          event.target.complete();
+        },
+        error: () => {
+          event.target.complete();
+        }
+      });
+    } else {
+      event.target.complete();
+    }
   }
 
   goToHome() { this.menuController.close('main-menu'); this.router.navigate(['/home']); }

@@ -7,7 +7,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonSearchbar, IonButton,
   IonIcon, IonCard, IonSpinner, IonButtons, IonFab,
   IonFabButton, MenuController, AlertController, ToastController,
-  IonModal, IonTextarea
+  IonModal, IonTextarea, IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
@@ -28,7 +28,7 @@ import { API_BASE_URL } from '../config';
     CommonModule, FormsModule,
     IonHeader, IonToolbar, IonTitle, IonContent, IonSearchbar, IonButton,
     IonIcon, IonCard, IonSpinner, IonButtons, IonFab,
-    IonFabButton, IonModal, IonTextarea
+    IonFabButton, IonModal, IonTextarea, IonRefresher, IonRefresherContent
   ],
 })
 export class HomePage implements OnInit {
@@ -68,6 +68,19 @@ export class HomePage implements OnInit {
       } catch (e) {}
     }
     this.loadPosts();
+  }
+
+  // 🔥 IDINAGDAG: PULL TO REFRESH FUNCTION
+  doRefresh(event: any) {
+    this.tutorPostService.getAllPosts(this.searchQuery).subscribe({
+      next: (posts) => {
+        this.posts = posts;
+        event.target.complete();
+      },
+      error: () => {
+        event.target.complete();
+      }
+    });
   }
 
   loadPosts() {
@@ -139,7 +152,6 @@ export class HomePage implements OnInit {
     const token = localStorage.getItem('access_token');
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
-    // 🔥 Tiyakin na number at may laman
     const postId = this.selectedPostToReport?.id;
     
     if (!postId) {
@@ -147,7 +159,6 @@ export class HomePage implements OnInit {
       return;
     }
 
-    // 🔥 Siguraduhing hindi bababa sa 5 letters ang reason para pumasok sa validation
     if (this.reportReason.trim().length < 5) {
        this.showToast('Reason must be at least 5 characters.', 'warning');
        return;
@@ -178,9 +189,18 @@ export class HomePage implements OnInit {
       const images = JSON.parse(jsonString);
       return images.map((img: string) => {
         if (!img) return img;
-        if (!img.startsWith('http')) {
+        
+        if (img.includes('localhost')) {
+          return img.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
+        }
+        
+        if (img.startsWith('/uploads/')) {
+          return `${API_BASE_URL}${img}`;
+        }
+        if (!img.startsWith('http') && !img.startsWith('/')) {
           return `${API_BASE_URL}/uploads/${img}`;
         }
+        
         return img;
       });
     } catch (e) {

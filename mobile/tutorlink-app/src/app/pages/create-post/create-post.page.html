@@ -45,7 +45,7 @@
         </div>
 
         <div class="input-group">
-          <label>Per Session (₱) - Optional</label>
+          <label>Per Session (₱)</label>
           <ion-input
             fill="outline"
             type="number"
@@ -69,6 +69,18 @@
         @if (showError('education_level')) {
           <ion-text color="danger"><small>Please enter your education level.</small></ion-text>
         }
+      </div>
+
+      <!-- 🔥 IDINAGDAG: GCASH NUMBER -->
+      <div class="input-group">
+        <label>GCash Number (for receiving payments)</label>
+        <ion-input
+          fill="outline"
+          type="text"
+          placeholder="e.g. 09123456789"
+          formControlName="gcash_number"
+          class="custom-input"
+        ></ion-input>
       </div>
 
       <div class="input-group">
@@ -97,7 +109,6 @@
           <span>Uploading images...</span>
         </div>
 
-        <!-- IMAGE PREVIEWS (Inayos ko para maging buo at malinis) -->
         <div class="image-previews" *ngIf="uploadedImageUrls().length > 0" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px;">
           <div *ngFor="let img of uploadedImageUrls(); let i = index" style="position: relative; width: 100px; height: 100px; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #ddd;">
             <img [src]="img" style="max-width: 100%; max-height: 100%; object-fit: contain;" />

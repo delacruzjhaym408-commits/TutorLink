@@ -10,12 +10,14 @@
 
 /* TAB BUTTONS */
 .tab-btn {
-  --color: #9ca3af; /* Default grey */
-  --color-selected: #2563eb; /* Primary Blue */
+  --color: #9ca3af;
+  --color-selected: #ffffff; /* Gusto natin puti ang text pag active */
   --padding-top: 8px;
   --padding-bottom: 8px;
   --ripple-color: transparent;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
+  border-radius: 12px; /* Para bilugan ang background */
+  margin: 4px 8px; /* Para may space sa gilid */
 
   ion-icon {
     font-size: 24px;
@@ -29,10 +31,14 @@
     letter-spacing: 0.2px;
   }
 
-  /* Kapag pinindot/active */
-  &.tab-selected {
+  /* 🔥 ACTIVE STATE: Kapag naka-select, magkakaroon ng asul na background */
+  &.active-tab {
+    --color: #ffffff;
+    --color-selected: #ffffff;
+    --background: #2563eb; /* Primary Blue */
+
     ion-icon {
-      transform: translateY(-2px); /* Konting angat */
+      transform: translateY(-2px);
     }
   }
 }

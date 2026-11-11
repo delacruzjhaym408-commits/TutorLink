@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol,
   IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonIcon, IonButton,
-  IonButtons
+  IonButtons, IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { peopleOutline, documentTextOutline, warningOutline, logOutOutline } from 'ionicons/icons';
@@ -19,7 +19,7 @@ import { SessionService } from '../../services/session.service';
   imports: [
     CommonModule, IonHeader, IonToolbar, IonTitle, IonContent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle,
-    IonCardContent, IonIcon, IonButton, IonButtons
+    IonCardContent, IonIcon, IonButton, IonButtons, IonRefresher, IonRefresherContent
   ],
 })
 export class AdminDashboardPage implements OnInit {
@@ -38,6 +38,30 @@ export class AdminDashboardPage implements OnInit {
 
   ngOnInit() {
     this.loadStats();
+  }
+
+    doRefresh(event: any) {
+    let completed = 0;
+    const checkComplete = () => {
+      completed++;
+      if (completed === 3) event.target.complete();
+    };
+
+    this.adminService.getUsers().subscribe(users => {
+      this.totalUsers.set(users.length);
+      this.cdr.detectChanges();
+      checkComplete();
+    });
+    this.adminService.getPosts().subscribe(posts => {
+      this.totalPosts.set(posts.length);
+      this.cdr.detectChanges();
+      checkComplete();
+    });
+    this.adminService.getReports().subscribe(reports => {
+      this.totalReports.set(reports.length);
+      this.cdr.detectChanges();
+      checkComplete();
+    });
   }
 
   loadStats() {

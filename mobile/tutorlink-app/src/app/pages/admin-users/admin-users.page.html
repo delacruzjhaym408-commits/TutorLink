@@ -17,6 +17,9 @@
 </ion-header>
 
 <ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+  <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
   <div *ngIf="loading()" class="ion-text-center ion-padding"><ion-spinner></ion-spinner></div>
 
   <div *ngIf="!loading() && filteredUsers.length === 0" class="ion-text-center ion-padding">

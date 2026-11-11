@@ -7,7 +7,7 @@ import {
   IonLabel, IonAvatar, IonButtons, IonBackButton, IonSpinner,
   IonBadge, IonMenu, IonIcon, IonButton, MenuController, IonMenuToggle,
   AlertController, ToastController, IonModal, IonInput, IonTextarea,
-  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonImg, IonSegment, IonSegmentButton
+  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonImg, IonSegment, IonSegmentButton, IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { 
   homeOutline, personOutline, chatbubbleOutline, settingsOutline, 
@@ -32,7 +32,7 @@ import { AppStateService } from '../../services/app-state.service';
     IonList, IonItem, IonLabel, IonAvatar, IonButtons, IonBackButton,
     IonSpinner, IonBadge, IonMenu, IonIcon, IonButton, IonMenuToggle,
     IonModal, IonInput, IonTextarea, IonCard, IonCardHeader, IonCardTitle, 
-    IonCardContent, IonImg, IonSegment, IonSegmentButton
+    IonCardContent, IonImg, IonSegment, IonSegmentButton, IonRefresher, IonRefresherContent
   ],
 })
 export class MyLessonPage implements OnInit, OnDestroy {
@@ -307,6 +307,20 @@ export class MyLessonPage implements OnInit, OnDestroy {
       if (filter === 'approved') return m.status === 'enrolled';
       if (filter === 'rejected') return m.status === 'rejected';
       return true;
+    });
+  }
+
+    doRefresh(event: any) {
+    this.lessonService.getMyEnrollments().subscribe({
+      next: (data) => {
+        this.enrollments.set(data);
+        this.checkPendingCounts();
+        this.loadStudents();
+        event.target.complete();
+      },
+      error: () => {
+        event.target.complete();
+      }
     });
   }
 

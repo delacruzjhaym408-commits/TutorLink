@@ -24,6 +24,10 @@
 </ion-header>
 
 <ion-content id="main-content" class="bg-content ion-padding">
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+  
   <div class="form-container">
     <h2 class="form-title">Account Settings</h2>
     <p class="form-subtitle">Manage your personal information and security.</p>
@@ -55,13 +59,7 @@
         </ion-input>
       </div>
 
-      <!-- IDINAGDAG ANG GCASH NUMBER -->
-      <div class="input-group">
-        <label>GCash Number (for receiving payments)</label>
-        <ion-input fill="outline" formControlName="gcash_number" placeholder="e.g. 09123456789" class="custom-input">
-          <ion-icon name="cash-outline" slot="start"></ion-icon>
-        </ion-input>
-      </div>
+      <!-- 🔥 TINANGGAL ANG GCASH NUMBER DITO -->
 
       <div class="input-group">
         <label>Email (Cannot be changed)</label>

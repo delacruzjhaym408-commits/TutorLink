@@ -62,19 +62,26 @@
           </div>
         </div>
 
-        <!-- NORMAL MESSAGE TEXT -->
-        <div *ngIf="msg.content.includes('[ROOM:'); else normalMessage">
-          <p class="message-text">
-            {{ msg.content.split('[ROOM:')[0] }}
-          </p>
-          <ion-button expand="block" color="success" size="small" style="margin-top: 8px;" (click)="joinCall(msg.content)">
-            Join Now
-          </ion-button>
+        <!-- IMAGE MESSAGE -->
+        <div *ngIf="msg.content.startsWith('[IMAGE]')" class="image-message">
+          <img [src]="msg.content.replace('[IMAGE]', '')" alt="Sent Image" style="max-width: 100%; border-radius: 8px;" />
         </div>
 
-        <ng-template #normalMessage>
-          <p class="message-text">{{ msg.content }}</p>
-        </ng-template>
+        <!-- NORMAL MESSAGE TEXT -->
+        <div *ngIf="!msg.content.startsWith('[IMAGE]')">
+          <div *ngIf="msg.content.includes('[ROOM:'); else normalMessage">
+            <p class="message-text">
+              {{ msg.content.split('[ROOM:')[0] }}
+            </p>
+            <ion-button expand="block" color="success" size="small" style="margin-top: 8px;" (click)="joinCall(msg.content)">
+              Join Now
+            </ion-button>
+          </div>
+
+          <ng-template #normalMessage>
+            <p class="message-text">{{ msg.content }}</p>
+          </ng-template>
+        </div>
 
         <small class="message-time">{{ msg.created_at | date:'shortTime' }}</small>
       </div>
@@ -91,12 +98,18 @@
 <ion-footer class="modern-footer">
   <ion-toolbar class="footer-toolbar">
     <div class="input-container">
+      <!-- 🔥 IDINAGDAG: CAMERA BUTTON SA KALIWA -->
+      <ion-button fill="clear" (click)="sendImage()" class="camera-btn">
+        <ion-icon name="camera-outline" slot="icon-only" color="medium"></ion-icon>
+      </ion-button>
+
       <ion-input
         [(ngModel)]="newMessage"
         placeholder="Type a message..."
         (keyup.enter)="send()"
         class="chat-input"
       ></ion-input>
+      
       <ion-button 
         (click)="send()" 
         [disabled]="sending() || !newMessage.trim()"

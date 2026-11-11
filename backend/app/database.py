@@ -8,6 +8,11 @@ connect_args = {}
 if "aivencloud.com" in settings.database_url:
     connect_args = {"ssl": {"ssl_mode": "REQUIRED"}}
 
+# 🔥 TIME ZONE FIX: I-set sa Philippine Time (UTC+8)
+# Idinagdag natin ito para maging accurate ang oras ng messages, posts, at reports.
+if "mysql" in settings.database_url:
+    connect_args["init_command"] = "SET time_zone = '+08:00'"
+
 engine = create_engine(
     settings.database_url, 
     pool_pre_ping=True,

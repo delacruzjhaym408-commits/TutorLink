@@ -33,7 +33,6 @@ async def create_or_get_conversation(
     ).first()
 
     if existing:
-        # Kung existing na, ibalik lang — WALANG bagong message
         return _build_conversation_out(existing, current_user, db)
 
     conversation = Conversation(
@@ -44,7 +43,6 @@ async def create_or_get_conversation(
     db.commit()
     db.refresh(conversation)
 
-    # ✅ NEW conversation: mag-save ng initial message (kung meron)
     if data.initial_message and data.initial_message.strip():
         first_message = Message(
             conversation_id=conversation.id,
@@ -58,7 +56,6 @@ async def create_or_get_conversation(
         db.commit()
         db.refresh(first_message)
 
-        # Real-time notify sa tutor
         ws_payload = {
             "type": "new_message",
             "conversation_id": conversation.id,
@@ -82,7 +79,6 @@ async def create_or_get_conversation(
 
 
 def _build_conversation_out(conv: Conversation, current_user: User, db: Session) -> dict:
-    """Helper: i-build ang ConversationOut dict para consistent ang return."""
     other_id = conv.participant2_id if conv.participant1_id == current_user.id else conv.participant1_id
     other_user = db.query(User).filter(User.id == other_id).first()
     last_msg = (
@@ -100,6 +96,7 @@ def _build_conversation_out(conv: Conversation, current_user: User, db: Session)
         "other_user_name": other_user.full_name if other_user else "Unknown User",
         "other_user_picture": other_user.profile_picture if other_user else None,
         "lastMessage": last_msg.content if last_msg else "No messages yet",
+        "last_sender_id": last_msg.sender_id if last_msg else None, # 🔥 IDINAGDAG
         "unread_count": 0,
     }
 
@@ -155,6 +152,7 @@ def list_my_conversations(
             "other_user_name": other_user.full_name if other_user else "Unknown User",
             "other_user_picture": other_user.profile_picture if other_user else None,
             "lastMessage": last_msg.content if last_msg else "No messages yet",
+            "last_sender_id": last_msg.sender_id if last_msg else None, # 🔥 IDINAGDAG
             "unread_count": unread_count,
         })
     return result
@@ -319,7 +317,6 @@ async def send_message(
     }
 
 
-# 🔥 IDINAGDAG DITO SA PINAKADULO PARA HINDI MAG-CONFLICT
 @router.get("/check/{other_user_id}")
 def check_conversation(
     other_user_id: int,

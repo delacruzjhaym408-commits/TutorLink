@@ -31,7 +31,9 @@ import { AppStateService } from './services/app-state.service';
   ],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  private router = inject(Router);
+  // 🔥 ISANG ROUTER LANG, PUBLIC PARA MAGAMIT SA HTML
+  public router = inject(Router); 
+  
   private menuController = inject(MenuController);
   private session = inject(SessionService);
   private messageService = inject(MessageService);
@@ -51,6 +53,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private appStateSubscription!: Subscription;
 
   constructor() {
+    // 🔥 IDINAGDAG ANG bookOutline PARA SA ICON
     addIcons({
       homeOutline, chatbubbleOutline, personOutline, settingsOutline,
       bookOutline, logOutOutline, personCircleOutline
@@ -61,7 +64,6 @@ export class AppComponent implements OnInit, OnDestroy {
         const url = event.urlAfterRedirects;
         this.showLayout.set(!(url.includes('/login') || url.includes('/register') || url.startsWith('/admin') || url === '/'));
 
-        // 🔥 FIX: Bago mag-fetch, siguraduhin na naka-login pa
         if (this.isAuthenticated()) {
           if (url.includes('/lesson-chat/')) {
             setTimeout(() => this.fetchUnreadCounts(), 500);
@@ -74,7 +76,6 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // 🔥 FIX: Check both user AND access_token bago mag-connect/fetch
     if (this.isAuthenticated()) {
       this.wsService.connect();
 
@@ -105,7 +106,6 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  // 🔥 Helper: siya lang ang mag-desisyon kung authenticated
   private isAuthenticated(): boolean {
     const token = localStorage.getItem('access_token');
     const user = localStorage.getItem('user');
@@ -123,7 +123,6 @@ export class AppComponent implements OnInit, OnDestroy {
         });
       },
       error: (err) => {
-        // 🔥 FIX: kung 401, i-logout na lang para malinis
         if (err?.status === 401) this.handleUnauthorized();
       },
     });
@@ -142,7 +141,6 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private handleUnauthorized() {
-    // Iwasan ang infinite loop kung nasa login page na
     if (this.router.url.includes('/login')) return;
     this.wsService.disconnect();
     this.session.logout();

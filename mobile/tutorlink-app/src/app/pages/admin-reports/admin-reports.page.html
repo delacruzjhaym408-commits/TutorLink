@@ -8,6 +8,9 @@
 </ion-header>
 
 <ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+  <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
   <ion-segment [value]="activeTab()" (ionChange)="setActiveTab($event.detail.value)" color="dark" style="padding: 8px 16px;">
     <ion-segment-button value="post">
       <ion-label>Post Reports</ion-label>

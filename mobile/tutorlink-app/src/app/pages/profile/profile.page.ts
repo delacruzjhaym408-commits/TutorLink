@@ -7,11 +7,11 @@ import {
   IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonAvatar,
   IonSpinner, IonNote, IonButtons, IonList, IonItem, IonLabel, 
   MenuController, AlertController, ToastController, IonBackButton, 
-  IonMenu
+  IonMenu,  IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { 
-  personOutline, mailOutline, callOutline, createOutline, trashOutline, 
+  star,personOutline, mailOutline, callOutline, createOutline, trashOutline, 
   addOutline, starOutline, logOutOutline, chatbubbleOutline, bookOutline, 
   settingsOutline, menuOutline, homeOutline, shieldCheckmarkOutline,
   documentTextOutline // 🔥 IDINAGDAG PARA SA PROFILE PAGE
@@ -28,7 +28,7 @@ import { API_BASE_URL } from '../../config';
   imports: [
     CommonModule, IonHeader, IonToolbar, IonTitle, IonContent,
     IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle,
-    IonCardContent, IonAvatar, IonSpinner, IonNote, IonButtons, IonList, IonItem, IonLabel, IonBackButton,IonMenu,
+    IonCardContent, IonAvatar, IonSpinner, IonNote, IonButtons, IonList, IonItem, IonLabel, IonBackButton,IonMenu, IonRefresher, IonRefresherContent
   ],
 })
 export class ProfilePage implements OnInit {
@@ -49,7 +49,7 @@ export class ProfilePage implements OnInit {
       personOutline, mailOutline, callOutline, createOutline, trashOutline, 
       addOutline, starOutline, logOutOutline, chatbubbleOutline, bookOutline, 
       settingsOutline, menuOutline, homeOutline, shieldCheckmarkOutline,
-      documentTextOutline // 🔥 IDINAGDAG DITO
+      documentTextOutline, star,
     });
   }
 
@@ -148,6 +148,19 @@ export class ProfilePage implements OnInit {
       buttons: [{ text: 'Cancel', role: 'cancel' }, { text: 'Delete', role: 'destructive', handler: () => this.deletePost(post) }],
     });
     await alert.present();
+  }
+
+    doRefresh(event: any) {
+    this.user.set(this.session.user() || this.getUserFromStorage());
+    this.tutorPostService.getMyPosts().subscribe({
+      next: (posts) => {
+        this.myPosts.set(posts);
+        event.target.complete();
+      },
+      error: () => {
+        event.target.complete();
+      }
+    });
   }
 
   private deletePost(post: TutorPost) {

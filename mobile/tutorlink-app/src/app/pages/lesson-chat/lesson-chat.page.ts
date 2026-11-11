@@ -8,10 +8,9 @@ import {
   AlertController, ToastController, IonAvatar, IonList, IonItem, IonLabel,
   ViewWillLeave 
 } from '@ionic/angular';
-// 🔥 IDINAGDAG ANG send (para sa <ion-icon name="send">)
 import { send, sendOutline, settingsOutline, logOutOutline, createOutline, cameraOutline, personRemoveOutline, timeOutline, closeCircleOutline, callOutline, videocamOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'; // 🔥 IDINAGDAG
 import { Subscription } from 'rxjs';
 
 import { LessonService, LessonMessage, Lesson, Enrollment } from '../../services/lesson.service';
@@ -65,7 +64,7 @@ export class LessonChatPage implements OnInit, OnDestroy, ViewWillLeave {
   private wsSubscription!: Subscription;
 
   constructor() {
-    // 🔥 IDINAGDAG ANG send DITO
+    // 🔥 IDINAGDAG ANG cameraOutline
     addIcons({ 
       send, sendOutline, settingsOutline, logOutOutline, createOutline, 
       cameraOutline, personRemoveOutline, timeOutline, closeCircleOutline,
@@ -174,6 +173,35 @@ export class LessonChatPage implements OnInit, OnDestroy, ViewWillLeave {
       },
       error: () => { this.sending.set(false); },
     });
+  }
+
+  // 🔥 IDINAGDAG: FUNCTION PARA MAG-SEND NG IMAGE
+  async sendImage() {
+    try {
+      const image = await Camera.getPhoto({
+        quality: 80,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Photos
+      });
+
+      if (image.dataUrl) {
+        const content = `[IMAGE]${image.dataUrl}`;
+        this.sending.set(true);
+
+        this.lessonService.sendMessage(this.lessonId, content).subscribe({
+          next: (msg) => {
+            this.messages.update((m) => [...m, msg]);
+            this.sending.set(false);
+            this.cdr.detectChanges();
+            setTimeout(() => this.content?.scrollToBottom(300), 100);
+          },
+          error: () => { this.sending.set(false); }
+        });
+      }
+    } catch (e) {
+      console.log('Camera cancelled', e);
+    }
   }
 
   startCall() {

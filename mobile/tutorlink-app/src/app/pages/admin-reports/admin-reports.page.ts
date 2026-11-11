@@ -7,7 +7,7 @@ import {
   ToastController, IonSpinner, IonBadge, AlertController,
   IonSegment, IonSegmentButton, IonModal, IonTextarea,
   IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
-  IonAvatar
+  IonAvatar, IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { checkmarkCircleOutline, chatbubbleEllipsesOutline, flagOutline } from 'ionicons/icons';
@@ -25,7 +25,7 @@ import { API_BASE_URL } from '../../config';
     IonLabel, IonButton, IonIcon, IonBackButton, IonButtons, IonSpinner, IonBadge,
     IonSegment, IonSegmentButton, IonModal, IonTextarea,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
-    IonAvatar
+    IonAvatar,  IonRefresher, IonRefresherContent
   ],
 })
 export class AdminReportsPage implements OnInit {
@@ -50,6 +50,19 @@ export class AdminReportsPage implements OnInit {
 
   ngOnInit() {
     this.loadReports();
+  }
+
+  doRefresh(event: any) {
+    this.adminService.getReports().subscribe({
+      next: (reports) => {
+        this.reports.set(reports);
+        this.cdr.detectChanges();
+        event.target.complete();
+      },
+      error: () => {
+        event.target.complete();
+      }
+    });
   }
 
   loadReports() {

@@ -26,6 +26,7 @@ def create_post(
         description=data.description,
         tutor_picture=data.tutor_picture,
         post_pictures=data.post_pictures,
+        gcash_number=data.gcash_number, # 🔥 IDINAGDAG ITO PARA MA-SAVE SA POST
         status="published",
     )
     db.add(post)
@@ -45,7 +46,7 @@ def create_post(
                 gc_name=post.subject,
                 description=post.description,
                 monthly_rate=post.session_rate,
-                gcash_number=post.gcash_number,
+                gcash_number=post.gcash_number, # 🔥 Galing na ito sa post na may laman na
             )
             db.add(new_gc)
             db.commit()
