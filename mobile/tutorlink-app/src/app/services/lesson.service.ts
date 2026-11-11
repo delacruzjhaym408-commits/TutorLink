@@ -80,7 +80,8 @@ export class LessonService {
   }
 
   sendMessage(lessonId: number, content: string): Observable<LessonMessage> {
-    return this.http.post<LessonMessage>(`${this.apiUrl}/lessons/${lessonId}/messages`, { content }, { headers: this.getAuthHeaders() });
+    const headers = this.getAuthHeaders().set('Content-Type', 'application/json');
+    return this.http.post<LessonMessage>(`${this.apiUrl}/lessons/${lessonId}/messages`, { content }, { headers });
   }
 
   updateLesson(lessonId: number, data: any): Observable<Lesson> {

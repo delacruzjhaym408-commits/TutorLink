@@ -9,11 +9,11 @@ import {
 import { 
   sendOutline, callOutline, videocamOutline,
   chatbubblesOutline,
-  cameraOutline // 🔥 IDINAGDAG
+  cameraOutline
 } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { Subscription } from 'rxjs';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'; // 🔥 IDINAGDAG
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 import { MessageService, Message } from '../../services/message.service';
 import { AuthUser } from '../../models/user.model';
@@ -56,14 +56,18 @@ export class ChatPage implements OnInit, OnDestroy {
   private wsSubscription!: Subscription;
 
   constructor() {
-    // 🔥 IDINAGDAG ANG cameraOutline
     addIcons({ sendOutline, callOutline, videocamOutline, chatbubblesOutline, cameraOutline });
   }
 
   getImageUrl(pic: string | null | undefined): string {
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
+    
+    // 🔥 Dynamic replacement para sa kahit anong local IP
+    if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
+      return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
+    }
+    
     if (pic.startsWith('/uploads/')) return `${API_BASE_URL}${pic}`;
-    if (pic.includes('localhost')) return pic.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
     if (!pic.startsWith('http')) return `${API_BASE_URL}/uploads/${pic}`;
     return pic;
   }
@@ -156,11 +160,10 @@ export class ChatPage implements OnInit, OnDestroy {
     });
   }
 
-  // 🔥 IDINAGDAG: FUNCTION PARA MAG-SEND NG IMAGE
   async sendImage() {
     try {
       const image = await Camera.getPhoto({
-        quality: 80,
+        quality: 50, // 🔥 Bawasan ang quality para mas maliit ang file
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Photos
@@ -177,12 +180,26 @@ export class ChatPage implements OnInit, OnDestroy {
             this.cdr.detectChanges();
             setTimeout(() => this.content?.scrollToBottom(300), 100);
           },
-          error: () => { this.sending.set(false); }
+          error: (err) => { 
+            console.error('Send Image Error:', err);
+            this.sending.set(false); 
+            this.showToast('Image too large or server error.'); // 🔥 IDINAGDAG
+          }
         });
       }
     } catch (e) {
       console.log('Camera cancelled', e);
     }
+  }
+
+  private async showToast(msg: string) {
+    // Simple toast helper
+    const toast = document.createElement('ion-toast');
+    toast.message = msg;
+    toast.duration = 2000;
+    toast.color = 'danger';
+    document.body.appendChild(toast);
+    await toast.present();
   }
 
   startCall() {

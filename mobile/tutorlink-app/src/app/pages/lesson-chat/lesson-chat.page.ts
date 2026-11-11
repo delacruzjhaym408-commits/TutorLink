@@ -10,7 +10,7 @@ import {
 } from '@ionic/angular';
 import { send, sendOutline, settingsOutline, logOutOutline, createOutline, cameraOutline, personRemoveOutline, timeOutline, closeCircleOutline, callOutline, videocamOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'; // 🔥 IDINAGDAG
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Subscription } from 'rxjs';
 
 import { LessonService, LessonMessage, Lesson, Enrollment } from '../../services/lesson.service';
@@ -64,7 +64,6 @@ export class LessonChatPage implements OnInit, OnDestroy, ViewWillLeave {
   private wsSubscription!: Subscription;
 
   constructor() {
-    // 🔥 IDINAGDAG ANG cameraOutline
     addIcons({ 
       send, sendOutline, settingsOutline, logOutOutline, createOutline, 
       cameraOutline, personRemoveOutline, timeOutline, closeCircleOutline,
@@ -175,11 +174,10 @@ export class LessonChatPage implements OnInit, OnDestroy, ViewWillLeave {
     });
   }
 
-  // 🔥 IDINAGDAG: FUNCTION PARA MAG-SEND NG IMAGE
   async sendImage() {
     try {
       const image = await Camera.getPhoto({
-        quality: 80,
+        quality: 50, // 🔥 Bawasan ang quality
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Photos
@@ -196,7 +194,11 @@ export class LessonChatPage implements OnInit, OnDestroy, ViewWillLeave {
             this.cdr.detectChanges();
             setTimeout(() => this.content?.scrollToBottom(300), 100);
           },
-          error: () => { this.sending.set(false); }
+          error: (err) => { 
+            console.error('Send Image Error:', err);
+            this.sending.set(false); 
+            this.showToast('Image too large or server error.');
+          }
         });
       }
     } catch (e) {

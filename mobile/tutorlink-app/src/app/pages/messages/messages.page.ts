@@ -73,8 +73,13 @@ export class MessagesPage implements OnInit, OnDestroy {
 
   getImageUrl(pic: string | null | undefined): string {
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
+    
+    // 🔥 Dynamic replacement para sa kahit anong local IP
+    if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
+      return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
+    }
+    
     if (pic.startsWith('/uploads/')) return `${API_BASE_URL}${pic}`;
-    if (pic.includes('localhost')) return pic.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
     if (!pic.startsWith('http')) return `${API_BASE_URL}/uploads/${pic}`;
     return pic;
   }

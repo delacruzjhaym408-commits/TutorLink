@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_BASE_URL } from '../config';
 
 export interface Message {
   id: number;
@@ -27,13 +28,12 @@ export interface StartConversationOptions {
 })
 export class MessageService {
   private http = inject(HttpClient);
-  private apiUrl = 'https://tutorlink-api-9lcu.onrender.com';
+  private apiUrl = API_BASE_URL; // 🔥 Dapat naka-set sa Render URL sa config.ts
 
   getMyConversations(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/conversations`);
   }
 
-  // 🔥 IDINAGDAG PARA SA RATING RESTRICTION
   checkConversation(otherUserId: number): Observable<{ exists: boolean, conversation_id: number | null }> {
     return this.http.get<{ exists: boolean, conversation_id: number | null }>(`${this.apiUrl}/conversations/check/${otherUserId}`);
   }
@@ -52,9 +52,12 @@ export class MessageService {
   }
 
   sendMessage(conversationId: number, content: string): Observable<Message> {
+    // 🔥 IDINAGDAG: Headers para payagan ang malaking Base64 string
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     return this.http.post<Message>(
       `${this.apiUrl}/conversations/${conversationId}/messages`,
-      { content }
+      { content },
+      { headers }
     );
   }
 
