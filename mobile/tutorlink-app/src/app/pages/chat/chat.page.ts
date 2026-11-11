@@ -62,7 +62,6 @@ export class ChatPage implements OnInit, OnDestroy {
   getImageUrl(pic: string | null | undefined): string {
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
     
-    // 🔥 Dynamic replacement para sa kahit anong local IP
     if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
       return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
     }
@@ -160,13 +159,17 @@ export class ChatPage implements OnInit, OnDestroy {
     });
   }
 
+  // 🔥 FIXED: CameraSource.Photos para deretso gallery
   async sendImage() {
     try {
       const image = await Camera.getPhoto({
-        quality: 10, // 🔥 Bawasan ang quality para mas maliit ang file
+        quality: 30,
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
-        source: CameraSource.Photos
+        source: CameraSource.Photos, // 🔥 Deretso Gallery
+        width: 800,
+        height: 800,
+        correctOrientation: true
       });
 
       if (image.dataUrl) {
@@ -183,17 +186,17 @@ export class ChatPage implements OnInit, OnDestroy {
           error: (err) => { 
             console.error('Send Image Error:', err);
             this.sending.set(false); 
-            this.showToast('Image too large or server error.'); // 🔥 IDINAGDAG
+            this.showToast('Error: ' + (err.error?.detail || 'Server error'));
           }
         });
       }
     } catch (e) {
-      console.log('Camera cancelled', e);
+      console.error('Camera cancelled or error:', e);
+      this.showToast('Failed to pick image. Please check permissions.');
     }
   }
 
   private async showToast(msg: string) {
-    // Simple toast helper
     const toast = document.createElement('ion-toast');
     toast.message = msg;
     toast.duration = 2000;

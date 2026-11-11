@@ -76,7 +76,6 @@ export class TutorDetailsPage implements OnInit {
   getImageUrl(pic: string | null | undefined): string {
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
     
-    // 🔥 Dynamic replacement para sa kahit anong local IP
     if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
       return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
     }
@@ -203,16 +202,29 @@ export class TutorDetailsPage implements OnInit {
 
   selectLesson(lesson: Lesson) { this.selectedLesson = lesson; }
 
+  // 🔥 FINAL FIX: Deretso Gallery at may error logging
   async pickReceipt() {
     try {
       const image = await Camera.getPhoto({ 
-        quality: 10, // 🔥 
-        allowEditing: true, 
+        quality: 30,
+        allowEditing: false,
         resultType: CameraResultType.DataUrl, 
-        source: CameraSource.Photos 
+        source: CameraSource.Photos, // 🔥 Deretso Gallery
+        width: 800,
+        height: 800,
+        correctOrientation: true
       });
-      if (image.dataUrl) this.paymentReceipt.set(image.dataUrl);
-    } catch (e) {}
+      
+      console.log('📷 Image picked:', image);
+      
+      if (image.dataUrl) {
+        this.paymentReceipt.set(image.dataUrl);
+        console.log('✅ Receipt set successfully');
+      }
+    } catch (e) {
+      console.error('❌ Camera cancelled or error:', e);
+      this.showToast('Failed to pick image. Please check permissions.');
+    }
   }
 
   async copyGcashNumber() {

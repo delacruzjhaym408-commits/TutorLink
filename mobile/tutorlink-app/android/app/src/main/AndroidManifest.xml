@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- 🔥 IDINAGDAG: CAMERA PERMISSIONS PARA SA RECEIPT AT CHAT IMAGES -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
     <!-- IDINAGDAG: Para makita at ma-open ang GCash at iba pang external apps -->
     <queries>
         <package android:name="com.globe.gcash.android" />
@@ -8,7 +14,6 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="gcash" />
         </intent>
-        <!-- Para sa iba pang external apps (tulad ng browser) -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
@@ -23,6 +28,7 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config"
+        android:requestLegacyExternalStorage="true"
         android:theme="@style/AppTheme">
 
         <activity

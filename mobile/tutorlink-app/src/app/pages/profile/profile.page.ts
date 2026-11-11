@@ -7,14 +7,14 @@ import {
   IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonAvatar,
   IonSpinner, IonNote, IonButtons, IonList, IonItem, IonLabel, 
   MenuController, AlertController, ToastController, IonBackButton, 
-  IonMenu,  IonRefresher, IonRefresherContent
+  IonMenu, IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { 
-  star,personOutline, mailOutline, callOutline, createOutline, trashOutline, 
+  personOutline, mailOutline, callOutline, createOutline, trashOutline, 
   addOutline, starOutline, logOutOutline, chatbubbleOutline, bookOutline, 
   settingsOutline, menuOutline, homeOutline, shieldCheckmarkOutline,
-  documentTextOutline // 🔥 IDINAGDAG PARA SA PROFILE PAGE
+  documentTextOutline, star // 🔥 IDINAGDAG
 } from 'ionicons/icons';
 import { TutorPost, TutorPostService } from '../../services/tutor-post.service';
 import { AuthUser } from '../../models/user.model';
@@ -73,21 +73,23 @@ export class ProfilePage implements OnInit {
     });
   }
 
-  // 🔥 LINIS: Tinanggal ang redundant na IP replace logic
+  // 🔥 FIXED: Dynamic replacement
   parseImages(jsonString: string | null | undefined): string[] {
     if (!jsonString) return [];
     try {
       const images = JSON.parse(jsonString);
       return images.map((img: string) => {
         if (!img) return img;
-        
-        // Kung filename lang, idagdag ang /uploads/
-        if (!img.startsWith('http') && !img.startsWith('/')) {
-          return `${API_BASE_URL}/uploads/${img}`;
+
+        if (img.includes('localhost') || img.includes('127.0.0.1') || img.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
+          return img.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
         }
-        // Kung relative path, idagdag ang API_BASE_URL
+        
         if (img.startsWith('/uploads/')) {
           return `${API_BASE_URL}${img}`;
+        }
+        if (!img.startsWith('http') && !img.startsWith('/')) {
+          return `${API_BASE_URL}/uploads/${img}`;
         }
         return img;
       });
@@ -96,9 +98,14 @@ export class ProfilePage implements OnInit {
     }
   }
 
+  // 🔥 FIXED: Dynamic replacement
   getProfilePictureUrl(): string {
     const pic = this.user()?.profile_picture;
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
+
+    if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
+      return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
+    }
     
     if (pic.startsWith('/uploads/')) {
       return `${API_BASE_URL}${pic}`;
@@ -109,9 +116,14 @@ export class ProfilePage implements OnInit {
     return pic;
   }
 
+  // 🔥 FIXED: Dynamic replacement
   getDescriptionPictureUrl(): string | null {
     const pic = this.user()?.description_picture;
     if (!pic) return null;
+
+    if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
+      return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
+    }
     
     if (pic.startsWith('/uploads/')) {
       return `${API_BASE_URL}${pic}`;
@@ -150,7 +162,7 @@ export class ProfilePage implements OnInit {
     await alert.present();
   }
 
-    doRefresh(event: any) {
+  doRefresh(event: any) {
     this.user.set(this.session.user() || this.getUserFromStorage());
     this.tutorPostService.getMyPosts().subscribe({
       next: (posts) => {

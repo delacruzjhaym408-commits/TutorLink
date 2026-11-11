@@ -1,11 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
-import shutil, os, uuid
+import os
+import cloudinary
+import cloudinary.uploader
+
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import User
 from app.schemas import UserOut, user_to_out
 from app.security import hash_password, verify_password
+
+# 🔥 I-configure ang Cloudinary
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -32,24 +43,30 @@ async def update_me(
     if gcash_number is not None: current_user.gcash_number = gcash_number.strip()
     
     if profile_picture:
-        file_extension = profile_picture.filename.split(".")[-1]
-        file_name = f"profile_{uuid.uuid4()}.{file_extension}"
-        file_path = f"uploads/{file_name}"
-        os.makedirs("uploads", exist_ok=True)
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(profile_picture.file, buffer)
-        # RELATIVE PATH: walang http:// at walang IP
-        current_user.profile_picture = f"/uploads/{file_name}"
+        try:
+            result = cloudinary.uploader.upload(
+                profile_picture.file,
+                folder="tutorlink/profiles",
+                resource_type="image",
+                quality="auto",
+                fetch_format="auto"
+            )
+            current_user.profile_picture = result["secure_url"]
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Profile upload failed: {str(e)}")
 
     if description_picture:
-        file_extension = description_picture.filename.split(".")[-1]
-        file_name = f"desc_{uuid.uuid4()}.{file_extension}"
-        file_path = f"uploads/{file_name}"
-        os.makedirs("uploads", exist_ok=True)
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(description_picture.file, buffer)
-        # RELATIVE PATH: walang http:// at walang IP
-        current_user.description_picture = f"/uploads/{file_name}"
+        try:
+            result = cloudinary.uploader.upload(
+                description_picture.file,
+                folder="tutorlink/descriptions",
+                resource_type="image",
+                quality="auto",
+                fetch_format="auto"
+            )
+            current_user.description_picture = result["secure_url"]
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Description upload failed: {str(e)}")
 
     if new_password:
         if not current_password or not verify_password(current_password, current_user.password_hash):

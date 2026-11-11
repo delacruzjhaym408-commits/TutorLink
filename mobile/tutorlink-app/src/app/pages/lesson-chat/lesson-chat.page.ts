@@ -174,13 +174,17 @@ export class LessonChatPage implements OnInit, OnDestroy, ViewWillLeave {
     });
   }
 
+  // 🔥 FIXED: CameraSource.Photos para deretso gallery
   async sendImage() {
     try {
       const image = await Camera.getPhoto({
-        quality: 10, // 🔥 Bawasan ang quality
+        quality: 30,
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
-        source: CameraSource.Photos
+        source: CameraSource.Photos, // 🔥 Deretso Gallery
+        width: 800,
+        height: 800,
+        correctOrientation: true
       });
 
       if (image.dataUrl) {
@@ -197,12 +201,13 @@ export class LessonChatPage implements OnInit, OnDestroy, ViewWillLeave {
           error: (err) => { 
             console.error('Send Image Error:', err);
             this.sending.set(false); 
-            this.showToast('Image too large or server error.');
+            this.showToast('Error: ' + (err.error?.detail || 'Server error'));
           }
         });
       }
     } catch (e) {
-      console.log('Camera cancelled', e);
+      console.error('Camera cancelled or error:', e);
+      this.showToast('Failed to pick image. Please check permissions.');
     }
   }
 
