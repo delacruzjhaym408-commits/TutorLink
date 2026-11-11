@@ -206,7 +206,7 @@ export class TutorDetailsPage implements OnInit {
   async pickReceipt() {
     try {
       const image = await Camera.getPhoto({ 
-        quality: 50, // 🔥 Bawasan ang quality para mas maliit ang file
+        quality: 10, // 🔥 
         allowEditing: true, 
         resultType: CameraResultType.DataUrl, 
         source: CameraSource.Photos 

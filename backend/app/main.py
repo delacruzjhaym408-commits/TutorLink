@@ -1,5 +1,6 @@
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
@@ -25,6 +26,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ============================================================
+# 🔥 IDINAGDAG: MIDDLEWARE PARA SA MALALAKING REQUEST BODY (10MB)
+# ============================================================
+@app.middleware("http")
+async def check_request_size(request: Request, call_next):
+    # 10MB limit (10 * 1024 * 1024 bytes)
+    if request.headers.get("content-length"):
+        try:
+            content_length = int(request.headers["content-length"])
+            if content_length > 10 * 1024 * 1024:
+                return JSONResponse(
+                    status_code=413, 
+                    content={"detail": "Payload too large. Maximum size is 10MB."}
+                )
+        except ValueError:
+            pass
+    return await call_next(request)
+# ============================================================
 
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
@@ -64,7 +84,6 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         manager.disconnect(user_id, websocket)
 
 # ===========================================
-
 
 @app.get("/")
 def read_root():

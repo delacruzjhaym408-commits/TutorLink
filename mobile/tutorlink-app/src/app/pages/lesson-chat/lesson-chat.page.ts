@@ -177,7 +177,7 @@ export class LessonChatPage implements OnInit, OnDestroy, ViewWillLeave {
   async sendImage() {
     try {
       const image = await Camera.getPhoto({
-        quality: 50, // 🔥 Bawasan ang quality
+        quality: 10, // 🔥 Bawasan ang quality
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Photos

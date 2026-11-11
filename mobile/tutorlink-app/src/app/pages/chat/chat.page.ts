@@ -163,7 +163,7 @@ export class ChatPage implements OnInit, OnDestroy {
   async sendImage() {
     try {
       const image = await Camera.getPhoto({
-        quality: 50, // 🔥 Bawasan ang quality para mas maliit ang file
+        quality: 10, // 🔥 Bawasan ang quality para mas maliit ang file
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Photos

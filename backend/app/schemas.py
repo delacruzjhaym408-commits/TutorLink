@@ -127,7 +127,7 @@ class ConversationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class MessageCreate(BaseModel):
-    content: str = Field(min_length=1, max_length=5000000)
+    content: str = Field(min_length=1, max_length=10000000) # 🔥 10MB
 
 class MessageOut(BaseModel):
     id: int
@@ -165,7 +165,7 @@ class LessonOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class LessonMessageCreate(BaseModel):
-    content: str = Field(min_length=1, max_length=5000000)
+    content: str = Field(min_length=1, max_length=10000000) # 🔥 10MB
 
 class LessonMessageOut(BaseModel):
     id: int
@@ -183,7 +183,7 @@ class EnrollmentCreate(BaseModel):
 class EnrollmentApplyRequest(BaseModel):
     lesson_id: int
     reference_number: str
-    receipt_base64: str
+    receipt_base64: str = Field(max_length=10000000) # 🔥 10MB
 
 class EnrollmentOut(BaseModel):
     id: int
