@@ -6,7 +6,8 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonIcon,
   IonAvatar, IonSpinner, IonButtons, IonBackButton, IonList,
   IonItem, IonLabel, AlertController, IonMenu, MenuController,
-  IonMenuToggle, ToastController, IonModal, IonTextarea, IonInput, IonRefresher, IonRefresherContent
+  IonMenuToggle, ToastController, IonModal, IonTextarea, IonInput,
+  IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
@@ -61,7 +62,6 @@ export class TutorDetailsPage implements OnInit {
   loading = signal(true);
   errorMessage = signal('');
   
-  // 🔥 RATING RESTRICTION
   hasConversation = signal(false);
 
   newRating = 5;
@@ -75,16 +75,19 @@ export class TutorDetailsPage implements OnInit {
 
   getImageUrl(pic: string | null | undefined): string {
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
+    
+    // 🔥 FIX: Dynamic na pagpapalit ng lumang localhost URLs
+    if (pic.includes('localhost') || pic.includes('127.0.0.1')) {
+      return pic.replace(/http:\/\/(localhost|127\.0\.0\.1):\d+/, API_BASE_URL);
+    }
+
     if (pic.startsWith('/uploads/')) {
       return `${API_BASE_URL}${pic}`;
     }
     if (!pic.startsWith('http')) {
       return `${API_BASE_URL}/uploads/${pic}`;
     }
-    // 🔥 FIX: Palitan ang lumang IP kung meron man
-    if (pic.includes('http://localhost:8100')) {
-      return pic.replace(/http:\/\/localhost:8100/, API_BASE_URL);
-    }
+    
     return pic;
   }
 
@@ -123,7 +126,7 @@ export class TutorDetailsPage implements OnInit {
         if (post.user_id) {
           this.loadTutorGallery(post.user_id);
           this.loadTutorStats(post.user_id);
-          this.checkConversation(post.user_id); // 🔥 Check kung may chat na
+          this.checkConversation(post.user_id);
         }
       },
       error: () => { this.errorMessage.set('Could not load tutor details.'); this.loading.set(false); this.cdr.detectChanges(); },
@@ -244,7 +247,6 @@ export class TutorDetailsPage implements OnInit {
     const currentPost = this.post();
     if (!currentPost) return;
     
-    // Optional check, pero ang backend na ang bahala mag-validate
     if (!this.hasConversation()) {
       this.showToast('You can only rate a tutor after having a conversation.');
       return;
@@ -291,7 +293,7 @@ export class TutorDetailsPage implements OnInit {
     await toast.present();
   }
 
-    doRefresh(event: any) {
+  doRefresh(event: any) {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.tutorPostService.getPostById(Number(id)).subscribe({
