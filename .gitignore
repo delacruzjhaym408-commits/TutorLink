@@ -25,3 +25,18 @@ TutorLink/
 
 # Database backup
 *.sql
+
+# Archive folder (hindi na kasama sa app)
+_archive_backup/
+
+# Temporary files
+backend_files.txt
+test_files.txt
+
+# Windows thumbnail cache
+Thumbs.db
+
+# Python compiled files (kahit nasa .gitignore na, i-double check natin)
+*.pyc
+*.pyo
+__pycache__/
