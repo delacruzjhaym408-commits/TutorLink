@@ -1,0 +1,28 @@
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start"><ion-back-button defaultHref="/admin/dashboard"></ion-back-button></ion-buttons>
+    <ion-title>Manage Group Chats</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-item *ngFor="let lesson of lessons()">
+      <ion-label>
+        <h2>
+          {{ lesson.gc_name }} 
+          <ion-badge color="danger" *ngIf="lesson.status === 'disabled'">DISABLED</ion-badge>
+        </h2>
+        <p>Tutor: {{ lesson.tutor_name }}</p>
+        <p *ngIf="lesson.status === 'disabled'" style="color: red;">Reason: {{ lesson.disabled_reason }}</p>
+      </ion-label>
+      
+      <ion-button fill="clear" color="warning" *ngIf="lesson.status !== 'disabled'" (click)="confirmDisable(lesson)">
+        <ion-icon name="ban-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      <ion-button fill="clear" color="success" *ngIf="lesson.status === 'disabled'" (click)="confirmEnable(lesson)">
+        <ion-icon name="checkmark-circle-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </ion-list>
+</ion-content>

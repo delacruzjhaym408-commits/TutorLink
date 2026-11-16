@@ -30,4 +30,9 @@ export const routes: Routes = [
     path: 'video-call/:roomName',
     loadComponent: () => import('./pages/video-call/video-call.page').then( m => m.VideoCallPage)
   },
+
+  {
+  path: 'admin/lessons',
+  loadComponent: () => import('./pages/admin-lessons/admin-lessons.page').then(m => m.AdminLessonsPage)
+  }
 ];

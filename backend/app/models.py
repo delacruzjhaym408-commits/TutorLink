@@ -73,6 +73,7 @@ class TutorPost(Base):
     gcash_number = Column(String(50), nullable=True)
     rating = Column(Numeric(2, 1), nullable=False, default=5.0)
     status = Column(String(20), nullable=False, default="published")
+    disabled_reason = Column(String(255), nullable=True) # 🔥 BAGONG DAGDAG
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
@@ -148,6 +149,8 @@ class Lesson(Base):
     next_meeting_date = Column(String(50), nullable=True)
     next_meeting_time = Column(String(50), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
+    status = Column(String(20), nullable=False, default="active") # 🔥 BAGONG DAGDAG
+    disabled_reason = Column(String(255), nullable=True)           # 🔥 BAGONG DAGDAG
 
     tutor = relationship("User", foreign_keys=[tutor_id])
     messages = relationship("LessonMessage", back_populates="lesson", cascade="all, delete-orphan")

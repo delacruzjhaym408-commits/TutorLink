@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonIcon, IonBackButton, IonButtons,
-  AlertController, ToastController, IonSpinner, IonCard, IonRefresher, IonRefresherContent
+  AlertController, ToastController, IonSpinner, IonCard, IonRefresher, IonRefresherContent, IonBadge
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { trashOutline, star, peopleOutline } from 'ionicons/icons';
+import { trashOutline, star, peopleOutline, banOutline, checkmarkCircleOutline } from 'ionicons/icons';
 import { AdminService } from '../../services/admin.service';
 import { API_BASE_URL } from '../../config';
 
@@ -17,7 +17,7 @@ import { API_BASE_URL } from '../../config';
   standalone: true,
   imports: [
     CommonModule, IonHeader, IonToolbar, IonTitle, IonContent,
-    IonButton, IonIcon, IonBackButton, IonButtons, IonSpinner, IonCard, IonRefresher, IonRefresherContent
+    IonButton, IonIcon, IonBackButton, IonButtons, IonSpinner, IonCard, IonRefresher, IonRefresherContent, IonBadge
   ],
 })
 export class AdminPostsPage implements OnInit {
@@ -30,7 +30,7 @@ export class AdminPostsPage implements OnInit {
   loading = signal(true);
 
   constructor() {
-    addIcons({ trashOutline, star, peopleOutline });
+    addIcons({ trashOutline, star, peopleOutline, banOutline, checkmarkCircleOutline });
   }
 
   ngOnInit() {
@@ -60,35 +60,69 @@ export class AdminPostsPage implements OnInit {
   }
 
   parseImages(jsonString: string | null | undefined): string[] {
-  if (!jsonString) return [];
-  try {
-    const images = JSON.parse(jsonString);
-    return images.map((img: string) => {
-      if (!img) return img;
-
-      // Kung relative path
-      if (img.startsWith('/uploads/')) {
-        return `${API_BASE_URL}${img}`;
-      }
-      if (!img.startsWith('http') && !img.startsWith('/')) {
-        return `${API_BASE_URL}/uploads/${img}`;
-      }
-
-      // 🔥 AYUSIN: Palitan ang lumang localhost sa API_BASE_URL
-      if (img.includes('localhost')) {
-        return img.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
-      }
-      return img;
-    });
-  } catch (e) {
-    return [];
+    if (!jsonString) return [];
+    try {
+      const images = JSON.parse(jsonString);
+      return images.map((img: string) => {
+        if (!img) return img;
+        if (img.startsWith('/uploads/')) return `${API_BASE_URL}${img}`;
+        if (!img.startsWith('http') && !img.startsWith('/')) return `${API_BASE_URL}/uploads/${img}`;
+        if (img.includes('localhost')) return img.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
+        return img;
+      });
+    } catch (e) {
+      return [];
+    }
   }
-}
+
+  async confirmDisable(post: any) {
+    const alert = await this.alertCtrl.create({
+      header: 'Disable Post',
+      message: `Are you sure you want to disable this post?`,
+      inputs: [{ name: 'reason', type: 'text', placeholder: 'Reason (required)' }],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { 
+          text: 'Disable', 
+          role: 'destructive', 
+          handler: (data) => {
+            if (!data.reason || !data.reason.trim()) {
+              this.showToast('Reason is required', 'warning');
+              return false;
+            }
+            this.disablePost(post.id, data.reason);
+            return true;
+          } 
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  disablePost(id: number, reason: string) {
+    this.adminService.disablePost(id, reason).subscribe({
+      next: () => {
+        this.posts.update(p => p.map(post => post.id === id ? { ...post, status: 'disabled', disabled_reason: reason } : post));
+        this.cdr.detectChanges();
+        this.showToast('Post disabled', 'success');
+      }
+    });
+  }
+
+  async confirmEnable(post: any) {
+    this.adminService.enablePost(post.id).subscribe({
+      next: () => {
+        this.posts.update(p => p.map(post => post.id === post.id ? { ...post, status: 'published', disabled_reason: null } : post));
+        this.cdr.detectChanges();
+        this.showToast('Post enabled', 'success');
+      }
+    });
+  }
 
   async confirmDelete(post: any) {
     const alert = await this.alertCtrl.create({
       header: 'Delete Post',
-      message: `Are you sure you want to delete the post "${post.subject}" by ${post.tutor_name}?`,
+      message: `Are you sure you want to delete "${post.subject}"?`,
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         { text: 'Delete', role: 'destructive', handler: () => this.deletePost(post.id) }
@@ -102,9 +136,13 @@ export class AdminPostsPage implements OnInit {
       next: async () => {
         this.posts.update(p => p.filter(post => post.id !== id));
         this.cdr.detectChanges();
-        const toast = await this.toastCtrl.create({ message: 'Post deleted', duration: 2000, color: 'success' });
-        await toast.present();
+        this.showToast('Post deleted', 'success');
       }
     });
+  }
+
+  async showToast(msg: string, color: string) {
+    const toast = await this.toastCtrl.create({ message: msg, duration: 2000, color });
+    await toast.present();
   }
 }

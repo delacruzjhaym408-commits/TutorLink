@@ -101,6 +101,7 @@ class TutorPostOut(BaseModel):
     gcash_number: Optional[str] = None
     rating: float
     status: str
+    disabled_reason: Optional[str] = None # 🔥 BAGONG DAGDAG
     created_at: datetime
     updated_at: datetime
     learners_count: Optional[int] = 0
@@ -163,6 +164,8 @@ class LessonOut(BaseModel):
     next_meeting_date: Optional[str] = None
     next_meeting_time: Optional[str] = None
     created_at: datetime
+    status: Optional[str] = "active"      # 🔥 BAGONG DAGDAG
+    disabled_reason: Optional[str] = None # 🔥 BAGONG DAGDAG
     model_config = ConfigDict(from_attributes=True)
 
 class LessonMessageCreate(BaseModel):

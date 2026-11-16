@@ -206,3 +206,69 @@ def resolve_report(report_id: int, current_user: User = Depends(require_admin), 
     report.status = "resolved"
     db.commit()
     return {"status": "success"}
+
+# 🔥 BAGONG ENDPOINTS PARA SA POSTS
+class PostDisableRequest(BaseModel):
+    reason: str
+
+@router.put("/posts/{post_id}/disable", response_model=TutorPostOut)
+def disable_post(post_id: int, data: PostDisableRequest, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    post = db.query(TutorPost).filter(TutorPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    post.status = "disabled"
+    post.disabled_reason = data.reason.strip()
+    db.commit()
+    db.refresh(post)
+    return post
+
+@router.put("/posts/{post_id}/enable", response_model=TutorPostOut)
+def enable_post(post_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    post = db.query(TutorPost).filter(TutorPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    post.status = "published"
+    post.disabled_reason = None
+    db.commit()
+    db.refresh(post)
+    return post
+
+# 🔥 BAGONG ENDPOINTS PARA SA LESSONS (GC)
+class LessonDisableRequest(BaseModel):
+    reason: str
+
+@router.put("/lessons/{lesson_id}/disable")
+def disable_lesson(lesson_id: int, data: LessonDisableRequest, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    lesson.status = "disabled"
+    lesson.disabled_reason = data.reason.strip()
+    db.commit()
+    return {"status": "disabled"}
+
+@router.put("/lessons/{lesson_id}/enable")
+def enable_lesson(lesson_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    lesson.status = "active"
+    lesson.disabled_reason = None
+    db.commit()
+    return {"status": "active"}
+
+@router.get("/lessons/all")
+def get_all_lessons(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    lessons = db.query(Lesson).order_by(Lesson.created_at.desc()).all()
+    result = []
+    for l in lessons:
+        tutor = db.query(User).filter(User.id == l.tutor_id).first()
+        result.append({
+            "id": l.id,
+            "gc_name": l.gc_name,
+            "tutor_name": tutor.full_name if tutor else "Unknown",
+            "status": l.status,
+            "disabled_reason": l.disabled_reason,
+            "created_at": l.created_at
+        })
+    return result

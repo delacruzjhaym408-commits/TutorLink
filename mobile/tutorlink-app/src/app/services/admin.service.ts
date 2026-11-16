@@ -41,6 +41,28 @@ export class AdminService {
     return this.http.delete(`${this.apiUrl}/admin/posts/${postId}`, { headers: this.getHeaders() });
   }
 
+    // Posts Disable/Enable
+  disablePost(postId: number, reason: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/posts/${postId}/disable`, { reason }, { headers: this.getHeaders() });
+  }
+
+  enablePost(postId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/posts/${postId}/enable`, {}, { headers: this.getHeaders() });
+  }
+
+  // Lessons Disable/Enable
+  getLessons(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/admin/lessons/all`, { headers: this.getHeaders() });
+  }
+
+  disableLesson(lessonId: number, reason: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/lessons/${lessonId}/disable`, { reason }, { headers: this.getHeaders() });
+  }
+
+  enableLesson(lessonId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/lessons/${lessonId}/enable`, {}, { headers: this.getHeaders() });
+  }
+
   // Reports
   getReports(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/reports`, { headers: this.getHeaders() });
