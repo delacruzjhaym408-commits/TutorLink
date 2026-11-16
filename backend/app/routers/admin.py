@@ -277,31 +277,41 @@ def get_all_lessons(current_user: User = Depends(require_admin), db: Session = D
 
 @router.post("/trigger-automatic-disable")
 def trigger_automatic_disable(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    # 1. Inactive for 1 month (Tutors only)
-    one_month_ago = datetime.now() - timedelta(days=30)
-    
-    inactive_tutors = db.query(User).filter(
-        User.role == UserRole.tutor,
-        User.is_active == True,
-        (User.last_login_at < one_month_ago) | (User.last_login_at == None)
-    ).all()
-    
-    for tutor in inactive_tutors:
-        tutor.is_active = False
-        tutor.disabled_reason = "Automatically disabled: Inactive for 1 month."
-        tutor.disabled_at = datetime.now()
+    try:
+        # 1. Inactive for 1 month (Tutors only)
+        one_month_ago = datetime.now() - timedelta(days=30)
         
-    # 2. 3 or more Reports
-    # Kunin lahat ng users na may >= 3 reports
-    reported_users = db.query(Report.reported_user_id, func.count(Report.id).label('count')).group_by(Report.reported_user_id).having(func.count(Report.id) >= 3).all()
-    
-    for user_id, count in reported_users:
-        if user_id:
-            user = db.query(User).filter(User.id == user_id).first()
-            if user and user.is_active:
-                user.is_active = False
-                user.disabled_reason = f"Automatically disabled: Received {count} reports."
-                user.disabled_at = datetime.now()
+        inactive_tutors = db.query(User).filter(
+            User.role == UserRole.tutor,
+            User.is_active == True,
+            or_(
+                User.last_login_at < one_month_ago,
+                User.last_login_at == None
+            )
+        ).all()
+        
+        disabled_count = 0
+        for tutor in inactive_tutors:
+            tutor.is_active = False
+            tutor.disabled_reason = "Automatically disabled: Inactive for 1 month."
+            tutor.disabled_at = datetime.now()
+            disabled_count += 1
+            
+        # 2. 3 or more Reports
+        reported_users = db.query(Report.reported_user_id, func.count(Report.id).label('count')).group_by(Report.reported_user_id).having(func.count(Report.id) >= 3).all()
+        
+        for user_id, count in reported_users:
+            if user_id:
+                user = db.query(User).filter(User.id == user_id).first()
+                if user and user.is_active:
+                    user.is_active = False
+                    user.disabled_reason = f"Automatically disabled: Received {count} reports."
+                    user.disabled_at = datetime.now()
+                    disabled_count += 1
 
-    db.commit()
-    return {"message": "Automatic disable check completed."}
+        db.commit()
+        return {"message": f"Check completed. {disabled_count} users disabled."}
+    except Exception as e:
+        db.rollback()
+        print(f"ERROR IN AUTO DISABLE: {str(e)}") # 🔥 Para lumabas sa Render Logs
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
