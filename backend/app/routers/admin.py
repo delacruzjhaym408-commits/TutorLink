@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from sqlalchemy import or_
+from datetime import datetime
+from pydantic import BaseModel
 
 from app.database import get_db
 from app.dependencies import require_admin
@@ -13,11 +15,54 @@ from app.schemas import UserOut, TutorPostOut, ReportOut, user_to_out
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
+# Schema para sa Disable Request
+class UserDisableRequest(BaseModel):
+    reason: str
+
 # 1. Manage Users (List at Delete)
 @router.get("/users", response_model=List[UserOut])
 def get_all_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     users = db.query(User).all()
     return [user_to_out(u) for u in users]
+
+# 🔥 BAGONG ENDPOINT: Disable User
+@router.put("/users/{user_id}/disable", response_model=UserOut)
+def disable_user(
+    user_id: int, 
+    data: UserDisableRequest, 
+    current_user: User = Depends(require_admin), 
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="You cannot disable your own admin account")
+    
+    user.is_active = False
+    user.disabled_reason = data.reason.strip()
+    user.disabled_at = datetime.now()
+    db.commit()
+    db.refresh(user)
+    return user_to_out(user)
+
+# 🔥 BAGONG ENDPOINT: Enable User
+@router.put("/users/{user_id}/enable", response_model=UserOut)
+def enable_user(
+    user_id: int, 
+    current_user: User = Depends(require_admin), 
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.is_active = True
+    user.disabled_reason = None
+    user.disabled_at = None
+    db.commit()
+    db.refresh(user)
+    return user_to_out(user)
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(user_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
@@ -112,7 +157,6 @@ def get_all_reports(current_user: User = Depends(require_admin), db: Session = D
         if r.reported_user_id:
             total_reports_for_user = db.query(Report).filter(Report.reported_user_id == r.reported_user_id).count()
             
-        # IDINAGDAG: Post Details
         post_details = None
         if r.reported_post:
             post_details = {
@@ -125,7 +169,6 @@ def get_all_reports(current_user: User = Depends(require_admin), db: Session = D
                 "hourly_rate": r.reported_post.hourly_rate
             }
             
-        # IDINAGDAG: User Details
         user_details = None
         if r.reported_user:
             user_details = {

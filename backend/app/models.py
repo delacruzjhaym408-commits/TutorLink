@@ -1,4 +1,5 @@
 import enum
+from typing import Optional
 
 from sqlalchemy import (
     Boolean,
@@ -36,6 +37,8 @@ class User(Base):
     profile_picture = Column(String(500), nullable=True)
     role = Column(Enum(UserRole), nullable=False, default=UserRole.student)
     is_active = Column(Boolean, nullable=False, default=True)
+    disabled_reason = Column(String(255), nullable=True) # 🔥 BAGONG DAGDAG
+    disabled_at = Column(DateTime, nullable=True)       # 🔥 BAGONG DAGDAG
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     description = Column(Text, nullable=True)
     description_picture = Column(String(500), nullable=True)
@@ -119,13 +122,11 @@ class Message(Base):
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
-    # ---- POST REFERENCE (bagong dagdag) ----
     post_id = Column(
         Integer, ForeignKey("tutor_posts.id", ondelete="SET NULL"), nullable=True
     )
     post_subject = Column(String(150), nullable=True)
     post_picture = Column(String(500), nullable=True)
-    # ----------------------------------------
 
     conversation = relationship("Conversation", back_populates="messages")
     sender = relationship(

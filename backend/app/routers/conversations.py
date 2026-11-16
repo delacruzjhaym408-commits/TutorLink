@@ -252,6 +252,12 @@ async def send_message(
     if current_user.id not in [conversation.participant1_id, conversation.participant2_id]:
         raise HTTPException(status_code=403, detail="You are not part of this conversation")
 
+        if not current_user.is_active:
+         raise HTTPException(
+            status_code=403, 
+            detail="Your account is disabled. You cannot send messages."
+        )
+
     message = Message(
         conversation_id=conversation_id,
         sender_id=current_user.id,

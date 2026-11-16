@@ -1,8 +1,4 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
-from app.models import User, UserRole
-from datetime import datetime
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from app.models import User, UserRole
@@ -47,6 +43,8 @@ class UserOut(BaseModel):
     gcash_number: Optional[str] = None
     role: UserRole
     is_active: bool
+    disabled_reason: Optional[str] = None # 🔥 BAGONG DAGDAG
+    disabled_at: Optional[datetime] = None # 🔥 BAGONG DAGDAG
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -61,7 +59,10 @@ def user_to_out(user: User) -> UserOut:
         phone_number=user.phone_number, profile_picture=user.profile_picture,
         description=user.description, description_picture=user.description_picture,
         gcash_number=user.gcash_number, role=user.role,
-        is_active=user.is_active, created_at=user.created_at,
+        is_active=user.is_active, 
+        disabled_reason=user.disabled_reason, # 🔥 BAGONG DAGDAG
+        disabled_at=user.disabled_at,         # 🔥 BAGONG DAGDAG
+        created_at=user.created_at,
     )
 
 class TutorPostCreate(BaseModel):
@@ -120,14 +121,14 @@ class ConversationOut(BaseModel):
     other_user_name: Optional[str] = None
     other_user_picture: Optional[str] = None
     lastMessage: Optional[str] = None
-    last_sender_id: Optional[int] = None #
+    last_sender_id: Optional[int] = None 
     unread_count: Optional[int] = 0
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 class MessageCreate(BaseModel):
-    content: str = Field(min_length=1, max_length=10000000) # 🔥 10MB
+    content: str = Field(min_length=1, max_length=10000000)
 
 class MessageOut(BaseModel):
     id: int
@@ -165,7 +166,7 @@ class LessonOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class LessonMessageCreate(BaseModel):
-    content: str = Field(min_length=1, max_length=10000000) # 🔥 10MB
+    content: str = Field(min_length=1, max_length=10000000)
 
 class LessonMessageOut(BaseModel):
     id: int
@@ -183,7 +184,7 @@ class EnrollmentCreate(BaseModel):
 class EnrollmentApplyRequest(BaseModel):
     lesson_id: int
     reference_number: str
-    receipt_base64: str = Field(max_length=10000000) # 🔥 10MB
+    receipt_base64: str = Field(max_length=10000000)
 
 class EnrollmentOut(BaseModel):
     id: int
