@@ -7,7 +7,7 @@ import {
   IonButtons, IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { peopleOutline, documentTextOutline, warningOutline, logOutOutline, chatbubblesOutline } from 'ionicons/icons';
+import { peopleOutline, documentTextOutline, warningOutline, logOutOutline } from 'ionicons/icons';
 import { AdminService } from '../../services/admin.service';
 import { SessionService } from '../../services/session.service';
 
@@ -33,7 +33,7 @@ export class AdminDashboardPage implements OnInit {
   totalReports = signal(0);
 
   constructor() {
-    addIcons({ peopleOutline, documentTextOutline, warningOutline, logOutOutline, chatbubblesOutline });
+    addIcons({ peopleOutline, documentTextOutline, warningOutline, logOutOutline });
   }
 
   ngOnInit() {
@@ -86,19 +86,5 @@ export class AdminDashboardPage implements OnInit {
   logout() {
     this.session.logout();
     this.router.navigate(['/login']);
-  }
-
-  goToLessons() { this.router.navigate(['/admin/lessons']); }
-
-  runAutoDisable() {
-    this.adminService.triggerAutoDisable().subscribe({
-      next: (res) => {
-        alert(res.message + ' Please refresh to see changes.');
-        this.loadStats();
-      },
-      error: (err) => {
-        alert('Error: ' + err.error?.detail);
-      }
-    });
   }
 }

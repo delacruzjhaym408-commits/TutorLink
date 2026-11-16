@@ -43,6 +43,13 @@ def disable_user(
     user.is_active = False
     user.disabled_reason = data.reason.strip()
     user.disabled_at = datetime.now()
+    
+    # 🔥 AUTO-DISABLE ALL GCs
+    lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
+    for lesson in lessons:
+        lesson.status = "disabled"
+        lesson.disabled_reason = "Tutor account disabled"
+
     db.commit()
     db.refresh(user)
     return user_to_out(user)
@@ -61,6 +68,13 @@ def enable_user(
     user.is_active = True
     user.disabled_reason = None
     user.disabled_at = None
+
+    # 🔥 AUTO-ENABLE ALL GCs
+    lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
+    for lesson in lessons:
+        lesson.status = "active"
+        lesson.disabled_reason = None
+
     db.commit()
     db.refresh(user)
     return user_to_out(user)
@@ -278,16 +292,12 @@ def get_all_lessons(current_user: User = Depends(require_admin), db: Session = D
 @router.post("/trigger-automatic-disable")
 def trigger_automatic_disable(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     try:
-        # 1. Inactive for 1 month (Tutors only)
         one_month_ago = datetime.now() - timedelta(days=30)
         
         inactive_tutors = db.query(User).filter(
             User.role == UserRole.tutor,
             User.is_active == True,
-            or_(
-                User.last_login_at < one_month_ago,
-                User.last_login_at == None
-            )
+            or_(User.last_login_at < one_month_ago, User.last_login_at == None)
         ).all()
         
         disabled_count = 0
@@ -295,9 +305,15 @@ def trigger_automatic_disable(current_user: User = Depends(require_admin), db: S
             tutor.is_active = False
             tutor.disabled_reason = "Automatically disabled: Inactive for 1 month."
             tutor.disabled_at = datetime.now()
+            
+            # 🔥 AUTO-DISABLE ALL GCs
+            lessons = db.query(Lesson).filter(Lesson.tutor_id == tutor.id).all()
+            for lesson in lessons:
+                lesson.status = "disabled"
+                lesson.disabled_reason = "Tutor automatically disabled"
+
             disabled_count += 1
             
-        # 2. 3 or more Reports
         reported_users = db.query(Report.reported_user_id, func.count(Report.id).label('count')).group_by(Report.reported_user_id).having(func.count(Report.id) >= 3).all()
         
         for user_id, count in reported_users:
@@ -307,11 +323,17 @@ def trigger_automatic_disable(current_user: User = Depends(require_admin), db: S
                     user.is_active = False
                     user.disabled_reason = f"Automatically disabled: Received {count} reports."
                     user.disabled_at = datetime.now()
+                    
+                    # 🔥 AUTO-DISABLE ALL GCs
+                    lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
+                    for lesson in lessons:
+                        lesson.status = "disabled"
+                        lesson.disabled_reason = "Tutor automatically disabled"
+                        
                     disabled_count += 1
 
         db.commit()
         return {"message": f"Check completed. {disabled_count} users disabled."}
     except Exception as e:
         db.rollback()
-        print(f"ERROR IN AUTO DISABLE: {str(e)}") # 🔥 Para lumabas sa Render Logs
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
