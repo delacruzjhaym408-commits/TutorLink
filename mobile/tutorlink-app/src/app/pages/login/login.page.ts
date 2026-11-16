@@ -75,12 +75,15 @@ export class LoginPage implements OnInit {
         await this.router.navigateByUrl('/home', { replaceUrl: true });
       }
       
-    } catch (error) {
-      this.errorMessage.set(
-        apiErrorMessage(error, 'Could not log in. Please try again.'),
-      );
-    } finally {
-      this.submitting.set(false);
+    } catch (error: any) {
+      // 🔥 Check kung disabled ang account
+      if (error?.error?.detail?.code === 'account_disabled') {
+        this.errorMessage.set(`Account Disabled: ${error.error.detail.reason}`);
+      } else {
+        this.errorMessage.set(
+          apiErrorMessage(error, 'Could not log in. Please try again.')
+        );
+        }
+      }
     }
   }
-}

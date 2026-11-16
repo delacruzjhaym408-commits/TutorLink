@@ -20,6 +20,14 @@ export class AdminService {
     return this.http.get<any[]>(`${this.apiUrl}/admin/users`, { headers: this.getHeaders() });
   }
 
+  disableUser(userId: number, reason: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/users/${userId}/disable`, { reason }, { headers: this.getHeaders() });
+  }
+
+  enableUser(userId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/users/${userId}/enable`, {}, { headers: this.getHeaders() });
+  }
+
   deleteUser(userId: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/admin/users/${userId}`, { headers: this.getHeaders() });
   }
@@ -33,7 +41,7 @@ export class AdminService {
     return this.http.delete(`${this.apiUrl}/admin/posts/${postId}`, { headers: this.getHeaders() });
   }
 
-  // 🔥 INayos: Tinanggal ang /admin sa reports
+  // Reports
   getReports(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/reports`, { headers: this.getHeaders() });
   }

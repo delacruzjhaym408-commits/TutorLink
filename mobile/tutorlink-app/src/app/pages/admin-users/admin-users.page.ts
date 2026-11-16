@@ -5,10 +5,10 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem,
   IonLabel, IonAvatar, IonButton, IonIcon, IonBackButton, IonButtons,
   AlertController, ToastController, IonSpinner, IonSearchbar,
-  IonRefresher, IonRefresherContent // 🔥 IDINAGDAG
+  IonRefresher, IonRefresherContent, IonBadge
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { trashOutline } from 'ionicons/icons';
+import { trashOutline, banOutline, checkmarkCircleOutline } from 'ionicons/icons';
 import { AdminService } from '../../services/admin.service';
 import { API_BASE_URL } from '../../config';
 
@@ -21,8 +21,7 @@ import { API_BASE_URL } from '../../config';
     CommonModule, FormsModule,
     IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem,
     IonLabel, IonAvatar, IonButton, IonIcon, IonBackButton, IonButtons,
-    IonSpinner, IonSearchbar,
-    IonRefresher, IonRefresherContent // 🔥 IDINAGDAG
+    IonSpinner, IonSearchbar, IonRefresher, IonRefresherContent, IonBadge
   ],
 })
 export class AdminUsersPage implements OnInit {
@@ -36,14 +35,13 @@ export class AdminUsersPage implements OnInit {
   searchQuery = signal('');
 
   constructor() {
-    addIcons({ trashOutline });
+    addIcons({ trashOutline, banOutline, checkmarkCircleOutline });
   }
 
   ngOnInit() {
     this.loadUsers();
   }
 
-  // 🔥 IDINAGDAG
   doRefresh(event: any) {
     this.adminService.getUsers().subscribe({
       next: (users) => {
@@ -88,6 +86,77 @@ export class AdminUsersPage implements OnInit {
     return pic;
   }
 
+  // 🔥 DISABLE USER LOGIC
+  async confirmDisable(user: any) {
+    const alert = await this.alertCtrl.create({
+      header: 'Disable User',
+      message: `Are you sure you want to disable ${user.full_name}?`,
+      inputs: [
+        {
+          name: 'reason',
+          type: 'text',
+          placeholder: 'Reason for disabling (required)',
+        }
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { 
+          text: 'Disable', 
+          role: 'destructive', 
+          handler: (data) => {
+            if (!data.reason || !data.reason.trim()) {
+              this.showToast('Reason is required to disable a user', 'warning');
+              return false; // Prevent closing
+            }
+            this.disableUser(user.id, data.reason);
+            return true;
+          } 
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  disableUser(id: number, reason: string) {
+    this.adminService.disableUser(id, reason).subscribe({
+      next: (updatedUser) => {
+        // Update list locally
+        this.users.update(u => u.map(user => user.id === id ? { ...user, ...updatedUser } : user));
+        this.cdr.detectChanges();
+        this.showToast('User disabled successfully', 'success');
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Error disabling user', 'danger');
+      }
+    });
+  }
+
+  // 🔥 ENABLE USER LOGIC
+  async confirmEnable(user: any) {
+    const alert = await this.alertCtrl.create({
+      header: 'Enable User',
+      message: `Are you sure you want to enable ${user.full_name}?`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { text: 'Enable', role: 'primary', handler: () => this.enableUser(user.id) }
+      ]
+    });
+    await alert.present();
+  }
+
+  enableUser(id: number) {
+    this.adminService.enableUser(id).subscribe({
+      next: (updatedUser) => {
+        this.users.update(u => u.map(user => user.id === id ? { ...user, ...updatedUser } : user));
+        this.cdr.detectChanges();
+        this.showToast('User enabled successfully', 'success');
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Error enabling user', 'danger');
+      }
+    });
+  }
+
   async confirmDelete(user: any) {
     const alert = await this.alertCtrl.create({
       header: 'Delete User',
@@ -102,21 +171,19 @@ export class AdminUsersPage implements OnInit {
 
   deleteUser(id: number) {
     this.adminService.deleteUser(id).subscribe({
-      next: async () => {
+      next: () => {
         this.users.update(u => u.filter(user => user.id !== id));
         this.cdr.detectChanges();
-        const toast = await this.toastCtrl.create({ message: 'User deleted', duration: 2000, color: 'success' });
-        await toast.present();
+        this.showToast('User deleted', 'success');
       },
-      error: async (err) => {
-        console.error('Delete User Error:', err);
-        const toast = await this.toastCtrl.create({ 
-          message: err.error?.detail || 'Error deleting user. Please try again.', 
-          duration: 3000, 
-          color: 'danger' 
-        });
-        await toast.present();
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Error deleting user', 'danger');
       }
     });
+  }
+
+  async showToast(msg: string, color: string) {
+    const toast = await this.toastCtrl.create({ message: msg, duration: 2000, color });
+    await toast.present();
   }
 }
