@@ -37,8 +37,9 @@ class User(Base):
     profile_picture = Column(String(500), nullable=True)
     role = Column(Enum(UserRole), nullable=False, default=UserRole.student)
     is_active = Column(Boolean, nullable=False, default=True)
-    disabled_reason = Column(String(255), nullable=True) # 🔥 BAGONG DAGDAG
-    disabled_at = Column(DateTime, nullable=True)       # 🔥 BAGONG DAGDAG
+    disabled_reason = Column(String(255), nullable=True)
+    disabled_at = Column(DateTime, nullable=True)
+    last_login_at = Column(DateTime, nullable=True) # 🔥 DAPAT NANDIYAN ITO
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     description = Column(Text, nullable=True)
     description_picture = Column(String(500), nullable=True)
