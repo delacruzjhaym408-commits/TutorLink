@@ -17,7 +17,22 @@
   <p>Overview of the TutorLink System</p>
 
   <ion-grid>
+    <ion-button expand="block" color="warning" style="margin-top: 20px;" (click)="runAutoDisable()">
+  <ion-icon name="warning-outline" slot="start"></ion-icon>
+  Run Automatic Disable Check
+</ion-button>
     <ion-row>
+      <ion-col size="12" size-md="4">
+  <ion-card (click)="goToLessons()" style="cursor: pointer; background: #fff3e0;">
+    <ion-card-header>
+      <ion-icon name="chatbubbles-outline" size="large" color="warning"></ion-icon>
+      <ion-card-title>Manage GCs</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <p>Disable/Enable Group Chats</p>
+    </ion-card-content>
+  </ion-card>
+  </ion-col>
       <ion-col size="12" size-md="4">
         <ion-card (click)="goToUsers()" style="cursor: pointer; background: #e3f2fd;">
           <ion-card-header>

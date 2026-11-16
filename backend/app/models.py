@@ -228,3 +228,14 @@ class AdminMessage(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     user = relationship("User", foreign_keys=[user_id])
+
+class UserAppeal(Base):
+    __tablename__ = "user_appeals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    reason = Column(Text, nullable=False)
+    status = Column(String(20), nullable=False, default="pending")
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    user = relationship("User", foreign_keys=[user_id])

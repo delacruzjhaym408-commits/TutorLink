@@ -4,13 +4,14 @@ from typing import List
 from sqlalchemy import or_
 from datetime import datetime
 from pydantic import BaseModel
-
+from datetime import datetime, timedelta
+from app.models import Report, UserRole
 from app.database import get_db
 from app.dependencies import require_admin
 from app.models import (
     User, TutorPost, Report, Conversation, Message,
-    Enrollment, Review, AdminMessage, Lesson, LessonMessage
-)
+    Enrollment, Review, AdminMessage, Lesson, LessonMessage)
+from sqlalchemy import func
 from app.schemas import UserOut, TutorPostOut, ReportOut, user_to_out
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -272,3 +273,35 @@ def get_all_lessons(current_user: User = Depends(require_admin), db: Session = D
             "created_at": l.created_at
         })
     return result
+
+
+@router.post("/trigger-automatic-disable")
+def trigger_automatic_disable(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    # 1. Inactive for 1 month (Tutors only)
+    one_month_ago = datetime.now() - timedelta(days=30)
+    
+    inactive_tutors = db.query(User).filter(
+        User.role == UserRole.tutor,
+        User.is_active == True,
+        (User.last_login_at < one_month_ago) | (User.last_login_at == None)
+    ).all()
+    
+    for tutor in inactive_tutors:
+        tutor.is_active = False
+        tutor.disabled_reason = "Automatically disabled: Inactive for 1 month."
+        tutor.disabled_at = datetime.now()
+        
+    # 2. 3 or more Reports
+    # Kunin lahat ng users na may >= 3 reports
+    reported_users = db.query(Report.reported_user_id, func.count(Report.id).label('count')).group_by(Report.reported_user_id).having(func.count(Report.id) >= 3).all()
+    
+    for user_id, count in reported_users:
+        if user_id:
+            user = db.query(User).filter(User.id == user_id).first()
+            if user and user.is_active:
+                user.is_active = False
+                user.disabled_reason = f"Automatically disabled: Received {count} reports."
+                user.disabled_at = datetime.now()
+
+    db.commit()
+    return {"message": "Automatic disable check completed."}

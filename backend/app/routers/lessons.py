@@ -427,6 +427,12 @@ async def send_lesson_message(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if not current_user.is_active:
+        raise HTTPException(
+            status_code=403,
+            detail="Your account is disabled. You cannot send messages."
+        )
+
     enrollment = db.query(Enrollment).filter(Enrollment.lesson_id == lesson_id, Enrollment.student_id == current_user.id).first()
     
     if not enrollment or enrollment.status == "pending_payment" or enrollment.status == "rejected":

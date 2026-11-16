@@ -89,4 +89,16 @@ export class AdminDashboardPage implements OnInit {
   }
 
   goToLessons() { this.router.navigate(['/admin/lessons']); }
+
+  runAutoDisable() {
+    this.adminService.triggerAutoDisable().subscribe({
+      next: (res) => {
+        alert(res.message + ' Please refresh to see changes.');
+        this.loadStats();
+      },
+      error: (err) => {
+        alert('Error: ' + err.error?.detail);
+      }
+    });
+  }
 }

@@ -260,3 +260,16 @@ class AdminMessageOut(BaseModel):
     is_read: bool
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+class AppealCreate(BaseModel):
+    email: str
+    reason: str
+
+class AppealOut(BaseModel):
+    id: int
+    user_id: int
+    reason: str
+    status: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)

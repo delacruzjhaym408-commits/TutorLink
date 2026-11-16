@@ -75,4 +75,16 @@ export class AdminService {
   sendAdminMessage(userId: number, message: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/admin-messages`, { user_id: userId, message }, { headers: this.getHeaders() });
   }
+
+  submitAppeal(email: string, reason: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/admin-messages/appeal`, { email, reason });
+  }
+
+  triggerAutoDisable(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/admin/trigger-automatic-disable`, {}, { headers: this.getHeaders() });
+  }
+
+  getAppeals(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/admin-messages/appeals`, { headers: this.getHeaders() });
+  }
 }

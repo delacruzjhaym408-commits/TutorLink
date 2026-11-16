@@ -50,6 +50,20 @@
           </ion-text>
         }
 
+        <div *ngIf="isDisabled()" style="margin-top: 20px; padding: 16px; background: #ffebee; border-radius: 8px;">
+  <h4 style="margin-top: 0; color: #c62828;">Account Disabled</h4>
+  <p style="font-size: 0.9rem;">You can send an appeal to the Admin.</p>
+  <ion-textarea 
+    [(ngModel)]="appealReason" 
+    placeholder="Explain why your account should be re-enabled..." 
+    fill="outline" 
+    rows="3">
+  </ion-textarea>
+  <ion-button expand="block" color="danger" style="margin-top: 12px;" (click)="sendAppeal()" [disabled]="!appealReason.trim()">
+    Send Appeal to Admin
+  </ion-button>
+</div>
+
         <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting()" class="submit-btn">
           <ion-spinner *ngIf="submitting()" name="crescent" slot="start"></ion-spinner>
           {{ submitting() ? 'Logging in...' : 'Log In' }}

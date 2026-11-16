@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-
+from datetime import datetime
 from app.database import get_db
 from app.models import User, UserRole
 from app.schemas import TokenOut, UserCreate, UserOut, user_to_out
@@ -63,10 +63,14 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "account_disabled",
-                "message": "This account has been disabled by the admin.",
+                "message": "This account has been disabled.",
                 "reason": user.disabled_reason or "No reason provided."
             },
         )
+
+    # 🔥 Update last login
+    user.last_login_at = datetime.now()
+    db.commit()
 
     return TokenOut(
         access_token=create_access_token(user.id),
