@@ -41,8 +41,10 @@ def disable_user(
         raise HTTPException(status_code=400, detail="You cannot disable your own admin account")
     
     user.is_active = False
-    user.disabled_reason = data.reason.strip()
-    user.disabled_at = datetime.now()
+    lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
+    for lesson in lessons:
+        lesson.status = "disabled"
+        lesson.disabled_reason = "Tutor account disabled"
     
     # 🔥 AUTO-DISABLE ALL GCs
     lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
@@ -66,8 +68,10 @@ def enable_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     user.is_active = True
-    user.disabled_reason = None
-    user.disabled_at = None
+    lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
+    for lesson in lessons:
+        lesson.status = "active"
+        lesson.disabled_reason = None
 
     # 🔥 AUTO-ENABLE ALL GCs
     lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
@@ -337,3 +341,24 @@ def trigger_automatic_disable(current_user: User = Depends(require_admin), db: S
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
+
+@router.put("/posts/{post_id}/approve", response_model=TutorPostOut)
+def approve_post(post_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    post = db.query(TutorPost).filter(TutorPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    post.status = "published"
+    db.commit()
+    db.refresh(post)
+    return post
+
+@router.put("/posts/{post_id}/reject", response_model=TutorPostOut)
+def reject_post(post_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    post = db.query(TutorPost).filter(TutorPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    post.status = "rejected"
+    db.commit()
+    db.refresh(post)
+    return post

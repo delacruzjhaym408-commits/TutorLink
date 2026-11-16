@@ -324,6 +324,10 @@ export class MyLessonPage implements OnInit, OnDestroy {
     });
   }
 
+  isDisabled(lesson: any): boolean {
+  return lesson?.status === 'disabled';
+}
+
   goToHome() { this.menuController.close('main-menu'); this.router.navigate(['/home']); }
   goToProfile() { this.menuController.close('main-menu'); this.router.navigate(['/profile']); }
   goToMessagesPage() { this.menuController.close('main-menu'); this.router.navigate(['/messages']); }

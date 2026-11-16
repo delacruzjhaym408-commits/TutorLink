@@ -66,9 +66,11 @@
       </div>
 
       <div class="lessons-container" *ngIf="!loading() && enrollments().length > 0">
-        <div *ngFor="let item of enrollments()" class="lesson-card" style="display: flex; flex-direction: column; align-items: stretch;">
+        
+        <!-- 🔥 ANG *ngFor LOOP AY DAPAT NAKAPALIBOT SA BUONG CARD -->
+        <div *ngFor="let item of enrollments()" class="lesson-card" style="display: flex; flex-direction: column; align-items: stretch; margin-bottom: 16px;" [style.opacity]="item.lesson.status === 'disabled' ? '0.6' : '1'">
           
-          <div style="display: flex; align-items: center; cursor: pointer;" (click)="openChat(item)">
+          <div style="display: flex; align-items: center; cursor: pointer;" (click)="item.lesson.status !== 'disabled' ? openChat(item) : null">
             <ion-avatar class="lesson-avatar" style="margin-right: 12px;">
               <img [src]="item.lesson.photo || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
             </ion-avatar>
@@ -76,8 +78,13 @@
             <div class="lesson-info" style="flex: 1;">
               <div class="lesson-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <h2 class="lesson-title" style="margin: 0;">{{ item.lesson.gc_name }}</h2>
-                  <!-- 🔥 IDINAGDAG: OWNER BADGE -->
+                  
+                  <!-- 🔥 DITO NAKALAGAY ANG TAMANG PANGALAN AT DISABLED BADGE -->
+                  <h2 class="lesson-title" style="margin: 0;">
+                    {{ item.lesson.gc_name }}
+                    <ion-badge color="danger" *ngIf="item.lesson.status === 'disabled'">DISABLED</ion-badge>
+                  </h2>
+                  
                   <ion-badge *ngIf="isTutor(item)" color="success" style="font-size: 0.65rem; padding: 4px 6px;">OWNER</ion-badge>
                 </div>
                 <ion-badge *ngIf="item.unread_count > 0" color="danger" class="unread-badge">
@@ -92,11 +99,14 @@
                 <ion-icon name="time-outline" color="primary" style="font-size: 1rem;"></ion-icon>
                 <span style="font-size: 0.85rem;">{{ item.lesson.next_meeting_time || 'TBA' }}</span>
               </div>
+
+              <!-- 🔥 PAALALA KAPAG DISABLED -->
+              <p *ngIf="item.lesson.status === 'disabled'" style="color: #eb445a; font-size: 0.8rem; margin-top: 8px; font-weight: 600;">
+                Reason: {{ item.lesson.disabled_reason || 'Disabled by Admin' }}
+              </p>
+
             </div>
           </div>
-
-          <!-- 🔥 TINANGGAL NA ANG MANAGE PAYMENTS BUTTON DITO -->
-
         </div>
       </div>
     </div>
@@ -130,10 +140,9 @@
       </div>
     </div>
 
-    <!-- TAB 3: PAYMENTS (Dito na mapupunta ang approvals) -->
+    <!-- TAB 3: PAYMENTS -->
     <div *ngIf="activeTab() === 'payments'">
       
-      <!-- DROPDOWN PARA SA GC -->
       <div class="input-group" style="margin-bottom: 16px;">
         <label style="font-size: 0.9rem; font-weight: 600; color: #374151;">Select Group Chat to View Payments</label>
         <select 
@@ -150,7 +159,6 @@
         </select>
       </div>
 
-      <!-- FILTER BUTTONS -->
       <div style="display: flex; gap: 8px; margin-bottom: 16px;">
         <ion-button size="small" [fill]="paymentFilter() === 'pending' ? 'solid' : 'outline'" color="warning" (click)="paymentFilter.set('pending')">Pending</ion-button>
         <ion-button size="small" [fill]="paymentFilter() === 'approved' ? 'solid' : 'outline'" color="success" (click)="paymentFilter.set('approved')">Approved</ion-button>
@@ -168,7 +176,6 @@
         <h3>No {{ paymentFilter() }} applications</h3>
       </div>
 
-      <!-- MGA APPLICATIONS -->
       <div *ngIf="selectedLessonId() && getFilteredMembers().length > 0">
         <ion-card *ngFor="let m of getFilteredMembers()" style="margin-bottom: 16px;">
           <ion-card-header>
@@ -206,7 +213,6 @@
               </div>
             </div>
 
-            <!-- KUNG REJECTED, IPAKITA ANG REASON -->
             <div *ngIf="m.status === 'rejected'">
                <p style="color: #ef4444; font-size: 0.9rem;">
                  <strong>Reason:</strong> {{ m.rejection_reason || 'No reason provided.' }}

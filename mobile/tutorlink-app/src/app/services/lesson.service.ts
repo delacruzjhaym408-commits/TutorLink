@@ -14,6 +14,8 @@ export interface Lesson {
   next_meeting_date: string | null;
   next_meeting_time: string | null;
   created_at: string;
+  status: string;
+  disabled_reason: string | null;
 }
 
 export interface Enrollment {

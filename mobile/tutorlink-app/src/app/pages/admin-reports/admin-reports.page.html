@@ -9,8 +9,9 @@
 
 <ion-content>
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
-  <ion-refresher-content></ion-refresher-content>
+    <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
+  
   <ion-segment [value]="activeTab()" (ionChange)="setActiveTab($event.detail.value)" color="dark" style="padding: 8px 16px;">
     <ion-segment-button value="post">
       <ion-label>Post Reports</ion-label>
@@ -50,7 +51,6 @@
         <div *ngIf="activeTab() === 'post' && report.reported_post_subject">
           <p>
             Reported Post: <strong>{{ report.reported_post_subject }}</strong>
-            <!-- 🔥 IDINAGDAG: Badge para sa Post Reports Count -->
             <ion-badge color="danger" style="margin-left: 8px;" *ngIf="report.total_post_reports > 1">
               ⚠️ {{ report.total_post_reports }} Reports
             </ion-badge>
@@ -102,9 +102,14 @@
           </ion-card-content>
         </ion-card>
         
-        <ion-button expand="block" color="danger" style="margin-top: 16px;" (click)="openMessagePrompt(selectedReport)">
-          <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Send Warning to Tutor
-        </ion-button>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
+          <ion-button expand="block" color="warning" (click)="openMessagePrompt(selectedReport)">
+            <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Send Warning to Tutor
+          </ion-button>
+          <ion-button expand="block" color="danger" (click)="confirmDisablePost(selectedReport.reported_post_id, selectedReport.id)">
+            <ion-icon name="ban-outline" slot="start"></ion-icon> Disable this Post
+          </ion-button>
+        </div>
       </div>
 
       <!-- KUNG USER REPORT -->
@@ -123,9 +128,14 @@
           </ion-label>
         </ion-item>
         
-        <ion-button expand="block" color="danger" style="margin-top: 16px;" (click)="openMessagePrompt(selectedReport)">
-          <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Send Warning Message
-        </ion-button>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
+          <ion-button expand="block" color="warning" (click)="openMessagePrompt(selectedReport)">
+            <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Send Warning Message
+          </ion-button>
+          <ion-button expand="block" color="danger" (click)="confirmDisableUser(selectedReport.reported_user_id, selectedReport.id)">
+            <ion-icon name="ban-outline" slot="start"></ion-icon> Disable this User
+          </ion-button>
+        </div>
       </div>
 
     </ion-content>

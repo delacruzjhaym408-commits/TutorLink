@@ -48,6 +48,29 @@ def submit_appeal(data: AppealCreate, db: Session = Depends(get_db)):
     db.refresh(appeal)
     return appeal
 
-@router.get("/appeals", response_model=list[AppealOut])
+@router.get("/appeals")
 def get_all_appeals(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    return db.query(UserAppeal).order_by(UserAppeal.created_at.desc()).all()
+    appeals = db.query(UserAppeal).order_by(UserAppeal.created_at.desc()).all()
+    result = []
+    for a in appeals:
+        user = db.query(User).filter(User.id == a.user_id).first()
+        result.append({
+            "id": a.id,
+            "user_id": a.user_id,
+            "user_name": user.full_name if user else "Unknown",
+            "email": user.email if user else "N/A",
+            "reason": a.reason,
+            "status": a.status,
+            "created_at": a.created_at
+        })
+    return result
+
+@router.delete("/appeals/{appeal_id}", status_code=204)
+def delete_appeal(appeal_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    appeal = db.query(UserAppeal).filter(UserAppeal.id == appeal_id).first()
+    if not appeal:
+        raise HTTPException(status_code=404, detail="Appeal not found")
+    
+    db.delete(appeal)
+    db.commit()
+    return None

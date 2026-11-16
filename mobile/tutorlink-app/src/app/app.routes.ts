@@ -32,7 +32,11 @@ export const routes: Routes = [
   },
 
   {
-  path: 'admin/lessons',
-  loadComponent: () => import('./pages/admin-lessons/admin-lessons.page').then(m => m.AdminLessonsPage)
+    path: 'admin/lessons',
+    loadComponent: () => import('./pages/admin-lessons/admin-lessons.page').then(m => m.AdminLessonsPage)
+  },
+  {
+    path: 'admin/appeals',
+    loadComponent: () => import('./pages/admin-appeals/admin-appeals.page').then(m => m.AdminAppealsPage)
   }
 ];

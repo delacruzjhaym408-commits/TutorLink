@@ -145,4 +145,18 @@ export class AdminPostsPage implements OnInit {
     const toast = await this.toastCtrl.create({ message: msg, duration: 2000, color });
     await toast.present();
   }
+
+    approvePost(id: number) {
+    this.adminService.approvePost(id).subscribe(() => {
+      this.showToast('Post approved', 'success');
+      this.loadPosts(); // I-reload ang listahan
+    });
+  }
+
+  rejectPost(id: number) {
+    this.adminService.rejectPost(id).subscribe(() => {
+      this.showToast('Post rejected', 'danger');
+      this.loadPosts();
+    });
+  }
 }

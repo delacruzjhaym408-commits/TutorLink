@@ -177,6 +177,9 @@ def get_my_enrollments(
 
     result = []
     for e in enrollments:
+        if e.lesson.status == "disabled":
+            continue
+
         if e.last_read_at:
             unread_count = db.query(LessonMessage).filter(
                 LessonMessage.lesson_id == e.lesson_id,
@@ -427,6 +430,10 @@ async def send_lesson_message(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson or lesson.status == "disabled":
+        raise HTTPException(status_code=403, detail="This group chat has been disabled by the admin.")
+
     if not current_user.is_active:
         raise HTTPException(
             status_code=403,

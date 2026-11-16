@@ -87,4 +87,15 @@ export class AdminService {
   getAppeals(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/admin-messages/appeals`, { headers: this.getHeaders() });
   }
+
+    approvePost(postId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/posts/${postId}/approve`, {}, { headers: this.getHeaders() });
+  }
+  rejectPost(postId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/posts/${postId}/reject`, {}, { headers: this.getHeaders() });
+  }
+
+    deleteAppeal(appealId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/admin-messages/appeals/${appealId}`, { headers: this.getHeaders() });
+  }
 }

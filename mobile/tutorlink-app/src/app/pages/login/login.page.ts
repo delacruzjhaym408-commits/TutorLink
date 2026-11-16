@@ -96,20 +96,20 @@ export class LoginPage implements OnInit {
 // Idagdag:
   async sendAppeal() {
     if (!this.appealReason.trim()) return;
+    
     this.submitting.set(true);
     this.adminService.submitAppeal(this.disabledEmail, this.appealReason).subscribe({
-      next: async () => {
+      next: () => {
         this.submitting.set(false);
         this.isDisabled.set(false);
         this.appealReason = '';
-        this.errorMessage.set('Appeal sent! Admin will review it.');
-        // Pwede mo idagdag ang ToastController dito kung meron
+        this.errorMessage.set('Appeal sent successfully! Admin will review it.');
       },
       error: (err) => {
         this.submitting.set(false);
         this.errorMessage.set(err.error?.detail || 'Failed to send appeal.');
       }
     });
-  throw new Error('Function not implemented.');
+  }
 }
-}
+

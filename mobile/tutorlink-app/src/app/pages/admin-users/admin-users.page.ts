@@ -8,7 +8,7 @@ import {
   IonRefresher, IonRefresherContent, IonBadge
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { trashOutline, banOutline, checkmarkCircleOutline } from 'ionicons/icons';
+import { trashOutline, star, peopleOutline, banOutline, checkmarkCircleOutline } from 'ionicons/icons';
 import { AdminService } from '../../services/admin.service';
 import { API_BASE_URL } from '../../config';
 
@@ -35,7 +35,7 @@ export class AdminUsersPage implements OnInit {
   searchQuery = signal('');
 
   constructor() {
-    addIcons({ trashOutline, banOutline, checkmarkCircleOutline });
+    addIcons({ trashOutline, star, peopleOutline, banOutline, checkmarkCircleOutline });
   }
 
   ngOnInit() {

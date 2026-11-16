@@ -10,7 +10,7 @@ import {
   IonAvatar, IonRefresher, IonRefresherContent
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { checkmarkCircleOutline, chatbubbleEllipsesOutline, flagOutline } from 'ionicons/icons';
+import { checkmarkCircleOutline, chatbubbleEllipsesOutline, flagOutline, banOutline } from 'ionicons/icons';
 import { AdminService } from '../../services/admin.service';
 import { API_BASE_URL } from '../../config';
 
@@ -25,7 +25,7 @@ import { API_BASE_URL } from '../../config';
     IonLabel, IonButton, IonIcon, IonBackButton, IonButtons, IonSpinner, IonBadge,
     IonSegment, IonSegmentButton, IonModal, IonTextarea,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
-    IonAvatar,  IonRefresher, IonRefresherContent
+    IonAvatar, IonRefresher, IonRefresherContent
   ],
 })
 export class AdminReportsPage implements OnInit {
@@ -45,7 +45,7 @@ export class AdminReportsPage implements OnInit {
   warningMessage = '';
 
   constructor() {
-    addIcons({ checkmarkCircleOutline, chatbubbleEllipsesOutline, flagOutline });
+    addIcons({ checkmarkCircleOutline, chatbubbleEllipsesOutline, flagOutline, banOutline });
   }
 
   ngOnInit() {
@@ -68,7 +68,6 @@ export class AdminReportsPage implements OnInit {
   loadReports() {
     this.loading.set(true);
     this.adminService.getReports().subscribe(reports => {
-      console.log("🔥 REPORTS FROM BACKEND:", reports); // I-check mo ito sa F12 Console
       this.reports.set(reports);
       this.loading.set(false);
       this.cdr.detectChanges();
@@ -101,8 +100,6 @@ export class AdminReportsPage implements OnInit {
 
   sendWarningMessage() {
     if (!this.selectedReport || !this.warningMessage.trim()) return;
-
-    console.log("🔥 SELECTED REPORT:", this.selectedReport); // I-check mo ito sa F12 Console
 
     let userId = this.selectedReport.reported_user_id;
     
@@ -158,6 +155,70 @@ export class AdminReportsPage implements OnInit {
         this.showToast('Report resolved', 'success');
       }
     });
+  }
+
+  // 🔥 DISABLE USER (Mula sa Report)
+  async confirmDisableUser(userId: number, reportId: number) {
+    const alert = await this.alertCtrl.create({
+      header: 'Disable User',
+      message: 'Are you sure you want to disable this user?',
+      inputs: [{ name: 'reason', type: 'text', placeholder: 'Reason (required)' }],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { 
+          text: 'Disable', 
+          role: 'destructive', 
+          handler: (data) => {
+            if (!data.reason || !data.reason.trim()) {
+              this.showToast('Reason is required', 'warning');
+              return false;
+            }
+            this.adminService.disableUser(userId, data.reason).subscribe({
+              next: () => {
+                this.showToast('User disabled successfully', 'success');
+                this.resolve({ id: reportId });
+                this.detailModal.dismiss();
+              },
+              error: (err) => this.showToast(err.error?.detail || 'Error disabling user', 'danger')
+            });
+            return true;
+          } 
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  // 🔥 DISABLE POST (Mula sa Report)
+  async confirmDisablePost(postId: number, reportId: number) {
+    const alert = await this.alertCtrl.create({
+      header: 'Disable Post',
+      message: 'Are you sure you want to disable this post?',
+      inputs: [{ name: 'reason', type: 'text', placeholder: 'Reason (required)' }],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { 
+          text: 'Disable', 
+          role: 'destructive', 
+          handler: (data) => {
+            if (!data.reason || !data.reason.trim()) {
+              this.showToast('Reason is required', 'warning');
+              return false;
+            }
+            this.adminService.disablePost(postId, data.reason).subscribe({
+              next: () => {
+                this.showToast('Post disabled successfully', 'success');
+                this.resolve({ id: reportId });
+                this.detailModal.dismiss();
+              },
+              error: (err) => this.showToast(err.error?.detail || 'Error disabling post', 'danger')
+            });
+            return true;
+          } 
+        }
+      ]
+    });
+    await alert.present();
   }
 
   private async showToast(message: string, color: string) {

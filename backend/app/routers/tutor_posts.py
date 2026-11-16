@@ -27,7 +27,7 @@ def create_post(
         tutor_picture=data.tutor_picture,
         post_pictures=data.post_pictures,
         gcash_number=data.gcash_number, # 🔥 IDINAGDAG ITO PARA MA-SAVE SA POST
-        status="published",
+        status="pending",
     )
     db.add(post)
     db.commit()
