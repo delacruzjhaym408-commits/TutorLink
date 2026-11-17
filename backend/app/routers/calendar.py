@@ -82,6 +82,7 @@ def book_session(
         session_date=booking.session_date,
         start_time=booking.start_time,
         end_time=booking.end_time,
+        total_amount=booking.total_amount,
         payment_proof=booking.payment_proof,
         payment_reference=booking.payment_reference,
         status="pending",
@@ -165,3 +166,38 @@ def update_session_status(
     db.commit()
     db.refresh(session)
     return session
+
+@router.get("/tutor-sessions")
+def get_tutor_sessions(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Get all 1v1 sessions booked for this tutor."""
+    if current_user.role != models.UserRole.tutor:
+        raise HTTPException(status_code=403, detail="Only tutors can access this.")
+
+    sessions = db.query(models.SessionBooking).filter(
+        models.SessionBooking.tutor_id == current_user.id
+    ).order_by(models.SessionBooking.session_date.desc(), models.SessionBooking.start_time.desc()).all()
+
+    result = []
+    for s in sessions:
+        # Kunin ang pangalan at picture ng student
+        student = db.query(models.User).filter(models.User.id == s.student_id).first()
+        
+        result.append({
+            "id": s.id,
+            "student_id": s.student_id,
+            "student_name": student.full_name if student else "Unknown Student",
+            "student_picture": student.profile_picture if student else None,
+            "subject": s.subject,
+            "session_date": s.session_date,
+            "start_time": s.start_time,
+            "end_time": s.end_time,
+            "total_amount": float(s.total_amount) if s.total_amount else 0.0,
+            "status": s.status,
+            "payment_status": s.payment_status,
+            "payment_proof": s.payment_proof,
+            "payment_reference": s.payment_reference,
+        })
+    return result

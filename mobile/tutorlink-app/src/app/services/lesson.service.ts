@@ -124,4 +124,9 @@ export class LessonService {
       { headers: this.getAuthHeaders() }
     );
   }
+
+  // Idagdag ito sa loob ng class:
+  apply1v1Session(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/sessions/apply`, data, { headers: this.getAuthHeaders() });
+  }
 }

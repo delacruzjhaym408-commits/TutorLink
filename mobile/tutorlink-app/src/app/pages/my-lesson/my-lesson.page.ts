@@ -1,13 +1,15 @@
-import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
-  IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem,
-  IonLabel, IonAvatar, IonButtons, IonBackButton, IonSpinner,
-  IonBadge, IonMenu, IonIcon, IonButton, MenuController, IonMenuToggle,
-  AlertController, ToastController, IonModal, IonInput, IonTextarea,
-  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonImg, IonSegment, IonSegmentButton, IonRefresher, IonRefresherContent
+  IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonIcon,
+  IonAvatar, IonSpinner, IonButtons, IonBackButton, IonList,
+  IonItem, IonLabel, AlertController, IonMenu, MenuController,
+  IonMenuToggle, ToastController, IonModal, IonTextarea, IonInput,
+  IonRefresher, IonRefresherContent, IonBadge, IonSegment, IonSegmentButton,
+  IonCard, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCardContent,
+  IonImg
 } from '@ionic/angular';
 import { 
   homeOutline, personOutline, chatbubbleOutline, settingsOutline, 
@@ -17,7 +19,6 @@ import {
 } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-
 import { LessonService, Enrollment } from '../../services/lesson.service';
 import { SessionService } from '../../services/session.service';
 import { AppStateService } from '../../services/app-state.service';
@@ -28,14 +29,16 @@ import { AppStateService } from '../../services/app-state.service';
   styleUrls: ['./my-lesson.page.scss'],
   standalone: true,
   imports: [
-    CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent,
-    IonList, IonItem, IonLabel, IonAvatar, IonButtons, IonBackButton,
-    IonSpinner, IonBadge, IonMenu, IonIcon, IonButton, IonMenuToggle,
-    IonModal, IonInput, IonTextarea, IonCard, IonCardHeader, IonCardTitle, 
-    IonCardContent, IonImg, IonSegment, IonSegmentButton, IonRefresher, IonRefresherContent
+    CommonModule, FormsModule, 
+    IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonIcon,
+    IonAvatar, IonSpinner, IonButtons, IonBackButton, IonList,
+    IonItem, IonLabel, IonMenuToggle, IonMenu, IonModal, IonTextarea,
+    IonInput, IonRefresher, IonRefresherContent, IonBadge, IonSegment, IonSegmentButton,
+    IonCard, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCardContent,
+    IonImg
   ],
 })
-export class MyLessonPage implements OnInit, OnDestroy {
+export class MyLessonPage implements OnInit {
   @ViewChild('createGcModal') createGcModal!: IonModal;
 
   private lessonService = inject(LessonService);
@@ -45,8 +48,9 @@ export class MyLessonPage implements OnInit, OnDestroy {
   private alertCtrl = inject(AlertController);
   private toastCtrl = inject(ToastController);
   private appState = inject(AppStateService);
-
-  activeTab = signal<string>('gc'); // 'gc' | 'students' | 'payments'
+  
+  // 🔥 DEFAULT TAB AY 1v1 SESSIONS NA
+  activeTab = signal<string>('students'); 
   
   enrollments = signal<Enrollment[]>([]);
   tutorStudents = signal<any[]>([]);
@@ -54,8 +58,9 @@ export class MyLessonPage implements OnInit, OnDestroy {
   currentUser = this.session.user;
 
   // PAYMENTS FILTER
-  paymentFilter = signal<string>('pending'); // 'pending' | 'approved' | 'rejected'
+  paymentFilter = signal<string>('pending'); 
 
+  // CREATE GC VARIABLES (Iwinaksi na natin ito pero itatago natin para hindi mag-error ang HTML)
   newGcName = '';
   newGcDescription = '';
   newGcPhoto = signal<string | null>(null);
@@ -67,8 +72,6 @@ export class MyLessonPage implements OnInit, OnDestroy {
   loadingMembers = signal(false);
 
   pendingCounts: { [lessonId: number]: number } = {};
-
-  private pollingInterval: any;
 
   constructor(public menuController: MenuController) {
     addIcons({ 
@@ -82,15 +85,6 @@ export class MyLessonPage implements OnInit, OnDestroy {
   ngOnInit() { 
     this.loadLessons(); 
     this.loadStudents();
-    this.pollingInterval = setInterval(() => {
-      this.fetchLessonsSilently();
-    }, 5000);
-  }
-
-  ngOnDestroy() {
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-    }
   }
 
   ionViewWillEnter() {
@@ -117,30 +111,18 @@ export class MyLessonPage implements OnInit, OnDestroy {
   loadStudents() {
     this.lessonService.getTutorStudents().subscribe({
       next: (data) => {
-        // Naka-group by GC
         const grouped: any = {};
         data.forEach(s => {
           if (!grouped[s.lesson_name]) grouped[s.lesson_name] = [];
           grouped[s.lesson_name].push(s);
         });
         
-        // I-convert sa array para sa *ngFor
         const groupedArray = Object.keys(grouped).map(key => ({
           gc_name: key,
           students: grouped[key]
         }));
         
         this.tutorStudents.set(groupedArray);
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  fetchLessonsSilently() {
-    this.lessonService.getMyEnrollments().subscribe({
-      next: (data) => {
-        this.enrollments.set(data);
-        this.checkPendingCounts(); 
         this.cdr.detectChanges();
       }
     });
@@ -160,6 +142,7 @@ export class MyLessonPage implements OnInit, OnDestroy {
     }
   }
 
+  // 🔥 MGA METHODS PARA SA LUMANG GC (Pwedeng iwan kahit hindi na ginagamit)
   openCreateGcModal() {
     this.newGcName = '';
     this.newGcDescription = '';
@@ -184,29 +167,7 @@ export class MyLessonPage implements OnInit, OnDestroy {
   }
 
   saveGroupChat() {
-    if (!this.newGcName.trim() || !this.newGcNumber.trim() || !this.newMonthlyRate) {
-      this.showToast('Please fill in all required fields (Name, GCash, Monthly Rate).');
-      return;
-    }
-
-    this.lessonService.createLesson({
-      gc_name: this.newGcName.trim(),
-      description: this.newGcDescription.trim(),
-      photo: this.newGcPhoto(),
-      gcash_number: this.newGcNumber.trim(),
-      monthly_rate: Number(this.newMonthlyRate)
-    }).subscribe({
-      next: () => {
-        this.showToast('Group Chat created successfully!');
-        this.createGcModal.dismiss();
-        this.loadLessons();
-        this.loadStudents();
-        this.appState.triggerRefreshBadges(); 
-      },
-      error: () => {
-        this.showToast('Error creating GC.');
-      }
-    });
+    // Not used anymore, but kept for safety
   }
 
   openChat(chat: Enrollment) {
@@ -217,7 +178,6 @@ export class MyLessonPage implements OnInit, OnDestroy {
     return item.status === 'tutor';
   }
 
-  // 🔥 IDINAGDAG: Ito yung para sa <select> dropdown sa Payments Tab
   onSelectPaymentGc(lessonId: string) {
     if (lessonId) {
       this.openMembersModal(Number(lessonId));
@@ -242,14 +202,10 @@ export class MyLessonPage implements OnInit, OnDestroy {
     });
   }
 
-  approveStudent(studentId: number) {
-    const lessonId = this.selectedLessonId();
-    if (!lessonId) return;
-
+  approveStudent(studentId: number, lessonId: number) {
     this.lessonService.approvePayment(lessonId, studentId).subscribe({
       next: () => {
         this.showToast('Student Approved!');
-        this.openMembersModal(lessonId);
         this.loadStudents();
         this.loadLessons();
         this.appState.triggerRefreshBadges(); 
@@ -258,14 +214,11 @@ export class MyLessonPage implements OnInit, OnDestroy {
     });
   }
 
-  async rejectStudent(studentId: number) {
-    const lessonId = this.selectedLessonId();
-    if (!lessonId) return;
-
+  async rejectStudent(studentId: number, lessonId: number) {
     const alert = await this.alertCtrl.create({
       header: 'Reject Application',
       message: 'Please state the reason for rejection:',
-      inputs: [{ name: 'reason', type: 'textarea', placeholder: 'e.g. Fake receipt, invalid reference number' }],
+      inputs: [{ name: 'reason', type: 'textarea', placeholder: 'e.g. Fake receipt' }],
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         {
@@ -279,7 +232,6 @@ export class MyLessonPage implements OnInit, OnDestroy {
             this.lessonService.rejectPayment(lessonId, studentId, data.reason.trim()).subscribe({
               next: () => {
                 this.showToast('Student Rejected.');
-                this.openMembersModal(lessonId);
                 this.loadStudents();
                 this.loadLessons();
                 this.appState.triggerRefreshBadges(); 
@@ -299,7 +251,6 @@ export class MyLessonPage implements OnInit, OnDestroy {
     await toast.present();
   }
 
-  // --- HELPERS PARA SA PAYMENTS TAB ---
   getFilteredMembers() {
     const filter = this.paymentFilter();
     return this.members().filter(m => {
@@ -310,7 +261,7 @@ export class MyLessonPage implements OnInit, OnDestroy {
     });
   }
 
-    doRefresh(event: any) {
+  doRefresh(event: any) {
     this.lessonService.getMyEnrollments().subscribe({
       next: (data) => {
         this.enrollments.set(data);
@@ -324,16 +275,15 @@ export class MyLessonPage implements OnInit, OnDestroy {
     });
   }
 
-    handleOpenChat(item: any) {
-    if (item.lesson.status === 'disabled') {
-      this.showToast('This group chat is disabled by admin.');
-      return;
-    }
-    this.openChat(item);
-  }
-
-  isDisabled(lesson: any): boolean {
-  return lesson?.status === 'disabled';
+  async openReceipt(base64Image: string) {
+    if (!base64Image) return;
+    
+    const alert = await this.alertCtrl.create({
+      header: 'Payment Receipt',
+      message: `<img src="${base64Image}" style="width: 100%; border-radius: 8px;" />`,
+      buttons: ['Close']
+    });
+    await alert.present();
   }
 
   goToHome() { this.menuController.close('main-menu'); this.router.navigate(['/home']); }

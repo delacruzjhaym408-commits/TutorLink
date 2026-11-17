@@ -8,7 +8,11 @@ export const routes: Routes = [
   { path: 'register', loadComponent: () => import('./pages/register/register.page').then((m) => m.RegisterPage) },
   { path: 'home', canActivate: [authGuard], loadComponent: () => import('./home/home.page').then((m) => m.HomePage) },
   { path: 'create-post', canActivate: [authGuard], loadComponent: () => import('./pages/create-post/create-post.page').then((m) => m.CreatePostPage) },
+  
+  // 🔥 MGA RUTA PARA SA POST AT TUTOR DETAILS
   { path: 'tutor-details/:id', canActivate: [authGuard], loadComponent: () => import('./pages/tutor-details/tutor-details.page').then((m) => m.TutorDetailsPage) },
+  { path: 'post-details/:id', canActivate: [authGuard], loadComponent: () => import('./pages/post-details/post-details.page').then((m) => m.PostDetailsPage) }, // 🔥 BAGONG DAGDAG ITO
+  
   { path: 'edit-post/:id', canActivate: [authGuard], loadComponent: () => import('./pages/edit-post/edit-post.page').then((m) => m.EditPostPage) },
   { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile.page').then((m) => m.ProfilePage) },
   { path: 'messages', canActivate: [authGuard], loadComponent: () => import('./pages/messages/messages.page').then((m) => m.MessagesPage) },
@@ -26,18 +30,8 @@ export const routes: Routes = [
   { path: 'admin/posts', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin-posts/admin-posts.page').then((m) => m.AdminPostsPage) },
   { path: 'admin/reports', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/admin-reports/admin-reports.page').then((m) => m.AdminReportsPage) },
   { path: 'admin-chat', canActivate: [authGuard], loadComponent: () => import('./pages/admin-chat/admin-chat.page').then((m) => m.AdminChatPage) },
-  {
-    path: 'video-call/:roomName',
-    loadComponent: () => import('./pages/video-call/video-call.page').then( m => m.VideoCallPage)
-  },
-
-  {
-    path: 'admin/lessons',
-    loadComponent: () => import('./pages/admin-lessons/admin-lessons.page').then(m => m.AdminLessonsPage)
-  },
-    { path: 'calendar', canActivate: [authGuard], loadComponent: () => import('./pages/calendar/calendar.page').then((m) => m.CalendarPage) },
-  {
-    path: 'admin/appeals',
-    loadComponent: () => import('./pages/admin-appeals/admin-appeals.page').then(m => m.AdminAppealsPage)
-  }
+  { path: 'video-call/:roomName', loadComponent: () => import('./pages/video-call/video-call.page').then( m => m.VideoCallPage) },
+  { path: 'admin/lessons', loadComponent: () => import('./pages/admin-lessons/admin-lessons.page').then(m => m.AdminLessonsPage) },
+  { path: 'calendar', canActivate: [authGuard], loadComponent: () => import('./pages/calendar/calendar.page').then((m) => m.CalendarPage) },
+  { path: 'admin/appeals', loadComponent: () => import('./pages/admin-appeals/admin-appeals.page').then(m => m.AdminAppealsPage) }
 ];

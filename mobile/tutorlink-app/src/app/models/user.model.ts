@@ -7,9 +7,12 @@ export interface AuthUser {
   description: string | null;
   description_picture: string | null;
   gcash_number: string | null;
-  hide_low_ratings?: boolean;
-  role: 'student' | 'tutor' | 'admin';
+  gcash_qr_code?: string | null;
+  role: string;
   is_active: boolean;
+  disabled_reason?: string | null;
+  disabled_at?: string | null;
+  hide_low_ratings?: boolean;
   created_at: string;
 }
 

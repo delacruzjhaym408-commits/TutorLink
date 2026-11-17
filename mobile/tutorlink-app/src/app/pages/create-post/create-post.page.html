@@ -16,83 +16,55 @@
       
       <div class="input-group">
         <label>Subject</label>
-        <ion-input
-          fill="outline"
-          type="text"
-          placeholder="e.g. Mathematics, English"
-          formControlName="subject"
-          class="custom-input"
-        ></ion-input>
-        @if (showError('subject')) {
-          <ion-text color="danger"><small>Please enter a subject.</small></ion-text>
-        }
+        <ion-input fill="outline" type="text" placeholder="e.g. Mathematics, English" formControlName="subject" class="custom-input"></ion-input>
+        @if (showError('subject')) { <ion-text color="danger"><small>Please enter a subject.</small></ion-text> }
       </div>
 
       <div class="input-row">
         <div class="input-group">
           <label>Hourly Rate (₱)</label>
-          <ion-input
-            fill="outline"
-            type="number"
-            placeholder="e.g. 150"
-            formControlName="hourly_rate"
-            min="1"
-            class="custom-input"
-          ></ion-input>
-          @if (showError('hourly_rate')) {
-            <ion-text color="danger"><small>Must be at least 1.</small></ion-text>
-          }
-        </div>
-
-        <div class="input-group">
-          <label>Per Session (₱)</label>
-          <ion-input
-            fill="outline"
-            type="number"
-            placeholder="e.g. 500"
-            formControlName="session_rate"
-            min="0"
-            class="custom-input"
-          ></ion-input>
+          <ion-input fill="outline" type="number" placeholder="e.g. 150" formControlName="hourly_rate" min="1" class="custom-input"></ion-input>
+          @if (showError('hourly_rate')) { <ion-text color="danger"><small>Must be at least 1.</small></ion-text> }
         </div>
       </div>
 
       <div class="input-group">
         <label>Education Level</label>
-        <ion-input
-          fill="outline"
-          type="text"
-          placeholder="e.g. College Graduate, Licensed"
-          formControlName="education_level"
-          class="custom-input"
-        ></ion-input>
-        @if (showError('education_level')) {
-          <ion-text color="danger"><small>Please enter your education level.</small></ion-text>
-        }
+        <ion-input fill="outline" type="text" placeholder="e.g. College Graduate, Licensed" formControlName="education_level" class="custom-input"></ion-input>
+        @if (showError('education_level')) { <ion-text color="danger"><small>Please enter your education level.</small></ion-text> }
       </div>
 
-      <!-- 🔥 IDINAGDAG: GCASH NUMBER -->
+      <!-- 🔥 GCASH NUMBER -->
       <div class="input-group">
         <label>GCash Number (for receiving payments)</label>
-        <ion-input
-          fill="outline"
-          type="text"
-          placeholder="e.g. 09123456789"
-          formControlName="gcash_number"
-          class="custom-input"
-        ></ion-input>
+        <ion-input fill="outline" type="text" placeholder="e.g. 09123456789" formControlName="gcash_number" class="custom-input"></ion-input>
+      </div>
+
+      <!-- 🔥 BAGONG DAGDAG: GCASH QR CODE -->
+      <div class="input-group">
+        <label>GCash QR Code (Optional)</label>
+        <div class="upload-box" (click)="pickQrImage()" style="text-align: center; padding: 16px; border: 2px dashed #ccc; border-radius: 8px;">
+          <img *ngIf="qrImage()" [src]="qrImage()" style="max-width: 150px; max-height: 150px; border-radius: 8px;" />
+          <div *ngIf="!qrImage()">
+            <ion-icon name="camera-outline" style="font-size: 40px; color: #666;"></ion-icon>
+            <p style="color: #666; font-size: 0.9rem;">Tap to upload QR Code</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔥 DELIVERY MODE -->
+      <div class="input-group">
+        <label>Mode of Delivery</label>
+        <ion-select formControlName="delivery_mode" fill="outline" interface="action-sheet" class="custom-input">
+          <ion-select-option value="online">Online</ion-select-option>
+          <ion-select-option value="face_to_face">Face to Face</ion-select-option>
+          <ion-select-option value="both">Both (Online & F2F)</ion-select-option>
+        </ion-select>
       </div>
 
       <div class="input-group">
         <label>Description (Optional)</label>
-        <ion-textarea
-          fill="outline"
-          placeholder="Tell students about your teaching experience..."
-          formControlName="description"
-          [autoGrow]="true"
-          rows="4"
-          class="custom-input"
-        ></ion-textarea>
+        <ion-textarea fill="outline" placeholder="Tell students about your teaching experience..." formControlName="description" [autoGrow]="true" rows="4" class="custom-input"></ion-textarea>
       </div>
 
       <!-- IMAGE UPLOAD SECTION -->
@@ -119,17 +91,9 @@
         </div>
       </div>
 
-      @if (errorMessage()) {
-        <ion-text color="danger"><p class="error-text">{{ errorMessage() }}</p></ion-text>
-      }
+      @if (errorMessage()) { <ion-text color="danger"><p class="error-text">{{ errorMessage() }}</p></ion-text> }
 
-      <ion-button
-        expand="block"
-        type="submit"
-        [disabled]="form.invalid || submitting() || uploadingImages()"
-        class="submit-btn"
-        style="margin-top: 24px;"
-      >
+      <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting() || uploadingImages()" class="submit-btn" style="margin-top: 24px;">
         <ion-spinner *ngIf="submitting()" name="crescent" slot="start"></ion-spinner>
         {{ submitting() ? 'Publishing...' : 'Publish Post' }}
       </ion-button>

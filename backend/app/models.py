@@ -76,6 +76,8 @@ class TutorPost(Base):
     description = Column(Text, nullable=True)
     post_pictures = Column(Text, nullable=True)
     gcash_number = Column(String(50), nullable=True)
+    gcash_qr_code = Column(Text, nullable=True)
+    delivery_mode = Column(String(50), nullable=False, default="online")
     rating = Column(Numeric(2, 1), nullable=False, default=5.0)
     status = Column(String(20), nullable=False, default="published")
     disabled_reason = Column(String(255), nullable=True) # 🔥 BAGONG DAGDAG
@@ -275,6 +277,7 @@ class SessionBooking(Base):
     session_date = Column(DateTime, nullable=False) # SQLAlchemy handles DATE natively if we want, but let's stick to DateTime for simplicity
     start_time = Column(String(10), nullable=False)
     end_time = Column(String(10), nullable=False)
+    total_amount = Column(Numeric(10, 2), nullable=True)
     status = Column(String(20), nullable=False, default="pending")
     payment_status = Column(String(20), nullable=False, default="unpaid")
     payment_proof = Column(Text, nullable=True)

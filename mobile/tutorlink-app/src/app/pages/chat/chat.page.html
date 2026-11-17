@@ -34,7 +34,11 @@
     <p>Loading messages...</p>
   </div>
 
-  <div 
+  <!-- 🔥 ITO ANG NAWALA: messages-container -->
+  <div class="messages-container" *ngIf="!loading()">
+    
+    <!-- 🔥 MESSAGE LOOP NA MAY CONTEXTMENU -->
+    <div 
       *ngFor="let msg of messages()" 
       class="message-row"
       [class.mine]="isMine(msg)"
@@ -88,11 +92,13 @@
       </div>
     </div>
     
+    <!-- EMPTY STATE -->
     <div *ngIf="messages().length === 0" class="ion-text-center empty-state">
       <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
       <h3>No messages yet</h3>
       <p>Say hello to start the conversation! 👋</p>
     </div>
+
   </div>
 </ion-content>
 

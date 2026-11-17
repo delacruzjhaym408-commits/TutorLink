@@ -5,7 +5,7 @@ from sqlalchemy import or_
 from datetime import datetime
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models import Lesson, Enrollment, LessonMessage, User, Conversation, Message, LessonMessageDeletion
+from app.models import Lesson, Enrollment, LessonMessage, User, Conversation, Message, LessonMessageDeletion, TutorPost
 from app.schemas import (
     LessonCreate, LessonOut, EnrollmentCreate, EnrollmentOut,
     LessonMessageCreate, LessonMessageOut, LessonUpdate, EnrollmentApplyRequest, EnrollmentStatusUpdate
@@ -93,7 +93,6 @@ def get_tutor_lessons(
 # ENROLLMENT / PAYMENT
 # ============================================================
 
-# 🔥 IDINAGDAG DITO SA TAAS PARA HINDI MA-CONFLICT SA {lesson_id}
 @router.get("/lessons/tutor/students")
 def get_tutor_students(
     current_user: User = Depends(get_current_user),
@@ -128,8 +127,63 @@ def get_tutor_students(
                 "payment_proof": e.payment_proof,
                 "payment_reference": e.payment_reference,
                 "rejection_reason": e.rejection_reason,
+                # 🔥 MGA DETALYE PARA SA 1v1 SESSION
+                "lesson_type": e.lesson_type,
+                "monthly_rate": float(e.lesson.monthly_rate) if e.lesson.monthly_rate else 0.0,
+                "next_meeting_date": e.lesson.next_meeting_date,
+                "next_meeting_time": e.lesson.next_meeting_time,
             })
     return result
+
+
+@router.post("/sessions/apply")
+def apply_1v1_session(
+    data: dict = Body(...), 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    post_id = data.get("post_id")
+    reference = data.get("reference")
+    receipt = data.get("receipt")
+    amount = data.get("amount")
+    start_time = data.get("start_time")
+    end_time = data.get("end_time")
+    session_date = data.get("session_date")
+
+    post = db.query(TutorPost).filter(TutorPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    # Gumawa ng bagong Lesson (1v1 Session) na may date at time
+    new_session = Lesson(
+        tutor_id=post.user_id,
+        gc_name=f"{post.subject} 1v1 Session",
+        description=f"1v1 Session with {current_user.full_name}",
+        monthly_rate=amount,
+        gcash_number=post.gcash_number,
+        next_meeting_date=session_date,
+        next_meeting_time=f"{start_time} - {end_time}",
+        status="active"
+    )
+    db.add(new_session)
+    db.commit()
+    db.refresh(new_session)
+
+    # Gumawa ng enrollment
+    enrollment = Enrollment(
+        student_id=current_user.id,
+        lesson_id=new_session.id,
+        status="pending_payment",
+        payment_status="pending",
+        payment_reference=reference,
+        payment_proof=receipt,
+        lesson_type="1v1"
+    )
+    db.add(enrollment)
+    db.commit()
+    db.refresh(enrollment)
+
+    return {"status": "success", "lesson_id": new_session.id, "enrollment_id": enrollment.id}
 
 
 @router.put("/enrollments/{lesson_id}/read")
@@ -177,10 +231,6 @@ def get_my_enrollments(
 
     result = []
     for e in enrollments:
-        # 🔥 TINANGGAL ANG CONTINUE PARA HINDI MAWALA SA LISTAHAN
-        # if e.lesson.status == "disabled":
-        #     continue
-
         if e.last_read_at:
             unread_count = db.query(LessonMessage).filter(
                 LessonMessage.lesson_id == e.lesson_id,
@@ -277,27 +327,16 @@ async def update_enrollment_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Tutor marks a student's enrollment as completed, enrolled, or cancelled.
-
-    SECURITY RULES:
-    - Only the tutor who owns the lesson can update enrollment status.
-    - Allowed values: "enrolled", "completed", "cancelled".
-    - "pending_payment" and "rejected" are managed by the payment flow, not this endpoint.
-    """
-    # Find the lesson
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found.")
 
-    # Only the tutor who owns this lesson can update enrollment status
     if lesson.tutor_id != current_user.id:
         raise HTTPException(
             status_code=403,
             detail="Only the tutor of this lesson can update enrollment status."
         )
 
-    # Validate status value
     allowed_statuses = ["enrolled", "completed", "cancelled"]
     if data.status not in allowed_statuses:
         raise HTTPException(
@@ -305,12 +344,9 @@ async def update_enrollment_status(
             detail=f"Status must be one of {allowed_statuses}."
         )
 
-    # Update ALL enrollments of this lesson (tutor toggling a whole group)
-    # OR update one specific student if student_id is provided in the request body.
-    # For now, we require the tutor to update ALL students in the lesson together.
     enrollments = db.query(Enrollment).filter(
         Enrollment.lesson_id == lesson_id,
-        Enrollment.status != "tutor",  # exclude the tutor's own enrollment
+        Enrollment.status != "tutor", 
     ).all()
 
     if not enrollments:
@@ -458,7 +494,6 @@ def get_lesson_messages(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # 🔥 FIX: Kunin ang IDs ng lesson messages na dinelete ng current user
     deleted_ids = set(
         row[0] for row in db.query(LessonMessageDeletion.message_id).filter(
             LessonMessageDeletion.user_id == current_user.id
@@ -472,7 +507,7 @@ def get_lesson_messages(
     result = []
     for m in messages:
         if m.id in deleted_ids:
-            continue  # 🔥 Laktawan kung dinelete ng current user
+            continue 
 
         sender = db.query(User).filter(User.id == m.sender_id).first()
         result.append({
@@ -539,8 +574,6 @@ async def send_lesson_message(
 
     for e in enrollments:
         if e.student_id != current_user.id:
-            
-            # FIX: Tamang computation ng unread
             if e.last_read_at:
                 unread = db.query(LessonMessage).filter(
                     LessonMessage.lesson_id == lesson_id,
@@ -569,10 +602,6 @@ def delete_lesson_message_for_me(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Delete a lesson (GC) message FOR THE CURRENT USER ONLY.
-    The other members still see the message.
-    """
     enrollment = db.query(Enrollment).filter(
         Enrollment.lesson_id == lesson_id,
         Enrollment.student_id == current_user.id,

@@ -74,6 +74,8 @@ class TutorPostCreate(BaseModel):
     tutor_picture: Optional[str] = Field(default=None, max_length=500)
     post_pictures: Optional[str] = None
     gcash_number: Optional[str] = None
+    gcash_qr_code: Optional[str] = None
+    delivery_mode: Optional[str] = "online"
 
 class TutorPostUpdate(BaseModel):
     subject: Optional[str] = Field(default=None, min_length=2, max_length=150)
@@ -84,6 +86,8 @@ class TutorPostUpdate(BaseModel):
     tutor_picture: Optional[str] = Field(default=None, max_length=500)
     post_pictures: Optional[str] = None
     gcash_number: Optional[str] = None
+    gcash_qr_code: Optional[str] = None
+    delivery_mode: Optional[str] = "online"
 
 class TutorPostOut(BaseModel):
     id: int
@@ -99,6 +103,8 @@ class TutorPostOut(BaseModel):
     description: Optional[str] = None
     post_pictures: Optional[str] = None
     gcash_number: Optional[str] = None
+    gcash_qr_code: Optional[str] = None
+    delivery_mode: Optional[str] = "online"
     rating: float
     status: str
     disabled_reason: Optional[str] = None # 🔥 BAGONG DAGDAG
@@ -304,6 +310,7 @@ class SessionBookingBase(BaseModel):
 
 class SessionBookingCreate(SessionBookingBase):
     tutor_id: int
+    total_amount: float
     payment_proof: Optional[str] = None
     payment_reference: Optional[str] = None
 
@@ -315,6 +322,7 @@ class SessionBookingResponse(SessionBookingBase):
     id: int
     tutor_id: int
     student_id: int
+    total_amount: float
     status: str
     payment_status: str
     payment_proof: Optional[str] = None

@@ -7,7 +7,7 @@ import {
   IonAvatar, IonSpinner, IonButtons, IonBackButton, IonList,
   IonItem, IonLabel, AlertController, IonMenu, MenuController,
   IonMenuToggle, ToastController, IonModal, IonTextarea, IonInput,
-  IonRefresher, IonRefresherContent, IonBadge, IonSegment, IonSegmentButton, IonDatetime
+  IonRefresher, IonRefresherContent, IonBadge, IonDatetime
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
@@ -20,7 +20,7 @@ import {
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Clipboard } from '@capacitor/clipboard';
-import { CalendarService, SessionBooking, TutorAvailability } from '../../services/calendar.service';
+import { CalendarService, TutorAvailability } from '../../services/calendar.service';
 import { TutorPost, TutorPostService } from '../../services/tutor-post.service';
 import { MessageService } from '../../services/message.service';
 import { SessionService } from '../../services/session.service';
@@ -37,7 +37,7 @@ import { API_BASE_URL } from '../../config';
     IonButton, IonIcon, IonAvatar, IonSpinner, IonButtons,
     IonBackButton, IonList, IonItem, IonLabel, IonBadge,
     IonMenuToggle, IonMenu, IonModal, IonTextarea, IonInput,
-    IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton, IonDatetime
+    IonRefresher, IonRefresherContent, IonDatetime
   ],
 })
 export class TutorDetailsPage implements OnInit {
@@ -57,13 +57,15 @@ export class TutorDetailsPage implements OnInit {
   private http = inject(HttpClient);
   private calendarService = inject(CalendarService);
   
-  activeApplyTab = signal<string>('gc');
   tutorAvailabilities = signal<TutorAvailability[]>([]);
   
   selectedDate = signal<string>(new Date().toISOString());
   selectedStartTime = '';
   selectedEndTime = '';
   bookingSubject = '';
+  bookingAmount = signal<number>(0);
+  bookingRef = '';
+  bookingReceipt = signal<string | null>(null); 
 
   post = signal<TutorPost | null>(null);
   tutorGallery = signal<string[]>([]);
@@ -115,8 +117,19 @@ export class TutorDetailsPage implements OnInit {
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) this.loadPost(Number(id));
-    else { this.errorMessage.set('Post ID not found'); this.loading.set(false); }
+    if (id) {
+      this.loadPost(Number(id));
+      
+      // 🔥 CHECK KUNG MAY ?apply=true SA URL
+      this.route.queryParams.subscribe(params => {
+        if (params['apply'] === 'true') {
+          setTimeout(() => { this.applyLesson(); }, 500);
+        }
+      });
+    } else {
+      this.errorMessage.set('Post ID not found');
+      this.loading.set(false);
+    }
   }
 
   private loadPost(id: number) {
@@ -139,7 +152,6 @@ export class TutorDetailsPage implements OnInit {
     });
   }
 
-  // 🔥 BAGONG METHOD: Check if the current user is allowed to review this tutor
   private checkCanReview(tutorId: number) {
     this.tutorPostService.canReviewTutor(tutorId).subscribe({
       next: (res) => {
@@ -198,105 +210,111 @@ export class TutorDetailsPage implements OnInit {
     const currentPost = this.post();
     if (!currentPost) return;
 
-    this.lessonService.getTutorLessons(currentPost.user_id).subscribe({
-      next: (lessons: Lesson[]) => this.tutorLessons.set(lessons)
-    });
-
     this.calendarService.getTutorAvailability(currentPost.user_id).subscribe({
       next: (avails) => this.tutorAvailabilities.set(avails)
     });
 
-    this.activeApplyTab.set('gc');
-    this.selectedLesson = null;
-    this.paymentRef = '';
-    this.paymentReceipt.set(null);
     this.selectedDate.set(new Date().toISOString());
     this.selectedStartTime = '';
     this.selectedEndTime = '';
     this.bookingSubject = currentPost.subject || '';
+    this.bookingAmount.set(0);
+    this.bookingRef = '';
+    this.bookingReceipt.set(null);
     
     this.paymentModal.present();
   }
 
-  onApplyTabChange(event: any) {
-    const val = event.detail.value;
-    if (typeof val === 'string') this.activeApplyTab.set(val);
+  // 🔥 COMPUTE: Auto-calculate base sa hourly rate at time duration
+  computeBookingAmount() {
+    const currentPost = this.post();
+    if (!currentPost || !this.selectedStartTime || !this.selectedEndTime) {
+      this.bookingAmount.set(0); 
+      return;
+    }
+
+    const start = new Date(`1970-01-01T${this.selectedStartTime}:00`);
+    const end = new Date(`1970-01-01T${this.selectedEndTime}:00`);
+    let diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+
+    if (diffHours <= 0) {
+      this.bookingAmount.set(0); // Invalid time (End time is before Start time)
+    } else {
+      if (diffHours < 1) diffHours = 1; // Minimum 1 hour
+      const computed = currentPost.hourly_rate * diffHours;
+      this.bookingAmount.set(computed); // I-set ang total
+    }
   }
 
-  onBookingDateChange(event: any) {
-    const val = event.detail.value;
-    if (typeof val === 'string') this.selectedDate.set(val);
+  async copyPostGcashNumber() {
+    const currentPost = this.post();
+    if (currentPost?.gcash_number) {
+      await Clipboard.write({ string: currentPost.gcash_number });
+      this.showToast('GCash Number Copied!');
+    } else { 
+      this.showToast('No GCash number to copy.'); 
+    }
   }
 
-  selectLesson(lesson: Lesson) { this.selectedLesson = lesson; }
-
-  async pickReceipt() {
+  async pickBookingReceipt() {
     try {
       const image = await Camera.getPhoto({ 
         quality: 30, allowEditing: false, resultType: CameraResultType.DataUrl, 
         source: CameraSource.Photos, width: 800, height: 800, correctOrientation: true
       });
-      if (image.dataUrl) this.paymentReceipt.set(image.dataUrl);
+      if (image.dataUrl) this.bookingReceipt.set(image.dataUrl);
     } catch (e) { this.showToast('Failed to pick image.'); }
-  }
-
-  async copyGcashNumber() {
-    if (this.selectedLesson?.gcash_number) {
-      await Clipboard.write({ string: this.selectedLesson.gcash_number });
-      this.showToast('GCash Number Copied!');
-    } else { this.showToast('No GCash number to copy.'); }
-  }
-
-  submitPayment() {
-    if (!this.selectedLesson || !this.paymentRef.trim() || !this.paymentReceipt()) {
-      this.showToast('Please select a lesson, enter reference number, and upload receipt.');
-      return;
-    }
-    this.lessonService.applyWithPayment({
-      lesson_id: this.selectedLesson.id,
-      reference_number: this.paymentRef.trim(),
-      receipt_base64: this.paymentReceipt()
-    }).subscribe({
-      next: () => {
-        this.paymentModal.dismiss();
-        this.showToast('Payment submitted! Wait for tutor approval.');
-        this.router.navigate(['/my-lesson']);
-      },
-      error: (err) => this.showToast(err.error?.detail || 'Error submitting payment.')
-    });
   }
 
   book1v1Session() {
     const currentPost = this.post();
     if (!currentPost) return;
 
+    // Validation
     if (!this.selectedDate() || !this.selectedStartTime || !this.selectedEndTime) {
       this.showToast('Please select date, start time, and end time.'); return;
     }
-    const dateOnly = this.selectedDate().split('T')[0];
-    const bookingData: SessionBooking = {
-      tutor_id: currentPost.user_id, subject: this.bookingSubject,
-      session_date: dateOnly, start_time: this.selectedStartTime, end_time: this.selectedEndTime
-    };
+    if (!this.bookingAmount() || this.bookingAmount() <= 0) {
+      this.showToast('Please select a valid time to compute the amount.'); return;
+    }
+    if (!this.bookingRef.trim() || !this.bookingReceipt()) {
+      this.showToast('Please enter reference number and upload receipt.'); return;
+    }
 
-    this.calendarService.bookSession(bookingData).subscribe({
+    // I-submit sa backend
+    this.lessonService.apply1v1Session({
+      post_id: currentPost.id,
+      reference: this.bookingRef.trim(),
+      receipt: this.bookingReceipt(),
+      amount: this.bookingAmount(),
+      session_date: this.selectedDate().split('T')[0],
+      start_time: this.selectedStartTime,
+      end_time: this.selectedEndTime
+    }).subscribe({
       next: () => {
         this.paymentModal.dismiss();
-        this.showToast('1v1 Session Booked! Check your Calendar.');
-        this.router.navigate(['/calendar']);
+        this.showToast('1v1 Session Application Submitted! Wait for tutor approval.');
+        this.router.navigate(['/my-lesson']);
       },
       error: (err) => this.showToast(err.error?.detail || 'Error booking session.')
     });
   }
 
-  setRating(stars: number) { this.newRating = stars; }
+  onBookingDateChange(event: any) {
+    const val = event.detail.value;
+    if (typeof val === 'string') {
+      this.selectedDate.set(val);
+      // 🔥 TAWAGIN ANG COMPUTE PARA MAG-UPDATE ANG TOTAL KAPAG NAGBAGO ANG PETSA
+      this.computeBookingAmount(); 
+    }
+  }
 
-  // 🔥 INAYOS: Gumagamit na ng canReview() imbes na hasConversation()
+  selectLesson(lesson: Lesson) { this.selectedLesson = lesson; }
+
   submitReview() {
     const currentPost = this.post();
     if (!currentPost) return;
     
-    // I-check muna kung allowed mag-review
     if (!this.canReview()) { 
       this.showToast(this.canReviewReason() || 'You cannot review this tutor yet.'); 
       return; 
@@ -319,10 +337,7 @@ export class TutorDetailsPage implements OnInit {
         });
         await toast.present(); 
         
-        // I-refresh ang post at stats para makita ang bagong average
         this.loadPost(currentPost.id);
-        
-        // I-refresh din ang canReview para malaman kung naka-review na
         this.checkCanReview(currentPost.user_id);
       },
       error: async (err) => {
@@ -336,7 +351,6 @@ export class TutorDetailsPage implements OnInit {
     });
   }
 
-  // 🔥 BAGONG METHOD: Ipakita ang reason kung bakit hindi pa makakapag-review
   async showReviewBlockedMessage() {
     const reason = this.canReviewReason() || 'You cannot review this tutor yet.';
     const toast = await this.toastCtrl.create({ 
@@ -379,7 +393,7 @@ export class TutorDetailsPage implements OnInit {
           if (post.user_id) {
             this.loadTutorGallery(post.user_id); 
             this.loadTutorStats(post.user_id); 
-            this.checkCanReview(post.user_id);  // 🔥 BAGO
+            this.checkCanReview(post.user_id);
           }
           event.target.complete();
         },
@@ -387,6 +401,8 @@ export class TutorDetailsPage implements OnInit {
       });
     } else event.target.complete();
   }
+
+  setRating(stars: number) { this.newRating = stars; }
 
   goToHome() { this.menuController.close('main-menu'); this.router.navigate(['/home']); }
   goToProfile() { this.menuController.close('main-menu'); this.router.navigate(['/profile']); }

@@ -20,10 +20,11 @@ export interface SessionBooking {
   session_date: string; // format: YYYY-MM-DD
   start_time: string;
   end_time: string;
+  total_amount?: number;
   status?: string;
   payment_status?: string;
-  payment_proof?: string;
-  payment_reference?: string;
+  payment_proof?: string | null; 
+  payment_reference?: string | null;
 }
 
 @Injectable({
@@ -66,5 +67,10 @@ export class CalendarService {
     if (paymentStatus) body.payment_status = paymentStatus;
     
     return this.http.patch<SessionBooking>(`${this.apiUrl}/session/${sessionId}/status`, body, { headers: this.getHeaders() });
+  }
+
+    // Shared: Kunin ang sessions para sa tutor
+  getTutorSessions(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/tutor-sessions`, { headers: this.getHeaders() });
   }
 }

@@ -26,40 +26,13 @@ def create_post(
         description=data.description,
         tutor_picture=data.tutor_picture,
         post_pictures=data.post_pictures,
-        gcash_number=data.gcash_number, # 🔥 IDINAGDAG ITO PARA MA-SAVE SA POST
+        gcash_number=data.gcash_number, 
+        delivery_mode=data.delivery_mode, # 🔥 BAGONG DAGDAG
         status="pending",
     )
     db.add(post)
     db.commit()
     db.refresh(post)
-    
-    # 🔥 AUTO-CREATE GC LOGIC (Option B: Reuse existing)
-    if data.session_rate:
-        existing_gc = db.query(Lesson).filter(
-            Lesson.tutor_id == current_user.id,
-            Lesson.gc_name == post.subject
-        ).first()
-
-        if not existing_gc:
-            new_gc = Lesson(
-                tutor_id=current_user.id,
-                gc_name=post.subject,
-                description=post.description,
-                monthly_rate=post.session_rate,
-                gcash_number=post.gcash_number, # 🔥 Galing na ito sa post na may laman na
-            )
-            db.add(new_gc)
-            db.commit()
-            db.refresh(new_gc)
-
-            enrollment = Enrollment(
-                student_id=current_user.id,
-                lesson_id=new_gc.id,
-                status="tutor",
-                payment_status="paid",
-            )
-            db.add(enrollment)
-            db.commit()
     
     post_dict = TutorPostOut.model_validate(post).model_dump()
     post_dict['tutor_name'] = current_user.full_name
@@ -76,7 +49,6 @@ def list_published_posts(
     db: Session = Depends(get_db),
     search: str | None = None,
 ):
-    # 🔥 I-join ang User at i-filter na active lang ang tutor
     query = db.query(TutorPost).join(User).filter(
         TutorPost.status == "published",
         User.is_active == True
@@ -107,7 +79,7 @@ def list_published_posts(
         lesson_ids = [l.id for l in lessons]
         learners_count = db.query(Enrollment).filter(
             Enrollment.lesson_id.in_(lesson_ids),
-            Enrollment.status == "enrolled"
+            Enrollment.status.in_(["enrolled", "completed"])
         ).count() if lesson_ids else 0
         
         total_reviews = db.query(Review).filter(Review.tutor_id == post.user_id).count()
@@ -134,7 +106,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
     lesson_ids = [l.id for l in lessons]
     learners_count = db.query(Enrollment).filter(
         Enrollment.lesson_id.in_(lesson_ids),
-        Enrollment.status == "enrolled"
+        Enrollment.status.in_(["enrolled", "completed"])
     ).count() if lesson_ids else 0
     total_reviews = db.query(Review).filter(Review.tutor_id == post.user_id).count()
     

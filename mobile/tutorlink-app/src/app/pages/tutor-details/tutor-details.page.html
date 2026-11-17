@@ -79,7 +79,6 @@
         <div class="info-text">
           <p>Hourly Rate</p>
           <h3>₱{{ post()?.hourly_rate }} / hour</h3>
-          <p style="margin-top: 4px; font-size: 0.9rem; color: #6b7280;" *ngIf="post()?.session_rate">₱{{ post()?.session_rate }} / session</p>
         </div>
       </div>
     </div>
@@ -144,123 +143,98 @@
   </ng-template>
 </ion-modal>
 
-<!-- PAYMENT MODAL -->
+<!-- 🔥 PAYMENT MODAL (1v1 Booking) -->
 <ion-modal #paymentModal>
   <ng-template>
     <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>Apply Lesson</ion-title>
+        <ion-title>1v1 Session Booking</ion-title>
         <ion-buttons slot="end"><ion-button (click)="paymentModal.dismiss()">Close</ion-button></ion-buttons>
-      </ion-toolbar>
-      
-      <ion-toolbar>
-        <ion-segment [(ngModel)]="activeApplyTab" (ionChange)="onApplyTabChange($event)">
-          <ion-segment-button value="gc">
-            <ion-label>Group Chat</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="1v1">
-            <ion-label>1v1 Session</ion-label>
-          </ion-segment-button>
-        </ion-segment>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding">
-      
-      <ng-container *ngIf="activeApplyTab() === 'gc'">
-        <h3>Select Group Chat</h3>
-        <ion-list lines="none" *ngIf="tutorLessons().length > 0; else noGc">
-          <ion-item *ngFor="let lesson of tutorLessons()" (click)="selectLesson(lesson)" [color]="selectedLesson?.id === lesson.id ? 'primary' : ''">
-            <ion-label>
-              <h2>{{ lesson.gc_name }}</h2>
-              <p>₱{{ lesson.monthly_rate || post()?.hourly_rate }} / month</p> 
-            </ion-label>
-            <ion-icon name="checkmark-circle" slot="end" *ngIf="selectedLesson?.id === lesson.id" color="success"></ion-icon>
-          </ion-item>
-        </ion-list>
-        <ng-template #noGc>
-          <div class="ion-text-center ion-padding"><p>No Group Chats available.</p></div>
-        </ng-template>
+      <h3>Available Days ni Tutor</h3>
+      <div *ngIf="tutorAvailabilities().length === 0" class="ion-text-center ion-padding" style="background: #f3f4f6; border-radius: 8px;">
+        <p style="color: #666;">Wala pang naka-set na availability si Tutor.</p>
+      </div>
+      <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px;" *ngIf="tutorAvailabilities().length > 0">
+        <ion-badge color="primary" *ngFor="let avail of tutorAvailabilities()" style="padding: 8px 12px; font-size: 0.9rem; white-space: nowrap;">
+          {{ avail.day_of_week }}: {{ avail.start_time }} - {{ avail.end_time }}
+        </ion-badge>
+      </div>
 
-        <div *ngIf="selectedLesson" style="margin-top: 24px;">
-          <ion-item lines="none" color="light" style="border-radius: 8px;">
-            <ion-label class="ion-text-wrap">
-              <h2 style="font-weight: bold; color: #3880ff;">Payment Details</h2>
-              <p>
-                <strong>GCash Number:</strong> {{ selectedLesson.gcash_number || 'Not provided' }}
-                <ion-button fill="clear" size="small" (click)="copyGcashNumber()" style="height: 20px; margin-left: 4px;">
-                  <ion-icon name="copy-outline" slot="icon-only" color="primary"></ion-icon>
-                </ion-button>
-              </p>
-              <p><strong>Amount:</strong> ₱{{ selectedLesson.monthly_rate || post()?.hourly_rate }}</p>
-            </ion-label>
-          </ion-item>
+      <h3 style="margin-top: 24px;">Pumili ng Petsa</h3>
+      <ion-datetime presentation="date" [(ngModel)]="selectedDate" (ionChange)="onBookingDateChange($event)" [firstDayOfWeek]="1" style="border-radius: 8px; border: 1px solid #ccc;"></ion-datetime>
 
-          <div class="input-group" style="margin-top: 16px;">
-            <label>GCash Reference Number</label>
-            <ion-input fill="outline" [(ngModel)]="paymentRef" placeholder="e.g., 1234 5678 9012"></ion-input>
+      <div style="display: flex; gap: 16px; margin-top: 16px;">
+        <div style="flex: 1;">
+          <label>Start Time</label>
+          <ion-input type="time" fill="outline" [(ngModel)]="selectedStartTime" (ionChange)="computeBookingAmount()"></ion-input>
+        </div>
+        <div style="flex: 1;">
+          <label>End Time</label>
+          <ion-input type="time" fill="outline" [(ngModel)]="selectedEndTime" (ionChange)="computeBookingAmount()"></ion-input>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <label>Subject</label>
+        <ion-input fill="outline" [value]="post()?.subject" readonly="true" style="opacity: 0.7;"></ion-input>
+      </div>
+
+      <ion-item lines="none" color="light" style="border-radius: 8px; margin-top: 24px;">
+        <ion-label class="ion-text-wrap">
+          <h2 style="font-weight: bold; color: #3880ff;">Payment Details</h2>
+          <p>
+            <strong>GCash Number:</strong> {{ post()?.gcash_number || 'Not provided' }}
+            <ion-button *ngIf="post()?.gcash_number" fill="clear" size="small" (click)="copyPostGcashNumber()" style="height: 20px; margin-left: 4px;">
+              <ion-icon name="copy-outline" slot="icon-only" color="primary"></ion-icon>
+            </ion-button>
+          </p>
+          <p><strong>Rate:</strong> ₱{{ post()?.hourly_rate }} / hour</p>
+        </ion-label>
+      </ion-item>
+
+      <div *ngIf="post()?.tutor_gcash" style="text-align: center; margin-top: 16px;">
+         <p style="font-size: 0.9rem; color: #666; margin-bottom: 4px;">Scan to Pay via GCash:</p>
+         <img [src]="getImageUrl(post()?.tutor_gcash)" style="max-width: 200px; border-radius: 8px; border: 1px solid #ccc;" />
+      </div>
+
+      <!-- 🔥 TOTAL AMOUNT: READONLY & AUTO-COMPUTED -->
+      <div class="input-group" style="margin-top: 16px;">
+        <label>Total Amount to Pay (₱)</label>
+        <ion-input 
+          fill="outline" 
+          type="number" 
+          [value]="bookingAmount()" 
+          readonly="true" 
+          style="font-weight: bold; color: #059669; font-size: 1.2rem;"
+        ></ion-input>
+        <small style="color: #666; font-size: 0.75rem; margin-top: 4px; display: block;">
+          (Auto-computed based on hourly rate and selected time)
+        </small>
+      </div>
+
+      <div class="input-group" style="margin-top: 16px;">
+        <label>GCash Reference Number</label>
+        <ion-input fill="outline" [(ngModel)]="bookingRef" placeholder="e.g. 1234 5678 9012"></ion-input>
+      </div>
+
+      <div class="input-group" style="margin-top: 16px;">
+        <label>Upload Receipt Screenshot</label>
+        <div class="upload-box" (click)="pickBookingReceipt()" style="text-align: center; padding: 16px; border: 2px dashed #ccc; border-radius: 8px;">
+          <img *ngIf="bookingReceipt()" [src]="bookingReceipt()" style="max-width: 100%; max-height: 200px; border-radius: 8px;" />
+          <div *ngIf="!bookingReceipt()">
+            <ion-icon name="camera-outline" style="font-size: 40px; color: #666;"></ion-icon>
+            <p style="color: #666; font-size: 0.9rem;">Tap to upload receipt</p>
           </div>
-
-          <div class="input-group" style="margin-top: 16px;">
-            <label>Upload Receipt Screenshot</label>
-            <div class="upload-box" (click)="pickReceipt()" style="text-align: center; padding: 16px; border: 2px dashed #ccc; border-radius: 8px;">
-              <img *ngIf="paymentReceipt()" [src]="paymentReceipt()" style="max-width: 100%; max-height: 200px; border-radius: 8px;" />
-              <div *ngIf="!paymentReceipt()">
-                <ion-icon name="camera-outline" style="font-size: 40px; color: #666;"></ion-icon>
-                <p style="color: #666; font-size: 0.9rem;">Tap to upload receipt</p>
-              </div>
-            </div>
-          </div>
-
-          <ion-button expand="block" color="primary" style="margin-top: 24px;" (click)="submitPayment()">
-            Submit Payment & Apply
-          </ion-button>
         </div>
-      </ng-container>
+      </div>
 
-      <ng-container *ngIf="activeApplyTab() === '1v1'">
-        <h3>Available Days ni Tutor</h3>
-        <div *ngIf="tutorAvailabilities().length === 0" class="ion-text-center ion-padding" style="background: #f3f4f6; border-radius: 8px;">
-          <p style="color: #666;">Wala pang naka-set na availability si Tutor.</p>
-        </div>
-        <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px;" *ngIf="tutorAvailabilities().length > 0">
-          <ion-badge color="primary" *ngFor="let avail of tutorAvailabilities()" style="padding: 8px 12px; font-size: 0.9rem; white-space: nowrap;">
-            {{ avail.day_of_week }}: {{ avail.start_time }} - {{ avail.end_time }}
-          </ion-badge>
-        </div>
-
-        <h3 style="margin-top: 24px;">Pumili ng Petsa</h3>
-        <ion-datetime presentation="date" [(ngModel)]="selectedDate" (ionChange)="onBookingDateChange($event)" [firstDayOfWeek]="1" style="border-radius: 8px; border: 1px solid #ccc;"></ion-datetime>
-
-        <div style="display: flex; gap: 16px; margin-top: 16px;">
-          <div style="flex: 1;">
-            <label>Start Time</label>
-            <ion-input type="time" fill="outline" [(ngModel)]="selectedStartTime"></ion-input>
-          </div>
-          <div style="flex: 1;">
-            <label>End Time</label>
-            <ion-input type="time" fill="outline" [(ngModel)]="selectedEndTime"></ion-input>
-          </div>
-        </div>
-
-        <div style="margin-top: 16px;">
-          <label>Subject</label>
-          <ion-input fill="outline" [(ngModel)]="bookingSubject"></ion-input>
-        </div>
-
-        <ion-item lines="none" color="light" style="border-radius: 8px; margin-top: 24px;">
-          <ion-label class="ion-text-wrap">
-            <h2 style="font-weight: bold; color: #3880ff;">Payment Details</h2>
-            <p><strong>GCash Number:</strong> {{ post()?.gcash_number || 'Not provided' }}</p>
-            <p><strong>Rate:</strong> ₱{{ post()?.hourly_rate }} / hour</p>
-            <p style="font-size: 0.8rem; color: #666; margin-top: 8px;">(Note: Please send the payment to this number after booking.)</p>
-          </ion-label>
-        </ion-item>
-
-        <ion-button expand="block" color="success" style="margin-top: 24px;" (click)="book1v1Session()">
-          Book 1v1 Session
-        </ion-button>
-      </ng-container>
+      <ion-button expand="block" color="success" style="margin-top: 24px;" (click)="book1v1Session()">
+        Book 1v1 Session & Submit Payment
+      </ion-button>
     </ion-content>
   </ng-template>
 </ion-modal>

@@ -12,9 +12,11 @@ export interface TutorPost {
   tutor_description_picture: string | null;
   tutor_gcash?: string | null;
   gcash_number?: string | null;
+  gcash_qr_code?: string | null; 
   subject: string;
   hourly_rate: number;
   session_rate?: number;
+  delivery_mode?: string;
   education_level: string;
   description: string | null;
   post_pictures?: string | null;
@@ -37,6 +39,8 @@ export interface TutorPostCreate {
   tutor_picture?: string | null;
   post_pictures?: string | null;
   gcash_number?: string | null;
+  gcash_qr_code?: string | null;
+  delivery_mode?: string; 
 }
 
 @Injectable({

@@ -8,7 +8,7 @@ import {
   ToastController, IonMenu, IonAvatar, MenuController, IonSpinner,
   IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent, IonToggle
 } from '@ionic/angular';
-import { personOutline, callOutline, lockClosedOutline, cameraOutline, menuOutline, homeOutline, chatbubbleOutline, bookOutline, settingsOutline, logOutOutline, mailOutline, cashOutline } from 'ionicons/icons';
+import { personOutline, callOutline, lockClosedOutline, cameraOutline, menuOutline, homeOutline, chatbubbleOutline, bookOutline, settingsOutline, logOutOutline, mailOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Router } from '@angular/router';
@@ -42,20 +42,19 @@ export class SettingsPage implements OnInit {
   user = signal<AuthUser | null>(null);
   selectedImage = signal<string | null>(null);
   selectedDescImage = signal<string | null>(null);
-  hideLowRatings = false; // 🔥 IDINAGDAG
+  hideLowRatings = false;
 
   form = this.fb.nonNullable.group({
     full_name: ['', [Validators.required, Validators.minLength(2)]],
     phone_number: [''],
     description: [''],
-    gcash_number: [''],
     current_password: [''],
     new_password: [''],
     confirm_new_password: [''],
   });
 
   constructor() {
-    addIcons({ personOutline, callOutline, lockClosedOutline, cameraOutline, menuOutline, homeOutline, chatbubbleOutline, bookOutline, settingsOutline, logOutOutline, mailOutline, cashOutline });
+    addIcons({ personOutline, callOutline, lockClosedOutline, cameraOutline, menuOutline, homeOutline, chatbubbleOutline, bookOutline, settingsOutline, logOutOutline, mailOutline });
   }
 
   ngOnInit() {
@@ -70,15 +69,12 @@ export class SettingsPage implements OnInit {
         full_name: currentUser.full_name,
         phone_number: currentUser.phone_number || '',
         description: currentUser.description || '',
-        gcash_number: currentUser.gcash_number || '',
       });
       
-      // 🔥 IDINAGDAG: Load hide_low_ratings value
       this.hideLowRatings = currentUser.hide_low_ratings || false;
     }
   }
 
-  // 🔥 BAGONG FUNCTION PARA SA TOGGLE
   toggleHideLowRatings(event: any) {
     const isChecked = event.detail.checked;
     this.hideLowRatings = isChecked;
@@ -127,10 +123,9 @@ export class SettingsPage implements OnInit {
           full_name: user.full_name,
           phone_number: user.phone_number || '',
           description: user.description || '',
-          gcash_number: user.gcash_number || '',
         });
         
-        this.hideLowRatings = user.hide_low_ratings || false; // 🔥 IDINAGDAG
+        this.hideLowRatings = user.hide_low_ratings || false;
         
         event.target.complete();
       },
@@ -192,7 +187,6 @@ export class SettingsPage implements OnInit {
     formData.append('full_name', value.full_name.trim());
     formData.append('phone_number', value.phone_number?.trim() || '');
     formData.append('description', value.description?.trim() || '');
-    formData.append('gcash_number', value.gcash_number?.trim() || '');
     
     if (value.new_password) {
       formData.append('current_password', value.current_password);

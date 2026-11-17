@@ -70,7 +70,7 @@ export class HomePage implements OnInit {
     this.loadPosts();
   }
 
-  // 🔥 IDINAGDAG: PULL TO REFRESH FUNCTION
+  // 🔥 PULL TO REFRESH FUNCTION
   doRefresh(event: any) {
     this.tutorPostService.getAllPosts(this.searchQuery).subscribe({
       next: (posts) => {
@@ -108,13 +108,16 @@ export class HomePage implements OnInit {
     await this.menuController.open();
   }
 
+  // 🔥 INAYOS: Papunta na ito sa Bagong Post Details Page
   goToTutorDetails(post: TutorPost) {
     if (post && post.id) {
-      this.router.navigate(['/tutor-details', post.id]);
+      this.router.navigate(['/post-details', post.id]);
     } else {
       console.error('Walang ID ang post na ito:', post);
     }
   }
+
+  // 🔥 ITO ANG NAWALA KANINA
   goToCreatePost() {
     this.router.navigate(['/create-post']);
   }
@@ -211,14 +214,12 @@ export class HomePage implements OnInit {
     }
   }
 
-    // 🔥 ACTIVE STATUS LOGIC
+  // 🔥 ACTIVE STATUS LOGIC
   isTutorActive(post: any): boolean {
     if (!post) return false;
     
-    // Kung may is_online flag
     if (post.is_online === true) return true;
     
-    // Fallback: Kung may last_seen_at, i-check kung within 5 minutes
     if (post.last_seen_at) {
       const lastSeen = new Date(post.last_seen_at).getTime();
       const now = new Date().getTime();

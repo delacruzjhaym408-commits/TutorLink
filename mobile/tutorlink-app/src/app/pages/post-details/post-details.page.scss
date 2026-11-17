@@ -1,0 +1,11 @@
+/* Basic styling para hindi magulo */
+.profile-card {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-bottom: 24px;
+}
+
+ion-item {
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  border-radius: 8px;
+}
