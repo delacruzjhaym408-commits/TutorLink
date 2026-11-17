@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import Optional, Dict, Any
+from datetime import datetime, date
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from app.models import User, UserRole
 
@@ -204,6 +204,9 @@ class EnrollmentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     rejection_reason: Optional[str] = None
 
+class EnrollmentStatusUpdate(BaseModel):
+    status: str = Field(..., example="completed")
+
 class LessonUpdate(BaseModel):
     gc_name: Optional[str] = None
     description: Optional[str] = None
@@ -273,3 +276,55 @@ class AppealOut(BaseModel):
     status: str
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+# --- Tutor Availability Schemas ---
+class TutorAvailabilityBase(BaseModel):
+    day_of_week: str = Field(..., example="Saturday")
+    start_time: str = Field(..., example="14:00")
+    end_time: str = Field(..., example="16:00")
+
+class TutorAvailabilityCreate(TutorAvailabilityBase):
+    pass
+
+class TutorAvailabilityResponse(TutorAvailabilityBase):
+    id: int
+    tutor_id: int
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# --- Session Booking Schemas ---
+class SessionBookingBase(BaseModel):
+    subject: str = Field(..., example="Math")
+    session_date: date = Field(..., example="2026-11-20")
+    start_time: str = Field(..., example="14:00")
+    end_time: str = Field(..., example="16:00")
+
+class SessionBookingCreate(SessionBookingBase):
+    tutor_id: int
+    payment_proof: Optional[str] = None
+    payment_reference: Optional[str] = None
+
+class SessionBookingStatusUpdate(BaseModel):
+    status: str = Field(..., example="completed") # pending, ongoing, completed, cancelled
+    payment_status: Optional[str] = Field(None, example="paid")
+
+class SessionBookingResponse(SessionBookingBase):
+    id: int
+    tutor_id: int
+    student_id: int
+    status: str
+    payment_status: str
+    payment_proof: Optional[str] = None
+    payment_reference: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    # Kung gusto mong isama ang details ng tutor at student sa response:
+    # tutor_name: Optional[str] = None
+    # student_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True

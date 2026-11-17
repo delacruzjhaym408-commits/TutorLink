@@ -3,32 +3,50 @@
     <ion-buttons slot="start"><ion-back-button defaultHref="/admin/dashboard"></ion-back-button></ion-buttons>
     <ion-title>Appeals</ion-title>
   </ion-toolbar>
+  
+  <ion-toolbar>
+    <!-- 🔥 AYOS NA ANG IONCHANGE -->
+    <ion-segment [(ngModel)]="activeTab" (ionChange)="onTabChange($event)">
+      <ion-segment-button value="pending"><ion-label>Pending</ion-label></ion-segment-button>
+      <ion-segment-button value="approved"><ion-label>Approved</ion-label></ion-segment-button>
+      <ion-segment-button value="rejected"><ion-label>Rejected</ion-label></ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <div *ngIf="appeals().length === 0" class="ion-text-center ion-padding">
-    <p>No appeals found.</p>
+  <div *ngIf="getFilteredAppeals().length === 0" class="ion-text-center ion-padding">
+    <p>No {{ activeTab() }} appeals found.</p>
   </div>
 
   <ion-list>
-    <ion-item *ngFor="let appeal of appeals()">
+    <ion-item *ngFor="let appeal of getFilteredAppeals()">
       <ion-label>
         <h2>
           {{ appeal.user_name }} 
-          <ion-badge color="warning" *ngIf="appeal.status === 'pending'">{{ appeal.status }}</ion-badge>
+          <ion-badge [color]="appeal.status === 'pending' ? 'warning' : (appeal.status === 'approved' ? 'success' : 'danger')">
+            {{ appeal.status | uppercase }}
+          </ion-badge>
         </h2>
         <p>{{ appeal.email }}</p>
         <p style="color: #666; font-style: italic;">"{{ appeal.reason }}"</p>
+        <p style="font-size: 0.7rem; color: #999;">{{ appeal.created_at | date:'medium' }}</p>
       </ion-label>
 
-      <div slot="end" style="display: flex; gap: 4px;">
-        <!-- 🔥 ENABLE BUTTON -->
-        <ion-button fill="clear" color="success" *ngIf="appeal.status === 'pending'" (click)="approveAppeal(appeal.user_id)">
+      <div slot="end" style="display: flex; gap: 4px;" *ngIf="appeal.status === 'pending'">
+        <ion-button fill="clear" color="success" (click)="approveAppeal(appeal.id)">
           <ion-icon name="checkmark-circle-outline" slot="icon-only"></ion-icon>
         </ion-button>
-
-        <!-- 🔥 DELETE BUTTON -->
-        <ion-button fill="clear" color="danger" (click)="confirmDelete(appeal)">
+        <ion-button fill="clear" color="danger" (click)="rejectAppeal(appeal.id)">
+          <ion-icon name="close-circle-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" color="medium" (click)="confirmDelete(appeal)">
+          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+      
+      <div slot="end" *ngIf="appeal.status !== 'pending'">
+        <ion-button fill="clear" color="medium" (click)="confirmDelete(appeal)">
           <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
         </ion-button>
       </div>

@@ -6,7 +6,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
   IonFooter, IonInput, IonButton, IonIcon, IonSpinner, IonModal, 
   AlertController, ToastController, IonAvatar, IonList, IonItem, IonLabel,
-  ViewWillLeave 
+  ViewWillLeave
 } from '@ionic/angular';
 import { send, sendOutline, settingsOutline, logOutOutline, createOutline, cameraOutline, personRemoveOutline, timeOutline, closeCircleOutline, callOutline, videocamOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
@@ -211,6 +211,33 @@ export class LessonChatPage implements OnInit, OnDestroy, ViewWillLeave {
     }
   }
 
+    // 🔥 BAGONG METHOD PARA SA LESSON MESSAGE DELETE
+  async deleteLessonMessage(msg: LessonMessage) {
+    if (!this.isMine(msg)) return;
+
+    const alert = await this.alertCtrl.create({
+      header: 'Delete Message',
+      message: 'Sigurado ka bang gusto mong i-delete ang message na ito? (Ikaw lang ang makakita nito — hindi mawawala sa ibang members.)',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: () => {
+            this.lessonService.deleteLessonMessage(this.lessonId, msg.id).subscribe({
+              next: () => {
+                this.messages.update((m) => m.filter((x) => x.id !== msg.id));
+                this.cdr.detectChanges();
+              },
+              error: (err) => this.showToast(err.error?.detail || 'Failed to delete message.')
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
   startCall() {
     const roomName = `TutorLink-Lesson-${this.lessonId}`;
     this.sendCallMessage("📞 Voice Call started by Tutor.", roomName);
@@ -269,6 +296,34 @@ export class LessonChatPage implements OnInit, OnDestroy, ViewWillLeave {
       },
       error: () => this.showToast('Error updating GC.')
     });
+  }
+
+    async markAsCompleted() {
+    if (!this.isCreator) return;
+
+    const alert = await this.alertCtrl.create({
+      header: 'Mark Group as Completed',
+      message: 'Markahan mo ba ang group na ito bilang COMPLETED? Makakapag-review na ang mga students pagkatapos.',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Yes, Mark Completed',
+          handler: () => {
+            this.lessonService.setEnrollmentStatus(this.lessonId, 'completed').subscribe({
+              next: () => {
+                this.showToast('Group marked as completed!');
+                this.settingsModal.dismiss();
+                this.loadLessonDetails();
+              },
+              error: (err) => {
+                this.showToast(err.error?.detail || 'Failed to mark as completed.');
+              }
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
   async confirmKick(member: any) {

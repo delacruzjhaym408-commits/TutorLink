@@ -63,8 +63,9 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "account_disabled",
-                "message": "This account has been disabled.",
-                "reason": user.disabled_reason or "No reason provided."
+                "message": "Your account has been disabled by the Admin.",
+                "reason": user.disabled_reason or "No specific reason provided.",
+                "disabled_at": user.disabled_at.isoformat() if user.disabled_at else None
             },
         )
 

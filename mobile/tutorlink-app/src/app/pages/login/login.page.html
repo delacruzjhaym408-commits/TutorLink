@@ -1,7 +1,6 @@
 <ion-content class="login-bg">
   <div class="auth-container">
     
-    <!-- BRAND HEADER -->
     <div class="brand">
       <div class="logo-circle">
         <ion-icon name="school-outline"></ion-icon>
@@ -10,7 +9,6 @@
       <p>Find the right tutor for you</p>
     </div>
 
-    <!-- LOGIN CARD -->
     <div class="auth-card">
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         
@@ -44,16 +42,23 @@
           }
         </div>
 
-        @if (errorMessage()) {
+        @if (errorMessage() && !isDisabled()) {
           <ion-text color="danger" class="error-box">
             <p>{{ errorMessage() }}</p>
           </ion-text>
         }
 
-        <!-- APPEAL BOX -->
-        <div *ngIf="isDisabled()" style="margin-top: 20px; padding: 16px; background: #ffebee; border-radius: 8px;">
-          <h4 style="margin-top: 0; color: #c62828;">Account Disabled</h4>
-          <p style="font-size: 0.9rem;">You can send an appeal to the Admin.</p>
+        <!-- 🔥 DISABLED ACCOUNT NOTIFICATION + APPEAL BOX -->
+        <div *ngIf="isDisabled()" style="margin-top: 20px; padding: 16px; background: #ffebee; border-radius: 8px; border-left: 4px solid #c62828;">
+          <h4 style="margin-top: 0; color: #c62828; display: flex; align-items: center; gap: 8px;">
+            <span>⛔ Account Disabled</span>
+          </h4>
+          <p style="font-size: 0.9rem; color: #333; margin-bottom: 8px;">
+            <strong>Reason:</strong> {{ disabledReason() }}
+          </p>
+          <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">
+            If you believe this is a mistake, you can send an appeal to the Admin.
+          </p>
           <ion-textarea 
             [(ngModel)]="appealReason" 
             [ngModelOptions]="{standalone: true}" 
@@ -61,8 +66,9 @@
             fill="outline" 
             rows="3">
           </ion-textarea>
-          <ion-button expand="block" color="danger" style="margin-top: 12px;" (click)="sendAppeal()" [disabled]="!appealReason.trim()">
-            Send Appeal to Admin
+          <ion-button expand="block" color="danger" style="margin-top: 12px;" (click)="sendAppeal()" [disabled]="!appealReason.trim() || submitting()">
+            <ion-spinner *ngIf="submitting()" name="crescent" slot="start"></ion-spinner>
+            {{ submitting() ? 'Sending...' : 'Send Appeal to Admin' }}
           </ion-button>
         </div>
 

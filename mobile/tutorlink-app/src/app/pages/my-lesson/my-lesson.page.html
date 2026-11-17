@@ -70,7 +70,7 @@
         <!-- 🔥 ANG *ngFor LOOP AY DAPAT NAKAPALIBOT SA BUONG CARD -->
         <div *ngFor="let item of enrollments()" class="lesson-card" style="display: flex; flex-direction: column; align-items: stretch; margin-bottom: 16px;" [style.opacity]="item.lesson.status === 'disabled' ? '0.6' : '1'">
           
-          <div style="display: flex; align-items: center; cursor: pointer;" (click)="item.lesson.status !== 'disabled' ? openChat(item) : null">
+          <div style="display: flex; align-items: center; cursor: pointer;" (click)="handleOpenChat(item)">
             <ion-avatar class="lesson-avatar" style="margin-right: 12px;">
               <img [src]="item.lesson.photo || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
             </ion-avatar>

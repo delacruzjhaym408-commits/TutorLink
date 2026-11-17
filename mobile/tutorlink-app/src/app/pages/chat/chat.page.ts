@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
-  IonFooter, IonInput, IonButton, IonIcon, IonSpinner, IonAvatar
+  IonFooter, IonInput, IonButton, IonIcon, IonSpinner, IonAvatar, AlertController
 } from '@ionic/angular';
 import { 
   sendOutline, callOutline, videocamOutline,
   chatbubblesOutline,
-  cameraOutline
+  cameraOutline, banOutline
 } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { Subscription } from 'rxjs';
@@ -40,6 +40,7 @@ export class ChatPage implements OnInit, OnDestroy {
   private appState = inject(AppStateService);
   private cdr = inject(ChangeDetectorRef);
   private session = inject(SessionService);
+  private alertCtrl = inject(AlertController);
 
   @ViewChild(IonContent) content!: IonContent;
 
@@ -52,11 +53,15 @@ export class ChatPage implements OnInit, OnDestroy {
   
   otherUserName = signal<string>('Chat');
   otherUserPicture = signal<string | null>(null);
+  
+  // 🔥 BAGONG SIGNALS PARA SA DISABLED STATE
+  otherUserIsActive = signal<boolean>(true);
+  otherUserDisabledReason = signal<string>('');
 
   private wsSubscription!: Subscription;
 
   constructor() {
-    addIcons({ sendOutline, callOutline, videocamOutline, chatbubblesOutline, cameraOutline });
+    addIcons({ sendOutline, callOutline, videocamOutline, chatbubblesOutline, cameraOutline, banOutline });
   }
 
   getImageUrl(pic: string | null | undefined): string {
@@ -144,7 +149,7 @@ export class ChatPage implements OnInit, OnDestroy {
   }
 
   async send() {
-    if (!this.newMessage.trim()) return;
+    if (!this.newMessage.trim() || !this.otherUserIsActive()) return;
     this.sending.set(true);
 
     this.messageService.sendMessage(this.conversationId, this.newMessage.trim()).subscribe({
@@ -155,18 +160,22 @@ export class ChatPage implements OnInit, OnDestroy {
         this.cdr.detectChanges();
         setTimeout(() => this.content?.scrollToBottom(300), 100);
       },
-      error: () => { this.sending.set(false); },
+      error: (err) => { 
+        this.sending.set(false); 
+        this.showToast(err.error?.detail || 'Error sending message.');
+      },
     });
   }
 
-  // 🔥 FIXED: CameraSource.Photos para deretso gallery
   async sendImage() {
+    if (!this.otherUserIsActive()) return;
+    
     try {
       const image = await Camera.getPhoto({
         quality: 30,
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
-        source: CameraSource.Photos, // 🔥 Deretso Gallery
+        source: CameraSource.Photos,
         width: 800,
         height: 800,
         correctOrientation: true
@@ -184,33 +193,61 @@ export class ChatPage implements OnInit, OnDestroy {
             setTimeout(() => this.content?.scrollToBottom(300), 100);
           },
           error: (err) => { 
-            console.error('Send Image Error:', err);
             this.sending.set(false); 
             this.showToast('Error: ' + (err.error?.detail || 'Server error'));
           }
         });
       }
     } catch (e) {
-      console.error('Camera cancelled or error:', e);
       this.showToast('Failed to pick image. Please check permissions.');
     }
+  }
+
+    // 🔥 BAGONG METHOD PARA SA MESSAGE DELETE
+  async deleteMessage(msg: Message) {
+    if (!this.isMine(msg)) return; // Safety: only own messages
+
+    const alert = await this.alertCtrl.create({
+      header: 'Delete Message',
+      message: 'Sigurado ka bang gusto mong i-delete ang message na ito? (Ikaw lang ang makakita nito — hindi mawawala sa kausap mo.)',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: () => {
+            this.messageService.deleteMessage(this.conversationId, msg.id).subscribe({
+              next: () => {
+                // Remove from local list
+                this.messages.update((m) => m.filter((x) => x.id !== msg.id));
+                this.cdr.detectChanges();
+              },
+              error: (err) => this.showToast(err.error?.detail || 'Failed to delete message.')
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
   private async showToast(msg: string) {
     const toast = document.createElement('ion-toast');
     toast.message = msg;
-    toast.duration = 2000;
+    toast.duration = 2500;
     toast.color = 'danger';
     document.body.appendChild(toast);
     await toast.present();
   }
 
   startCall() {
+    if (!this.otherUserIsActive()) return;
     const roomName = `TutorLink-Chat-${this.conversationId}`;
     this.sendCallMessage("📞 Voice Call", roomName);
   }
 
   startVideoCall() {
+    if (!this.otherUserIsActive()) return;
     const roomName = `TutorLink-Chat-${this.conversationId}`;
     this.sendCallMessage("🎥 Video Call", roomName);
   }

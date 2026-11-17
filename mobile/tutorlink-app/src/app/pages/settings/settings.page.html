@@ -59,8 +59,6 @@
         </ion-input>
       </div>
 
-      <!-- 🔥 TINANGGAL ANG GCASH NUMBER DITO -->
-
       <div class="input-group">
         <label>Email (Cannot be changed)</label>
         <ion-input fill="outline" [value]="user()?.email" readonly class="custom-input readonly-input">
@@ -85,6 +83,21 @@
           </div>
         </div>
       </div>
+
+      <!-- 🔥 HIDE LOW RATINGS TOGGLE (AYOS NA) -->
+      <div class="section-divider"><h3>Review Settings</h3></div>
+      
+      <ion-item lines="none" style="margin-bottom: 16px; --background: transparent;">
+        <ion-toggle 
+          [checked]="hideLowRatings" 
+          (ionChange)="toggleHideLowRatings($event)"
+          color="primary">
+          Hide Low Ratings (1 & 2 stars)
+        </ion-toggle>
+      </ion-item>
+      <p style="font-size: 0.8rem; color: #6b7280; margin-top: -10px; margin-bottom: 16px; padding-left: 4px;">
+        Hide 1- and 2-star reviews from the public (but the overall score will not change).
+      </p>
 
       <div class="section-divider"><h3>Change Password (Optional)</h3></div>
 

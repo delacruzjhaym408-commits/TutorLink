@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import {
   IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel,
-  IonMenu, IonHeader, IonToolbar, IonContent, IonList, IonItem,
+  IonMenu, IonHeader, IonToolbar, IonContent, IonList, IonItem, 
   MenuController, IonBadge, ToastController
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
   homeOutline, chatbubbleOutline, personOutline, settingsOutline,
-  bookOutline, logOutOutline, personCircleOutline
+  bookOutline, logOutOutline, personCircleOutline, calendarOutline
 } from 'ionicons/icons';
 import { Subscription } from 'rxjs';
 import { SessionService } from './services/session.service';
@@ -26,12 +26,10 @@ import { AppStateService } from './services/app-state.service';
   imports: [
     CommonModule,
     IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel,
-    IonMenu, IonHeader, IonToolbar, IonContent, IonList, IonItem,
-    IonBadge
+    IonMenu, IonHeader, IonToolbar, IonContent, IonList, IonItem, IonBadge
   ],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  // 🔥 ISANG ROUTER LANG, PUBLIC PARA MAGAMIT SA HTML
   public router = inject(Router); 
   
   private menuController = inject(MenuController);
@@ -53,10 +51,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private appStateSubscription!: Subscription;
 
   constructor() {
-    // 🔥 IDINAGDAG ANG bookOutline PARA SA ICON
     addIcons({
       homeOutline, chatbubbleOutline, personOutline, settingsOutline,
-      bookOutline, logOutOutline, personCircleOutline
+      bookOutline, logOutOutline, personCircleOutline, calendarOutline
     });
 
     this.router.events.subscribe((event) => {

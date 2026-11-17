@@ -6,7 +6,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput,
   IonTextarea, IonText, IonButtons, IonBackButton, IonIcon, 
   ToastController, IonMenu, IonAvatar, MenuController, IonSpinner,
-  IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent
+  IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent, IonToggle
 } from '@ionic/angular';
 import { personOutline, callOutline, lockClosedOutline, cameraOutline, menuOutline, homeOutline, chatbubbleOutline, bookOutline, settingsOutline, logOutOutline, mailOutline, cashOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
@@ -26,7 +26,7 @@ import { AuthUser } from '../../models/user.model';
     CommonModule, ReactiveFormsModule, IonHeader, IonToolbar, IonTitle,
     IonContent, IonButton, IonInput, IonTextarea, IonText, IonButtons,
     IonBackButton, IonIcon, IonMenu, IonAvatar, IonSpinner,
-    IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent
+    IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent, IonToggle
   ],
 })
 export class SettingsPage implements OnInit {
@@ -42,6 +42,7 @@ export class SettingsPage implements OnInit {
   user = signal<AuthUser | null>(null);
   selectedImage = signal<string | null>(null);
   selectedDescImage = signal<string | null>(null);
+  hideLowRatings = false; // 🔥 IDINAGDAG
 
   form = this.fb.nonNullable.group({
     full_name: ['', [Validators.required, Validators.minLength(2)]],
@@ -60,9 +61,8 @@ export class SettingsPage implements OnInit {
   ngOnInit() {
     const currentUser = this.session.user();
     if (currentUser) {
-    this.user.set(currentUser);
+      this.user.set(currentUser);
       
-      // IDINAGDAG: I-convert ang path para lumabas ang image preview
       this.selectedImage.set(this.getFullImageUrl(currentUser.profile_picture));
       this.selectedDescImage.set(this.getFullImageUrl(currentUser.description_picture));
       
@@ -72,10 +72,45 @@ export class SettingsPage implements OnInit {
         description: currentUser.description || '',
         gcash_number: currentUser.gcash_number || '',
       });
+      
+      // 🔥 IDINAGDAG: Load hide_low_ratings value
+      this.hideLowRatings = currentUser.hide_low_ratings || false;
     }
   }
 
-    doRefresh(event: any) {
+  // 🔥 BAGONG FUNCTION PARA SA TOGGLE
+  toggleHideLowRatings(event: any) {
+    const isChecked = event.detail.checked;
+    this.hideLowRatings = isChecked;
+    
+    const token = localStorage.getItem('access_token');
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    
+    this.http.patch(`${API_BASE_URL}/users/me/hide-ratings`, { hide_low_ratings: isChecked }, { headers }).subscribe({
+      next: async () => {
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          const u = JSON.parse(userJson);
+          u.hide_low_ratings = isChecked;
+          localStorage.setItem('user', JSON.stringify(u));
+        }
+        
+        const toast = await this.toastCtrl.create({ 
+          message: `Hide low ratings: ${isChecked ? 'ON' : 'OFF'}`, 
+          duration: 2000, 
+          color: isChecked ? 'success' : 'medium' 
+        });
+        await toast.present();
+      },
+      error: async () => {
+        this.hideLowRatings = !isChecked;
+        const toast = await this.toastCtrl.create({ message: 'Error updating settings.', duration: 2000, color: 'danger' });
+        await toast.present();
+      }
+    });
+  }
+
+  doRefresh(event: any) {
     const token = localStorage.getItem('access_token');
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     
@@ -95,6 +130,8 @@ export class SettingsPage implements OnInit {
           gcash_number: user.gcash_number || '',
         });
         
+        this.hideLowRatings = user.hide_low_ratings || false; // 🔥 IDINAGDAG
+        
         event.target.complete();
       },
       error: () => {
@@ -103,22 +140,19 @@ export class SettingsPage implements OnInit {
     });
   }
 
-  // IDINAGDAG: Function para mag-convert ng path to full URL
   getFullImageUrl(pic: string | null | undefined): string | null {
-  if (!pic) return null;
-  if (pic.startsWith('/uploads/')) {
-    return `${API_BASE_URL}${pic}`;
+    if (!pic) return null;
+    if (pic.startsWith('/uploads/')) {
+      return `${API_BASE_URL}${pic}`;
+    }
+    if (!pic.startsWith('http')) {
+      return `${API_BASE_URL}/uploads/${pic}`;
+    }
+    if (pic.includes('localhost')) {
+      return pic.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
+    }
+    return pic;
   }
-  if (!pic.startsWith('http')) {
-    return `${API_BASE_URL}/uploads/${pic}`;
-  }
-  
-  // 🔥 AYUSIN: Palitan ang lumang localhost sa API_BASE_URL
-  if (pic.includes('localhost')) {
-    return pic.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
-  }
-  return pic;
-}
 
   async openMenu() { await this.menuController.open('main-menu'); }
 
@@ -175,7 +209,6 @@ export class SettingsPage implements OnInit {
         this.session.currentUser.set(updatedUser);
         this.user.set(updatedUser);
         
-        // I-refresh ang preview pagkatapos ng update
         this.selectedImage.set(this.getFullImageUrl(updatedUser.profile_picture));
         this.selectedDescImage.set(this.getFullImageUrl(updatedUser.description_picture));
 

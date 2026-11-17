@@ -109,9 +109,12 @@ export class HomePage implements OnInit {
   }
 
   goToTutorDetails(post: TutorPost) {
-    this.router.navigate(['/tutor-details', post.id]);
+    if (post && post.id) {
+      this.router.navigate(['/tutor-details', post.id]);
+    } else {
+      console.error('Walang ID ang post na ito:', post);
+    }
   }
-
   goToCreatePost() {
     this.router.navigate(['/create-post']);
   }
@@ -206,6 +209,24 @@ export class HomePage implements OnInit {
     } catch (e) {
       return [];
     }
+  }
+
+    // 🔥 ACTIVE STATUS LOGIC
+  isTutorActive(post: any): boolean {
+    if (!post) return false;
+    
+    // Kung may is_online flag
+    if (post.is_online === true) return true;
+    
+    // Fallback: Kung may last_seen_at, i-check kung within 5 minutes
+    if (post.last_seen_at) {
+      const lastSeen = new Date(post.last_seen_at).getTime();
+      const now = new Date().getTime();
+      const diffMinutes = (now - lastSeen) / 1000 / 60;
+      return diffMinutes <= 5;
+    }
+    
+    return false;
   }
 
   private async showAlert(header: string, message: string) {

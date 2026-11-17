@@ -24,6 +24,8 @@ export interface TutorPost {
   updated_at: string;
   learners_count?: number;
   total_reviews?: number;
+  is_online?: boolean;
+  last_seen_at?: string;
 }
 
 export interface TutorPostCreate {
@@ -44,6 +46,12 @@ export class TutorPostService {
   private apiUrl = `${API_BASE_URL}/tutor-posts`;
 
   constructor(private http: HttpClient) {}
+
+  canReviewTutor(tutorId: number): Observable<{ allowed: boolean, reason: string, source: string | null }> {
+    return this.http.get<{ allowed: boolean, reason: string, source: string | null }>(
+      `${API_BASE_URL}/reviews/can-review/${tutorId}`
+    );
+  }
 
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('access_token');

@@ -7,7 +7,7 @@ import {
   IonAvatar, IonSpinner, IonButtons, IonBackButton, IonList,
   IonItem, IonLabel, AlertController, IonMenu, MenuController,
   IonMenuToggle, ToastController, IonModal, IonTextarea, IonInput,
-  IonRefresher, IonRefresherContent
+  IonRefresher, IonRefresherContent, IonBadge, IonSegment, IonSegmentButton, IonDatetime
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
@@ -20,7 +20,7 @@ import {
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Clipboard } from '@capacitor/clipboard';
-
+import { CalendarService, SessionBooking, TutorAvailability } from '../../services/calendar.service';
 import { TutorPost, TutorPostService } from '../../services/tutor-post.service';
 import { MessageService } from '../../services/message.service';
 import { SessionService } from '../../services/session.service';
@@ -35,9 +35,9 @@ import { API_BASE_URL } from '../../config';
   imports: [
     CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent,
     IonButton, IonIcon, IonAvatar, IonSpinner, IonButtons,
-    IonBackButton, IonList, IonItem, IonLabel,
+    IonBackButton, IonList, IonItem, IonLabel, IonBadge,
     IonMenuToggle, IonMenu, IonModal, IonTextarea, IonInput,
-    IonRefresher, IonRefresherContent
+    IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton, IonDatetime
   ],
 })
 export class TutorDetailsPage implements OnInit {
@@ -55,6 +55,15 @@ export class TutorDetailsPage implements OnInit {
   private toastCtrl = inject(ToastController);
   private lessonService = inject(LessonService);
   private http = inject(HttpClient);
+  private calendarService = inject(CalendarService);
+  
+  activeApplyTab = signal<string>('gc');
+  tutorAvailabilities = signal<TutorAvailability[]>([]);
+  
+  selectedDate = signal<string>(new Date().toISOString());
+  selectedStartTime = '';
+  selectedEndTime = '';
+  bookingSubject = '';
 
   post = signal<TutorPost | null>(null);
   tutorGallery = signal<string[]>([]);
@@ -62,7 +71,10 @@ export class TutorDetailsPage implements OnInit {
   loading = signal(true);
   errorMessage = signal('');
   
-  hasConversation = signal(false);
+  // 🔥 REVIEW GATING SIGNALS
+  canReview = signal(false);
+  canReviewReason = signal('');
+  canReviewSource = signal<string | null>(null);
 
   newRating = 5;
   reviewComment = '';
@@ -75,18 +87,11 @@ export class TutorDetailsPage implements OnInit {
 
   getImageUrl(pic: string | null | undefined): string {
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
-    
     if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
       return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
     }
-    
-    if (pic.startsWith('/uploads/')) {
-      return `${API_BASE_URL}${pic}`;
-    }
-    if (!pic.startsWith('http')) {
-      return `${API_BASE_URL}/uploads/${pic}`;
-    }
-    
+    if (pic.startsWith('/uploads/')) return `${API_BASE_URL}${pic}`;
+    if (!pic.startsWith('http')) return `${API_BASE_URL}/uploads/${pic}`;
     return pic;
   }
 
@@ -95,9 +100,7 @@ export class TutorDetailsPage implements OnInit {
     try {
       const images = JSON.parse(pictures);
       return images.map((img: string) => this.getImageUrl(img));
-    } catch {
-      return [];
-    }
+    } catch { return []; }
   }
 
   constructor(public menuController: MenuController) {
@@ -125,17 +128,30 @@ export class TutorDetailsPage implements OnInit {
         if (post.user_id) {
           this.loadTutorGallery(post.user_id);
           this.loadTutorStats(post.user_id);
-          this.checkConversation(post.user_id);
+          this.checkCanReview(post.user_id);
         }
       },
-      error: () => { this.errorMessage.set('Could not load tutor details.'); this.loading.set(false); this.cdr.detectChanges(); },
+      error: () => { 
+        this.errorMessage.set('Could not load tutor details.'); 
+        this.loading.set(false); 
+        this.cdr.detectChanges(); 
+      },
     });
   }
 
-  private checkConversation(tutorId: number) {
-    this.messageService.checkConversation(tutorId).subscribe({
+  // 🔥 BAGONG METHOD: Check if the current user is allowed to review this tutor
+  private checkCanReview(tutorId: number) {
+    this.tutorPostService.canReviewTutor(tutorId).subscribe({
       next: (res) => {
-        this.hasConversation.set(res.exists);
+        this.canReview.set(res.allowed);
+        this.canReviewReason.set(res.reason);
+        this.canReviewSource.set(res.source);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.canReview.set(false);
+        this.canReviewReason.set('Unable to check review eligibility.');
+        this.canReviewSource.set(null);
         this.cdr.detectChanges();
       }
     });
@@ -143,37 +159,35 @@ export class TutorDetailsPage implements OnInit {
 
   private loadTutorGallery(userId: number) {
     this.tutorPostService.getTutorGallery(userId).subscribe({
-      next: (res) => { this.tutorGallery.set(res.images || []); this.cdr.detectChanges(); }
+      next: (res) => { 
+        this.tutorGallery.set(res.images || []); 
+        this.cdr.detectChanges(); 
+      }
     });
   }
 
   private loadTutorStats(userId: number) {
     this.tutorPostService.getTutorRatingStats(userId).subscribe({
-      next: (stats) => { this.tutorStats.set(stats); this.cdr.detectChanges(); }
+      next: (stats) => { 
+        this.tutorStats.set(stats); 
+        this.cdr.detectChanges(); 
+      }
     });
   }
 
   async goToMessages() {
     const currentPost = this.post();
     if (!currentPost) return;
-
     const initialMessage = `Hi! I'm interested in your ${currentPost.subject} post.`;
     const gallery = this.parsePostPictures(currentPost.post_pictures);
     const thumbnail = gallery.length > 0 ? gallery[0] : null;
 
     this.messageService.startConversation(currentPost.user_id, {
-      initialMessage,
-      postId: currentPost.id,
-      postSubject: currentPost.subject,
-      postPicture: thumbnail,
+      initialMessage, postId: currentPost.id, postSubject: currentPost.subject, postPicture: thumbnail,
     }).subscribe({
       next: (conv: any) => this.router.navigate(['/chat', conv.id]),
       error: async (err) => {
-        if (err?.status === 401) {
-          this.session.logout();
-          this.router.navigate(['/login']);
-          return;
-        }
+        if (err?.status === 401) { this.session.logout(); this.router.navigate(['/login']); return; }
         const alert = await this.alertCtrl.create({ header: 'Oops!', message: 'You cannot message yourself.', buttons: ['OK'] });
         await alert.present();
       }
@@ -185,57 +199,52 @@ export class TutorDetailsPage implements OnInit {
     if (!currentPost) return;
 
     this.lessonService.getTutorLessons(currentPost.user_id).subscribe({
-      next: (lessons: Lesson[]) => {
-        if (lessons.length === 0) {
-          this.showToast('This tutor has no Group Chats yet.');
-          return;
-        }
-        this.tutorLessons.set(lessons);
-        this.selectedLesson = null;
-        this.paymentRef = '';
-        this.paymentReceipt.set(null);
-        this.paymentModal.present();
-      },
-      error: () => this.showToast('Error fetching tutor lessons.')
+      next: (lessons: Lesson[]) => this.tutorLessons.set(lessons)
     });
+
+    this.calendarService.getTutorAvailability(currentPost.user_id).subscribe({
+      next: (avails) => this.tutorAvailabilities.set(avails)
+    });
+
+    this.activeApplyTab.set('gc');
+    this.selectedLesson = null;
+    this.paymentRef = '';
+    this.paymentReceipt.set(null);
+    this.selectedDate.set(new Date().toISOString());
+    this.selectedStartTime = '';
+    this.selectedEndTime = '';
+    this.bookingSubject = currentPost.subject || '';
+    
+    this.paymentModal.present();
+  }
+
+  onApplyTabChange(event: any) {
+    const val = event.detail.value;
+    if (typeof val === 'string') this.activeApplyTab.set(val);
+  }
+
+  onBookingDateChange(event: any) {
+    const val = event.detail.value;
+    if (typeof val === 'string') this.selectedDate.set(val);
   }
 
   selectLesson(lesson: Lesson) { this.selectedLesson = lesson; }
 
-  // 🔥 FINAL FIX: Deretso Gallery at may error logging
   async pickReceipt() {
     try {
       const image = await Camera.getPhoto({ 
-        quality: 30,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl, 
-        source: CameraSource.Photos, // 🔥 Deretso Gallery
-        width: 800,
-        height: 800,
-        correctOrientation: true
+        quality: 30, allowEditing: false, resultType: CameraResultType.DataUrl, 
+        source: CameraSource.Photos, width: 800, height: 800, correctOrientation: true
       });
-      
-      console.log('📷 Image picked:', image);
-      
-      if (image.dataUrl) {
-        this.paymentReceipt.set(image.dataUrl);
-        console.log('✅ Receipt set successfully');
-      }
-    } catch (e) {
-      console.error('❌ Camera cancelled or error:', e);
-      this.showToast('Failed to pick image. Please check permissions.');
-    }
+      if (image.dataUrl) this.paymentReceipt.set(image.dataUrl);
+    } catch (e) { this.showToast('Failed to pick image.'); }
   }
 
   async copyGcashNumber() {
     if (this.selectedLesson?.gcash_number) {
-      await Clipboard.write({
-        string: this.selectedLesson.gcash_number
-      });
+      await Clipboard.write({ string: this.selectedLesson.gcash_number });
       this.showToast('GCash Number Copied!');
-    } else {
-      this.showToast('No GCash number to copy.');
-    }
+    } else { this.showToast('No GCash number to copy.'); }
   }
 
   submitPayment() {
@@ -243,7 +252,6 @@ export class TutorDetailsPage implements OnInit {
       this.showToast('Please select a lesson, enter reference number, and upload receipt.');
       return;
     }
-
     this.lessonService.applyWithPayment({
       lesson_id: this.selectedLesson.id,
       reference_number: this.paymentRef.trim(),
@@ -258,32 +266,85 @@ export class TutorDetailsPage implements OnInit {
     });
   }
 
+  book1v1Session() {
+    const currentPost = this.post();
+    if (!currentPost) return;
+
+    if (!this.selectedDate() || !this.selectedStartTime || !this.selectedEndTime) {
+      this.showToast('Please select date, start time, and end time.'); return;
+    }
+    const dateOnly = this.selectedDate().split('T')[0];
+    const bookingData: SessionBooking = {
+      tutor_id: currentPost.user_id, subject: this.bookingSubject,
+      session_date: dateOnly, start_time: this.selectedStartTime, end_time: this.selectedEndTime
+    };
+
+    this.calendarService.bookSession(bookingData).subscribe({
+      next: () => {
+        this.paymentModal.dismiss();
+        this.showToast('1v1 Session Booked! Check your Calendar.');
+        this.router.navigate(['/calendar']);
+      },
+      error: (err) => this.showToast(err.error?.detail || 'Error booking session.')
+    });
+  }
+
   setRating(stars: number) { this.newRating = stars; }
 
+  // 🔥 INAYOS: Gumagamit na ng canReview() imbes na hasConversation()
   submitReview() {
     const currentPost = this.post();
     if (!currentPost) return;
     
-    if (!this.hasConversation()) {
-      this.showToast('You can only rate a tutor after having a conversation.');
-      return;
+    // I-check muna kung allowed mag-review
+    if (!this.canReview()) { 
+      this.showToast(this.canReviewReason() || 'You cannot review this tutor yet.'); 
+      return; 
     }
 
     const token = localStorage.getItem('access_token');
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    this.http.post(`${API_BASE_URL}/reviews/tutor/${currentPost.user_id}`, { rating: this.newRating, comment: this.reviewComment }, { headers }).subscribe({
+    
+    this.http.post(`${API_BASE_URL}/reviews/tutor/${currentPost.user_id}`, { 
+      rating: this.newRating, 
+      comment: this.reviewComment 
+    }, { headers }).subscribe({
       next: async () => {
-        this.ratingModal.dismiss();
+        this.ratingModal.dismiss(); 
         this.reviewComment = '';
-        const toast = await this.toastCtrl.create({ message: 'Thank you for your review!', duration: 2500, color: 'success' });
-        await toast.present();
+        const toast = await this.toastCtrl.create({ 
+          message: 'Thank you for your review!', 
+          duration: 2500, 
+          color: 'success' 
+        });
+        await toast.present(); 
+        
+        // I-refresh ang post at stats para makita ang bagong average
         this.loadPost(currentPost.id);
+        
+        // I-refresh din ang canReview para malaman kung naka-review na
+        this.checkCanReview(currentPost.user_id);
       },
       error: async (err) => {
-        const toast = await this.toastCtrl.create({ message: err.error?.detail || 'Error submitting review', duration: 2500, color: 'danger' });
+        const toast = await this.toastCtrl.create({ 
+          message: err.error?.detail || 'Error submitting review', 
+          duration: 2500, 
+          color: 'danger' 
+        });
         await toast.present();
       }
     });
+  }
+
+  // 🔥 BAGONG METHOD: Ipakita ang reason kung bakit hindi pa makakapag-review
+  async showReviewBlockedMessage() {
+    const reason = this.canReviewReason() || 'You cannot review this tutor yet.';
+    const toast = await this.toastCtrl.create({ 
+      message: reason, 
+      duration: 2500, 
+      color: 'warning' 
+    });
+    await toast.present();
   }
 
   submitReport() {
@@ -293,9 +354,8 @@ export class TutorDetailsPage implements OnInit {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http.post(`${API_BASE_URL}/reports`, { reported_user_id: currentPost.user_id, reason: this.reportReason }, { headers }).subscribe({
       next: async () => {
-        this.reportModal.dismiss();
-        this.reportReason = '';
-        const toast = await this.toastCtrl.create({ message: 'Report submitted. Admin will review it.', duration: 2500, color: 'warning' });
+        this.reportModal.dismiss(); this.reportReason = '';
+        const toast = await this.toastCtrl.create({ message: 'Report submitted.', duration: 2500, color: 'warning' });
         await toast.present();
       },
       error: async (err) => {
@@ -317,19 +377,15 @@ export class TutorDetailsPage implements OnInit {
         next: (post) => {
           this.post.set(post);
           if (post.user_id) {
-            this.loadTutorGallery(post.user_id);
-            this.loadTutorStats(post.user_id);
-            this.checkConversation(post.user_id);
+            this.loadTutorGallery(post.user_id); 
+            this.loadTutorStats(post.user_id); 
+            this.checkCanReview(post.user_id);  // 🔥 BAGO
           }
           event.target.complete();
         },
-        error: () => {
-          event.target.complete();
-        }
+        error: () => event.target.complete()
       });
-    } else {
-      event.target.complete();
-    }
+    } else event.target.complete();
   }
 
   goToHome() { this.menuController.close('main-menu'); this.router.navigate(['/home']); }

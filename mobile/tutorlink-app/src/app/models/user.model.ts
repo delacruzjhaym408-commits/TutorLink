@@ -7,6 +7,7 @@ export interface AuthUser {
   description: string | null;
   description_picture: string | null;
   gcash_number: string | null;
+  hide_low_ratings?: boolean;
   role: 'student' | 'tutor' | 'admin';
   is_active: boolean;
   created_at: string;
@@ -24,3 +25,4 @@ export interface RegisterData {
   full_name: string;
   phone_number?: string | null;
 }
+

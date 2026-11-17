@@ -10,7 +10,6 @@ import { addIcons } from 'ionicons';
 import { SessionService } from '../../services/session.service';
 import { apiErrorMessage } from '../../utils/api-error';
 import { AdminService } from '../../services/admin.service';
-import { IonModal } from '@ionic/angular';
 
 @Component({
   selector: 'app-login',
@@ -28,21 +27,20 @@ export class LoginPage implements OnInit {
   private router = inject(Router);
   private session = inject(SessionService);
   private adminService = inject(AdminService);
+  
   isDisabled = signal(false);
   appealReason = '';
   disabledEmail = '';
+  disabledReason = signal('');
   submitting = signal(false);
   errorMessage = signal('');
 
-
-  
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
   constructor() {
-    // 🔥 IDINAGDAG: Ito ang kulang para gumana ang icon
     addIcons({ schoolOutline });
   }
 
@@ -71,6 +69,8 @@ export class LoginPage implements OnInit {
 
     this.submitting.set(true);
     this.errorMessage.set('');
+    this.isDisabled.set(false);
+
     try {
       const { email, password } = this.form.getRawValue();
       await this.session.login(email, password);
@@ -83,23 +83,25 @@ export class LoginPage implements OnInit {
       }
       
     } catch (error: any) {
+      // 🔥 CHECK IF ACCOUNT IS DISABLED
       if (error?.error?.detail?.code === 'account_disabled') {
-        this.errorMessage.set(`Account Disabled: ${error.error.detail.reason}`);
-        this.isDisabled.set(true);
         this.disabledEmail = this.form.getRawValue().email;
+        this.disabledReason.set(error.error.detail.reason || 'Your account has been disabled by the Admin.');
+        this.isDisabled.set(true);
       } else {
         this.errorMessage.set(apiErrorMessage(error, 'Could not log in. Please try again.'));
       }
+    } finally {
+      this.submitting.set(false);
     }
-    }
+  }
 
-// Idagdag:
   async sendAppeal() {
     if (!this.appealReason.trim()) return;
     
     this.submitting.set(true);
     this.adminService.submitAppeal(this.disabledEmail, this.appealReason).subscribe({
-      next: () => {
+      next: async () => {
         this.submitting.set(false);
         this.isDisabled.set(false);
         this.appealReason = '';
@@ -112,4 +114,3 @@ export class LoginPage implements OnInit {
     });
   }
 }
-

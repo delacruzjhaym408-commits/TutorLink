@@ -68,4 +68,8 @@ export class MessageService {
   deleteConversation(conversationId: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/conversations/${conversationId}`);
   }
+
+  deleteMessage(conversationId: number, messageId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/conversations/${conversationId}/messages/${messageId}`);
+  }
 }

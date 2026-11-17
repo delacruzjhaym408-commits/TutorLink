@@ -109,4 +109,19 @@ export class LessonService {
   getTutorStudents(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/lessons/tutor/students`, { headers: this.getAuthHeaders() });
   }
+
+  setEnrollmentStatus(lessonId: number, status: string): Observable<any> {
+    return this.http.put(
+      `${this.apiUrl}/enrollments/${lessonId}/status`,
+      { status },
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  deleteLessonMessage(lessonId: number, messageId: number): Observable<any> {
+    return this.http.delete(
+      `${this.apiUrl}/lessons/${lessonId}/messages/${messageId}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
 }

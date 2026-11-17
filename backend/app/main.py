@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
 import os
 
-from app.routers import auth, tutor_posts, users, conversations, lessons, admin, reports, uploads, reviews, admin_messages
+from app.routers import auth, tutor_posts, users, conversations, lessons, admin, reports, uploads, reviews, admin_messages, calendar
 from app.database import get_db, SessionLocal
 from app.websocket import manager
 from app.security import decode_access_token
@@ -40,6 +40,7 @@ app.include_router(reports.router)
 app.include_router(uploads.router)
 app.include_router(reviews.router)
 app.include_router(admin_messages.router)
+app.include_router(calendar.router)
 
 # ============ WEBSOCKET ENDPOINT ============
 @app.websocket("/ws")

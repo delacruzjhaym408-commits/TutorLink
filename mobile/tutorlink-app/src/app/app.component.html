@@ -47,6 +47,12 @@
             {{ totalUnreadLessons() }}
           </ion-badge>
         </ion-item>
+
+        <!-- 🔥 BAGONG DAGDAG: MY CALENDAR SA MENU -->
+        <ion-item button routerLink="/calendar" routerLinkActive="active-menu-item" (click)="navigate('/calendar')" class="menu-item">
+          <ion-icon name="calendar-outline" slot="start" color="primary"></ion-icon>
+          <ion-label>My Calendar</ion-label>
+        </ion-item>
         
         <ion-item button routerLink="/settings" routerLinkActive="active-menu-item" (click)="navigate('/settings')" class="menu-item">
           <ion-icon name="settings-outline" slot="start" color="primary"></ion-icon>
@@ -85,7 +91,6 @@
       <ion-label>Messages</ion-label>
     </ion-tab-button>
 
-    <!-- 🔥 IDINAGDAG ANG MY LESSON DITO -->
     <ion-tab-button (click)="goTo('/my-lesson')" class="tab-btn" [class.active-tab]="router.url === '/my-lesson'">
       <div class="icon-wrapper">
         <ion-icon name="book-outline"></ion-icon>
@@ -94,6 +99,12 @@
         </ion-badge>
       </div>
       <ion-label>My Lesson</ion-label>
+    </ion-tab-button>
+
+    <!-- 🔥 BAGONG DAGDAG: MY CALENDAR SA BOTTOM TAB -->
+    <ion-tab-button (click)="goTo('/calendar')" class="tab-btn" [class.active-tab]="router.url === '/calendar'">
+      <ion-icon name="calendar-outline"></ion-icon>
+      <ion-label>Calendar</ion-label>
     </ion-tab-button>
 
     <ion-tab-button (click)="goTo('/profile')" class="tab-btn" [class.active-tab]="router.url === '/profile'">

@@ -76,7 +76,11 @@ def list_published_posts(
     db: Session = Depends(get_db),
     search: str | None = None,
 ):
-    query = db.query(TutorPost).join(User).filter(TutorPost.status == "published")
+    # 🔥 I-join ang User at i-filter na active lang ang tutor
+    query = db.query(TutorPost).join(User).filter(
+        TutorPost.status == "published",
+        User.is_active == True
+    )
 
     if search:
         search_pattern = f"%{search.lower()}%"
@@ -110,31 +114,6 @@ def list_published_posts(
         
         post_dict['learners_count'] = learners_count
         post_dict['total_reviews'] = total_reviews
-        result.append(post_dict)
-    return result
-
-
-@router.get("/me", response_model=list[TutorPostOut])
-def list_my_posts(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    posts = (
-        db.query(TutorPost)
-        .filter(TutorPost.user_id == current_user.id)
-        .order_by(TutorPost.created_at.desc())
-        .all()
-    )
-    
-    result = []
-    for post in posts:
-        post_dict = TutorPostOut.model_validate(post).model_dump()
-        post_dict['tutor_name'] = current_user.full_name
-        post_dict['tutor_picture'] = current_user.profile_picture or post.tutor_picture
-        post_dict['tutor_description'] = current_user.description
-        post_dict['tutor_description_picture'] = current_user.description_picture
-        post_dict['learners_count'] = 0
-        post_dict['total_reviews'] = 0
         result.append(post_dict)
     return result
 

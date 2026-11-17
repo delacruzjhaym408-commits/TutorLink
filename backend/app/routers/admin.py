@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from sqlalchemy import or_
 from datetime import datetime
 from pydantic import BaseModel
@@ -10,7 +10,7 @@ from app.database import get_db
 from app.dependencies import require_admin
 from app.models import (
     User, TutorPost, Report, Conversation, Message,
-    Enrollment, Review, AdminMessage, Lesson, LessonMessage)
+    Enrollment, Review, AdminMessage, Lesson, LessonMessage, UserAppeal)
 from sqlalchemy import func
 from app.schemas import UserOut, TutorPostOut, ReportOut, user_to_out
 
@@ -26,7 +26,7 @@ def get_all_users(current_user: User = Depends(require_admin), db: Session = Dep
     users = db.query(User).all()
     return [user_to_out(u) for u in users]
 
-# 🔥 BAGONG ENDPOINT: Disable User
+# 🔥 DISABLE USER (AUTO-DISABLE POSTS AND LESSONS)
 @router.put("/users/{user_id}/disable", response_model=UserOut)
 def disable_user(
     user_id: int, 
@@ -40,13 +40,18 @@ def disable_user(
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot disable your own admin account")
     
+    # 1. I-disable ang account
     user.is_active = False
-    lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
-    for lesson in lessons:
-        lesson.status = "disabled"
-        lesson.disabled_reason = "Tutor account disabled"
-    
-    # 🔥 AUTO-DISABLE ALL GCs
+    user.disabled_reason = data.reason.strip()
+    user.disabled_at = datetime.now()
+
+    # 2. I-disable ang lahat ng Posts ng user
+    posts = db.query(TutorPost).filter(TutorPost.user_id == user.id).all()
+    for post in posts:
+        post.status = "disabled"
+        post.disabled_reason = "Tutor account disabled"
+
+    # 3. I-disable ang lahat ng Group Chats (Lessons) ng user
     lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
     for lesson in lessons:
         lesson.status = "disabled"
@@ -56,7 +61,7 @@ def disable_user(
     db.refresh(user)
     return user_to_out(user)
 
-# 🔥 BAGONG ENDPOINT: Enable User
+# 🔥 ENABLE USER (AUTO-ENABLE POSTS AND LESSONS)
 @router.put("/users/{user_id}/enable", response_model=UserOut)
 def enable_user(
     user_id: int, 
@@ -67,13 +72,18 @@ def enable_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # 1. I-enable ang account
     user.is_active = True
-    lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
-    for lesson in lessons:
-        lesson.status = "active"
-        lesson.disabled_reason = None
+    user.disabled_reason = None
+    user.disabled_at = None
 
-    # 🔥 AUTO-ENABLE ALL GCs
+    # 2. I-enable ang lahat ng Posts
+    posts = db.query(TutorPost).filter(TutorPost.user_id == user.id).all()
+    for post in posts:
+        post.status = "published"
+        post.disabled_reason = None
+
+    # 3. I-enable ang lahat ng Group Chats
     lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
     for lesson in lessons:
         lesson.status = "active"
@@ -92,7 +102,6 @@ def delete_user(user_id: int, current_user: User = Depends(require_admin), db: S
         raise HTTPException(status_code=400, detail="You cannot delete your own admin account")
     
     try:
-        # 1. Delete Conversations & Messages
         convs = db.query(Conversation).filter(
             or_(Conversation.participant1_id == user_id, Conversation.participant2_id == user_id)
         ).all()
@@ -100,34 +109,24 @@ def delete_user(user_id: int, current_user: User = Depends(require_admin), db: S
             db.query(Message).filter(Message.conversation_id == c.id).delete()
             db.delete(c)
         
-        # 2. Delete Enrollments
         db.query(Enrollment).filter(Enrollment.student_id == user_id).delete()
-        
-        # 3. Delete Reports
         db.query(Report).filter(Report.reporter_id == user_id).delete()
         db.query(Report).filter(Report.reported_user_id == user_id).delete()
-        
-        # 4. Delete Reviews
         db.query(Review).filter(Review.tutor_id == user_id).delete()
         db.query(Review).filter(Review.reviewer_id == user_id).delete()
-        
-        # 5. Delete Admin Messages
         db.query(AdminMessage).filter(AdminMessage.user_id == user_id).delete()
         
-        # 6. Delete Posts
         posts = db.query(TutorPost).filter(TutorPost.user_id == user_id).all()
         for p in posts:
             db.query(Report).filter(Report.reported_post_id == p.id).delete()
             db.delete(p)
         
-        # 7. Delete Lessons
         lessons = db.query(Lesson).filter(Lesson.tutor_id == user_id).all()
         for l in lessons:
             db.query(LessonMessage).filter(LessonMessage.lesson_id == l.id).delete()
             db.query(Enrollment).filter(Enrollment.lesson_id == l.id).delete()
             db.delete(l)
         
-        # 8. Delete User
         db.delete(user)
         db.commit()
     except Exception as e:
@@ -310,7 +309,12 @@ def trigger_automatic_disable(current_user: User = Depends(require_admin), db: S
             tutor.disabled_reason = "Automatically disabled: Inactive for 1 month."
             tutor.disabled_at = datetime.now()
             
-            # 🔥 AUTO-DISABLE ALL GCs
+            # Auto-disable posts and lessons
+            posts = db.query(TutorPost).filter(TutorPost.user_id == tutor.id).all()
+            for post in posts:
+                post.status = "disabled"
+                post.disabled_reason = "Tutor automatically disabled"
+                
             lessons = db.query(Lesson).filter(Lesson.tutor_id == tutor.id).all()
             for lesson in lessons:
                 lesson.status = "disabled"
@@ -328,7 +332,11 @@ def trigger_automatic_disable(current_user: User = Depends(require_admin), db: S
                     user.disabled_reason = f"Automatically disabled: Received {count} reports."
                     user.disabled_at = datetime.now()
                     
-                    # 🔥 AUTO-DISABLE ALL GCs
+                    posts = db.query(TutorPost).filter(TutorPost.user_id == user.id).all()
+                    for post in posts:
+                        post.status = "disabled"
+                        post.disabled_reason = "Tutor automatically disabled"
+
                     lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
                     for lesson in lessons:
                         lesson.status = "disabled"
@@ -362,3 +370,76 @@ def reject_post(post_id: int, current_user: User = Depends(require_admin), db: S
     db.commit()
     db.refresh(post)
     return post
+
+# ==========================================
+# 🔥 APPEALS ENDPOINTS
+# ==========================================
+
+@router.get("/appeals")
+def get_all_appeals(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    # Kunin lahat ng appeals, pinakabago (latest) ang nasa unahan
+    appeals = db.query(UserAppeal).order_by(UserAppeal.created_at.desc()).all()
+    result = []
+    for a in appeals:
+        user = db.query(User).filter(User.id == a.user_id).first()
+        result.append({
+            "id": a.id,
+            "user_id": a.user_id,
+            "user_name": user.full_name if user else "Unknown",
+            "email": user.email if user else "Unknown",
+            "reason": a.reason,
+            "status": a.status,
+            "created_at": a.created_at
+        })
+    return result
+
+class AppealActionRequest(BaseModel):
+    reason: Optional[str] = None
+
+@router.put("/appeals/{appeal_id}/approve")
+def approve_appeal(appeal_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    appeal = db.query(UserAppeal).filter(UserAppeal.id == appeal_id).first()
+    if not appeal:
+        raise HTTPException(status_code=404, detail="Appeal not found")
+    
+    # I-update ang appeal status
+    appeal.status = "approved"
+    
+    # I-enable ang user
+    user = db.query(User).filter(User.id == appeal.user_id).first()
+    if user:
+        user.is_active = True
+        user.disabled_reason = None
+        user.disabled_at = None
+        
+        # I-enable ang posts at lessons
+        posts = db.query(TutorPost).filter(TutorPost.user_id == user.id).all()
+        for post in posts:
+            post.status = "published"
+            post.disabled_reason = None
+        lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
+        for lesson in lessons:
+            lesson.status = "active"
+            lesson.disabled_reason = None
+            
+    db.commit()
+    return {"status": "approved"}
+
+@router.put("/appeals/{appeal_id}/reject")
+def reject_appeal(appeal_id: int, data: AppealActionRequest, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    appeal = db.query(UserAppeal).filter(UserAppeal.id == appeal_id).first()
+    if not appeal:
+        raise HTTPException(status_code=404, detail="Appeal not found")
+    
+    appeal.status = "rejected"
+    db.commit()
+    return {"status": "rejected"}
+
+@router.delete("/appeals/{appeal_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_appeal(appeal_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    appeal = db.query(UserAppeal).filter(UserAppeal.id == appeal_id).first()
+    if not appeal:
+        raise HTTPException(status_code=404, detail="Appeal not found")
+    db.delete(appeal)
+    db.commit()
+    return None

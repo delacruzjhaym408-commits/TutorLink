@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models import User, Review, TutorPost, Conversation
+from app.models import User, Review, TutorPost, Conversation, SessionBooking, Enrollment, Lesson
 from app.schemas import ReviewCreate, ReviewOut
 
 router = APIRouter(prefix="/reviews", tags=["Reviews"])
@@ -13,18 +13,23 @@ def create_review(tutor_id: int, data: ReviewCreate, current_user: User = Depend
     if current_user.id == tutor_id:
         raise HTTPException(status_code=400, detail="You cannot review yourself.")
     
-    # 🔥 RESTRICTION: Kailangan may existing conversation (nag-usap sila)
-    has_conversation = db.query(Conversation).filter(
-        or_(
-            and_(Conversation.participant1_id == current_user.id, Conversation.participant2_id == tutor_id),
-            and_(Conversation.participant1_id == tutor_id, Conversation.participant2_id == current_user.id),
-        )
+    # 🔥 REVIEW GATING LOGIC: Kailangan may completed na 1v1 session O completed na GC enrollment
+    completed_1v1 = db.query(SessionBooking).filter(
+        SessionBooking.tutor_id == tutor_id,
+        SessionBooking.student_id == current_user.id,
+        SessionBooking.status == 'completed'
     ).first()
 
-    if not has_conversation:
+    completed_gc = db.query(Enrollment).join(Lesson).filter(
+        Lesson.tutor_id == tutor_id,
+        Enrollment.student_id == current_user.id,
+        Enrollment.status == 'completed'
+    ).first()
+
+    if not completed_1v1 and not completed_gc:
         raise HTTPException(
             status_code=403, 
-            detail="You can only rate a tutor after you have messaged them or had a session."
+            detail="You can only rate a tutor after completing a session with them."
         )
 
     review = Review(
@@ -37,6 +42,7 @@ def create_review(tutor_id: int, data: ReviewCreate, current_user: User = Depend
     db.commit()
     db.refresh(review)
 
+    # I-update ang average rating sa lahat ng posts ng tutor
     posts = db.query(TutorPost).filter(TutorPost.user_id == tutor_id).all()
     if posts:
         all_reviews = db.query(Review).filter(Review.tutor_id == tutor_id).all()
@@ -56,11 +62,98 @@ def create_review(tutor_id: int, data: ReviewCreate, current_user: User = Depend
         "created_at": review.created_at
     }
 
+@router.get("/can-review/{tutor_id}")
+def can_review_tutor(
+    tutor_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Check if the current user can review a tutor.
+
+    Rules:
+    - Must have a COMPLETED 1v1 session with the tutor, OR
+    - Must have a COMPLETED GC enrollment with the tutor.
+    - Cannot review yourself.
+    - Cannot review the same tutor twice (one review per student-tutor pair).
+    """
+    # Cannot review yourself
+    if current_user.id == tutor_id:
+        return {
+            "allowed": False,
+            "reason": "You cannot review yourself.",
+            "source": None,
+        }
+
+    # Check if tutor exists
+    tutor = db.query(User).filter(User.id == tutor_id).first()
+    if not tutor:
+        raise HTTPException(status_code=404, detail="Tutor not found.")
+
+    # Check if already reviewed
+    existing_review = db.query(Review).filter(
+        Review.tutor_id == tutor_id,
+        Review.reviewer_id == current_user.id,
+    ).first()
+    if existing_review:
+        return {
+            "allowed": False,
+            "reason": "You have already reviewed this tutor.",
+            "source": None,
+        }
+
+    # Check for completed 1v1 session
+    completed_1v1 = db.query(SessionBooking).filter(
+        SessionBooking.tutor_id == tutor_id,
+        SessionBooking.student_id == current_user.id,
+        SessionBooking.status == "completed",
+    ).first()
+
+    if completed_1v1:
+        return {
+            "allowed": True,
+            "reason": "You have a completed 1v1 session with this tutor.",
+            "source": "1v1",
+        }
+
+    # Check for completed GC enrollment
+    completed_gc = db.query(Enrollment).join(Lesson).filter(
+        Lesson.tutor_id == tutor_id,
+        Enrollment.student_id == current_user.id,
+        Enrollment.status == "completed",
+    ).first()
+
+    if completed_gc:
+        return {
+            "allowed": True,
+            "reason": "You have a completed group session with this tutor.",
+            "source": "gc",
+        }
+
+    # No completed session
+    return {
+        "allowed": False,
+        "reason": "You can only rate a tutor after completing a session with them.",
+        "source": None,
+    }
+
 @router.get("/tutor/{tutor_id}/stats")
 def get_tutor_rating_stats(tutor_id: int, db: Session = Depends(get_db)):
-    reviews = db.query(Review).filter(Review.tutor_id == tutor_id).all()
+    tutor = db.query(User).filter(User.id == tutor_id).first()
+    if not tutor:
+        raise HTTPException(status_code=404, detail="Tutor not found.")
+
+    reviews_query = db.query(Review).filter(Review.tutor_id == tutor_id)
+
+    # 🔥 KUNG NAKA-HIDE ANG LOW RATINGS, I-EXCLUDE ANG 1 AT 2 STARS SA COUNTS
+    if tutor.hide_low_ratings:
+        reviews_query = reviews_query.filter(Review.rating > 2)
+
+    reviews = reviews_query.all()
+    
     if not reviews:
         return {"average": 5.0, "total_reviews": 0}
+        
     total_stars = sum([r.rating for r in reviews])
     average = total_stars / len(reviews)
     return {"average": round(average, 1), "total_reviews": len(reviews)}

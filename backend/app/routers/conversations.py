@@ -5,7 +5,7 @@ from datetime import datetime
 
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models import Conversation, Message, User
+from app.models import Conversation, Message, User, MessageDeletion
 from app.schemas import (
     ConversationOut, ConversationCreate, MessageOut, MessageCreate
 )
@@ -23,6 +23,15 @@ async def create_or_get_conversation(
     if data.participant_id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot message yourself")
 
+    if not current_user.is_active:
+        raise HTTPException(status_code=403, detail="Your account is disabled. You cannot start conversations.")
+
+    other_user = db.query(User).filter(User.id == data.participant_id).first()
+    if not other_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not other_user.is_active:
+        raise HTTPException(status_code=403, detail="This user is currently disabled. You cannot message them.")
+
     existing = db.query(Conversation).filter(
         or_(
             and_(Conversation.participant1_id == current_user.id,
@@ -33,6 +42,13 @@ async def create_or_get_conversation(
     ).first()
 
     if existing:
+        # 🔥 FIX: Kung dinelete ng current user, i-un-delete para bumalik sa listahan.
+        if existing.participant1_id == current_user.id:
+            existing.is_deleted_by_p1 = False
+        elif existing.participant2_id == current_user.id:
+            existing.is_deleted_by_p2 = False
+        db.commit()
+        db.refresh(existing)
         return _build_conversation_out(existing, current_user, db)
 
     conversation = Conversation(
@@ -96,7 +112,7 @@ def _build_conversation_out(conv: Conversation, current_user: User, db: Session)
         "other_user_name": other_user.full_name if other_user else "Unknown User",
         "other_user_picture": other_user.profile_picture if other_user else None,
         "lastMessage": last_msg.content if last_msg else "No messages yet",
-        "last_sender_id": last_msg.sender_id if last_msg else None, # 🔥 IDINAGDAG
+        "last_sender_id": last_msg.sender_id if last_msg else None,
         "unread_count": 0,
     }
 
@@ -152,7 +168,7 @@ def list_my_conversations(
             "other_user_name": other_user.full_name if other_user else "Unknown User",
             "other_user_picture": other_user.profile_picture if other_user else None,
             "lastMessage": last_msg.content if last_msg else "No messages yet",
-            "last_sender_id": last_msg.sender_id if last_msg else None, # 🔥 IDINAGDAG
+            "last_sender_id": last_msg.sender_id if last_msg else None,
             "unread_count": unread_count,
         })
     return result
@@ -213,6 +229,13 @@ def get_messages(
     if current_user.id not in [conversation.participant1_id, conversation.participant2_id]:
         raise HTTPException(status_code=403, detail="You are not part of this conversation")
 
+    # 🔥 FIX: Kunin ang IDs ng messages na dinelete ng current user
+    deleted_ids = set(
+        row[0] for row in db.query(MessageDeletion.message_id).filter(
+            MessageDeletion.user_id == current_user.id
+        ).all()
+    )
+
     messages = (
         db.query(Message)
         .filter(Message.conversation_id == conversation_id)
@@ -222,6 +245,9 @@ def get_messages(
 
     result = []
     for m in messages:
+        if m.id in deleted_ids:
+            continue  # 🔥 Laktawan kung dinelete ng current user
+
         sender = db.query(User).filter(User.id == m.sender_id).first()
         result.append({
             "id": m.id,
@@ -236,7 +262,6 @@ def get_messages(
             "post_picture": m.post_picture,
         })
     return result
-
 
 @router.post("/{conversation_id}/messages", response_model=MessageOut, status_code=status.HTTP_201_CREATED)
 async def send_message(
@@ -253,10 +278,21 @@ async def send_message(
         raise HTTPException(status_code=403, detail="You are not part of this conversation")
 
     if not current_user.is_active:
-        raise HTTPException(
-            status_code=403, 
-            detail="Your account is disabled. You cannot send messages."
-        )
+        raise HTTPException(status_code=403, detail="Your account is disabled. You cannot send messages.")
+
+    other_user_id = (
+        conversation.participant2_id if conversation.participant1_id == current_user.id
+        else conversation.participant1_id
+    )
+    other_user = db.query(User).filter(User.id == other_user_id).first()
+    if other_user and not other_user.is_active:
+        raise HTTPException(status_code=403, detail="This user is currently disabled. You cannot send messages to them.")
+
+    # 🔥 FIX: Kung dinelete ng nag-send, gagawa tayo ng BAGONG conversation
+    if conversation.participant1_id == current_user.id:
+        conversation.is_deleted_by_p1 = False
+    elif conversation.participant2_id == current_user.id:
+        conversation.is_deleted_by_p2 = False
 
     message = Message(
         conversation_id=conversation_id,
@@ -267,12 +303,7 @@ async def send_message(
     db.commit()
     db.refresh(message)
 
-    other_user_id = (
-        conversation.participant2_id if conversation.participant1_id == current_user.id
-        else conversation.participant1_id
-    )
-
-    db.refresh(conversation)
+    # Compute unread count for the other user
     other_last_read = (
         conversation.participant2_last_read if conversation.participant1_id == current_user.id
         else conversation.participant1_last_read
@@ -339,3 +370,43 @@ def check_conversation(
     if existing:
         return {"exists": True, "conversation_id": existing.id}
     return {"exists": False, "conversation_id": None}
+
+@router.delete("/{conversation_id}/messages/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_message_for_me(
+    conversation_id: int,
+    message_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Delete a message FOR THE CURRENT USER ONLY.
+    The other participant still sees the message.
+    """
+    conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    if current_user.id not in [conversation.participant1_id, conversation.participant2_id]:
+        raise HTTPException(status_code=403, detail="You are not part of this conversation")
+
+    message = db.query(Message).filter(
+        Message.id == message_id,
+        Message.conversation_id == conversation_id,
+    ).first()
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    existing = db.query(MessageDeletion).filter(
+        MessageDeletion.message_id == message_id,
+        MessageDeletion.user_id == current_user.id,
+    ).first()
+    if existing:
+        return None
+
+    deletion = MessageDeletion(
+        message_id=message_id,
+        user_id=current_user.id,
+    )
+    db.add(deletion)
+    db.commit()
+    return None

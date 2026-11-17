@@ -50,7 +50,12 @@
 
   <div class="messages-container" *ngIf="!loading() && (myStatus() === 'enrolled' || myStatus() === 'tutor')">
     
-    <div *ngFor="let msg of messages()" class="message-row" [class.mine]="isMine(msg)">
+        <div 
+      *ngFor="let msg of messages()" 
+      class="message-row" 
+      [class.mine]="isMine(msg)"
+      (contextmenu)="deleteLessonMessage(msg)"
+    >
       
       <ion-avatar class="sender-avatar" *ngIf="!isMine(msg)">
         <img [src]="msg.sender_picture || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
@@ -142,6 +147,10 @@
         </ion-list>
         <ion-button expand="block" color="primary" (click)="saveSettings()" style="margin-top: 16px;">
           Save Changes
+        </ion-button>
+                <ion-button expand="block" color="success" (click)="markAsCompleted()" style="margin-top: 12px;">
+          <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+          Mark Group as Completed
         </ion-button>
 
         <h3 style="margin-top: 24px;">Members</h3>

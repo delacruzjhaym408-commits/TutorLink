@@ -9,6 +9,7 @@ from app.dependencies import get_current_user
 from app.models import User
 from app.schemas import UserOut, user_to_out
 from app.security import hash_password, verify_password
+from pydantic import BaseModel
 
 # 🔥 I-configure ang Cloudinary
 cloudinary.config(
@@ -76,3 +77,17 @@ async def update_me(
     db.commit()
     db.refresh(current_user)
     return user_to_out(current_user)
+
+class HideRatingsUpdate(BaseModel):
+    hide_low_ratings: bool
+
+@router.patch("/me/hide-ratings")
+def update_hide_low_ratings(
+    data: HideRatingsUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    current_user.hide_low_ratings = data.hide_low_ratings
+    db.commit()
+    db.refresh(current_user)
+    return {"status": "success", "hide_low_ratings": current_user.hide_low_ratings}

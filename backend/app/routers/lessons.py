@@ -5,10 +5,10 @@ from sqlalchemy import or_
 from datetime import datetime
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models import Lesson, Enrollment, LessonMessage, User, Conversation, Message
+from app.models import Lesson, Enrollment, LessonMessage, User, Conversation, Message, LessonMessageDeletion
 from app.schemas import (
     LessonCreate, LessonOut, EnrollmentCreate, EnrollmentOut,
-    LessonMessageCreate, LessonMessageOut, LessonUpdate, EnrollmentApplyRequest
+    LessonMessageCreate, LessonMessageOut, LessonUpdate, EnrollmentApplyRequest, EnrollmentStatusUpdate
 )
 from app.websocket import manager
 
@@ -177,8 +177,9 @@ def get_my_enrollments(
 
     result = []
     for e in enrollments:
-        if e.lesson.status == "disabled":
-            continue
+        # 🔥 TINANGGAL ANG CONTINUE PARA HINDI MAWALA SA LISTAHAN
+        # if e.lesson.status == "disabled":
+        #     continue
 
         if e.last_read_at:
             unread_count = db.query(LessonMessage).filter(
@@ -269,6 +270,63 @@ async def approve_payment(
 
     return {"status": "approved"}
 
+@router.put("/enrollments/{lesson_id}/status")
+async def update_enrollment_status(
+    lesson_id: int,
+    data: EnrollmentStatusUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Tutor marks a student's enrollment as completed, enrolled, or cancelled.
+
+    SECURITY RULES:
+    - Only the tutor who owns the lesson can update enrollment status.
+    - Allowed values: "enrolled", "completed", "cancelled".
+    - "pending_payment" and "rejected" are managed by the payment flow, not this endpoint.
+    """
+    # Find the lesson
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found.")
+
+    # Only the tutor who owns this lesson can update enrollment status
+    if lesson.tutor_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the tutor of this lesson can update enrollment status."
+        )
+
+    # Validate status value
+    allowed_statuses = ["enrolled", "completed", "cancelled"]
+    if data.status not in allowed_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Status must be one of {allowed_statuses}."
+        )
+
+    # Update ALL enrollments of this lesson (tutor toggling a whole group)
+    # OR update one specific student if student_id is provided in the request body.
+    # For now, we require the tutor to update ALL students in the lesson together.
+    enrollments = db.query(Enrollment).filter(
+        Enrollment.lesson_id == lesson_id,
+        Enrollment.status != "tutor",  # exclude the tutor's own enrollment
+    ).all()
+
+    if not enrollments:
+        raise HTTPException(status_code=404, detail="No students enrolled in this lesson.")
+
+    for e in enrollments:
+        e.status = data.status
+
+    db.commit()
+
+    return {
+        "status": "success",
+        "lesson_id": lesson_id,
+        "new_status": data.status,
+        "updated_count": len(enrollments),
+    }
 
 @router.put("/enrollments/{lesson_id}/reject/{student_id}")
 async def reject_payment(
@@ -400,12 +458,22 @@ def get_lesson_messages(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # 🔥 FIX: Kunin ang IDs ng lesson messages na dinelete ng current user
+    deleted_ids = set(
+        row[0] for row in db.query(LessonMessageDeletion.message_id).filter(
+            LessonMessageDeletion.user_id == current_user.id
+        ).all()
+    )
+
     messages = db.query(LessonMessage).filter(
         LessonMessage.lesson_id == lesson_id
     ).order_by(LessonMessage.created_at.asc()).all()
 
     result = []
     for m in messages:
+        if m.id in deleted_ids:
+            continue  # 🔥 Laktawan kung dinelete ng current user
+
         sender = db.query(User).filter(User.id == m.sender_id).first()
         result.append({
             "id": m.id,
@@ -493,3 +561,43 @@ async def send_lesson_message(
             })
 
     return msg_dict
+
+@router.delete("/lessons/{lesson_id}/messages/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_lesson_message_for_me(
+    lesson_id: int,
+    message_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Delete a lesson (GC) message FOR THE CURRENT USER ONLY.
+    The other members still see the message.
+    """
+    enrollment = db.query(Enrollment).filter(
+        Enrollment.lesson_id == lesson_id,
+        Enrollment.student_id == current_user.id,
+    ).first()
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="You are not a member of this lesson")
+
+    message = db.query(LessonMessage).filter(
+        LessonMessage.id == message_id,
+        LessonMessage.lesson_id == lesson_id,
+    ).first()
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    existing = db.query(LessonMessageDeletion).filter(
+        LessonMessageDeletion.message_id == message_id,
+        LessonMessageDeletion.user_id == current_user.id,
+    ).first()
+    if existing:
+        return None
+
+    deletion = LessonMessageDeletion(
+        message_id=message_id,
+        user_id=current_user.id,
+    )
+    db.add(deletion)
+    db.commit()
+    return None

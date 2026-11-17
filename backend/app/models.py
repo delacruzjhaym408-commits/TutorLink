@@ -44,6 +44,10 @@ class User(Base):
     description = Column(Text, nullable=True)
     description_picture = Column(String(500), nullable=True)
     gcash_number = Column(String(50), nullable=True)
+    gcash_qr_code = Column(String(500), nullable=True)
+    is_online = Column(Boolean, nullable=False, default=False)
+    last_seen_at = Column(DateTime, nullable=True)
+    hide_low_ratings = Column(Boolean, nullable=False, default=False)
     updated_at = Column(
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
@@ -149,6 +153,9 @@ class Lesson(Base):
     monthly_rate = Column(Numeric(10, 2), nullable=True)
     next_meeting_date = Column(String(50), nullable=True)
     next_meeting_time = Column(String(50), nullable=True)
+    gc_day_of_week = Column(String(20), nullable=True)
+    gc_start_time = Column(String(10), nullable=True)
+    gc_end_time = Column(String(10), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     status = Column(String(20), nullable=False, default="active") # 🔥 BAGONG DAGDAG
     disabled_reason = Column(String(255), nullable=True)           # 🔥 BAGONG DAGDAG
@@ -179,6 +186,7 @@ class Enrollment(Base):
     lesson_id = Column(Integer, ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False)
     status = Column(String(20), nullable=False, default="enrolled")
     payment_status = Column(String(20), nullable=False, default="unpaid")
+    lesson_type = Column(String(20), nullable=False, default="group")
     payment_proof = Column(Text, nullable=True)
     payment_reference = Column(String(100), nullable=True)
     rejection_reason = Column(String(255), nullable=True)
@@ -239,4 +247,66 @@ class UserAppeal(Base):
     status = Column(String(20), nullable=False, default="pending")
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
+    user = relationship("User", foreign_keys=[user_id])
+
+# ---------- Tutor Availability ----------
+class TutorAvailability(Base):
+    __tablename__ = "tutor_availability"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tutor_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    day_of_week = Column(String(20), nullable=False)
+    start_time = Column(String(10), nullable=False)
+    end_time = Column(String(10), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    tutor = relationship("User", foreign_keys=[tutor_id])
+
+
+# ---------- Session Bookings (1v1) ----------
+class SessionBooking(Base):
+    __tablename__ = "session_bookings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tutor_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    subject = Column(String(150), nullable=False)
+    session_date = Column(DateTime, nullable=False) # SQLAlchemy handles DATE natively if we want, but let's stick to DateTime for simplicity
+    start_time = Column(String(10), nullable=False)
+    end_time = Column(String(10), nullable=False)
+    status = Column(String(20), nullable=False, default="pending")
+    payment_status = Column(String(20), nullable=False, default="unpaid")
+    payment_proof = Column(Text, nullable=True)
+    payment_reference = Column(String(100), nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+    tutor = relationship("User", foreign_keys=[tutor_id])
+    student = relationship("User", foreign_keys=[student_id])
+
+
+# ---------- Per-User Message Deletions (1v1 Chat) ----------
+class MessageDeletion(Base):
+    __tablename__ = "message_deletions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    deleted_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    message = relationship("Message", foreign_keys=[message_id])
+    user = relationship("User", foreign_keys=[user_id])
+
+
+# ---------- Per-User Lesson Message Deletions (GC Chat) ----------
+class LessonMessageDeletion(Base):
+    __tablename__ = "lesson_message_deletions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    message_id = Column(Integer, ForeignKey("lesson_messages.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    deleted_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    message = relationship("LessonMessage", foreign_keys=[message_id])
     user = relationship("User", foreign_keys=[user_id])

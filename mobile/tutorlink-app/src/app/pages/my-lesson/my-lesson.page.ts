@@ -324,9 +324,17 @@ export class MyLessonPage implements OnInit, OnDestroy {
     });
   }
 
+    handleOpenChat(item: any) {
+    if (item.lesson.status === 'disabled') {
+      this.showToast('This group chat is disabled by admin.');
+      return;
+    }
+    this.openChat(item);
+  }
+
   isDisabled(lesson: any): boolean {
   return lesson?.status === 'disabled';
-}
+  }
 
   goToHome() { this.menuController.close('main-menu'); this.router.navigate(['/home']); }
   goToProfile() { this.menuController.close('main-menu'); this.router.navigate(['/profile']); }

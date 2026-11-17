@@ -22,7 +22,7 @@ import { SessionService } from '../../services/session.service';
     IonCardContent, IonIcon, IonButton, IonButtons, IonRefresher, IonRefresherContent, IonBadge
   ],
 })
-export class AdminDashboardPage implements OnInit, ViewWillEnter { // 🔥 Idinagdag ang ViewWillEnter
+export class AdminDashboardPage implements OnInit, ViewWillEnter {
   private adminService = inject(AdminService);
   private session = inject(SessionService);
   private router = inject(Router);
@@ -44,7 +44,6 @@ export class AdminDashboardPage implements OnInit, ViewWillEnter { // 🔥 Idina
     this.loadStats();
   }
 
-  // 🔥 LALO NA ITO: Magre-reload ito tuwing babalik ka sa Dashboard (e.g., galing sa Manage Posts)
   ionViewWillEnter() {
     this.loadStats();
   }
