@@ -6,7 +6,8 @@ import { API_BASE_URL } from '../config'; // Palitan mo ito kung iba ang path ng
 export interface TutorAvailability {
   id?: number;
   tutor_id?: number;
-  day_of_week: string;
+  day_of_week: string | null;
+  specific_date?: string | null; 
   start_time: string;
   end_time: string;
   is_active?: boolean;
@@ -34,12 +35,12 @@ export class CalendarService {
   private http = inject(HttpClient);
   private apiUrl = `${API_BASE_URL}/calendar`;
 
-  private getHeaders() {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-  }
+private getHeaders() {
+  const token = localStorage.getItem('access_token'); // 🔥 FIX: Dapat access_token
+  return new HttpHeaders({
+    'Authorization': `Bearer ${token}`
+  });
+}
 
   // Tutor: Mag-set ng availability
   setAvailability(data: TutorAvailability): Observable<TutorAvailability> {

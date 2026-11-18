@@ -33,6 +33,7 @@ async def create_or_get_conversation(
         raise HTTPException(status_code=403, detail="This user is currently disabled. You cannot message them.")
 
     existing = db.query(Conversation).filter(
+        Conversation.conversation_type == "private",
         or_(
             and_(Conversation.participant1_id == current_user.id,
                  Conversation.participant2_id == data.participant_id),
@@ -40,13 +41,11 @@ async def create_or_get_conversation(
                  Conversation.participant2_id == current_user.id),
         )
     ).first()
-
+    
     if existing:
-        # 🔥 FIX: Kung dinelete ng current user, i-un-delete para bumalik sa listahan.
-        if existing.participant1_id == current_user.id:
-            existing.is_deleted_by_p1 = False
-        elif existing.participant2_id == current_user.id:
-            existing.is_deleted_by_p2 = False
+        # 🔥 FIX: I-un-delete para bumalik sa listahan ng DALAWANG parties
+        existing.is_deleted_by_p1 = False
+        existing.is_deleted_by_p2 = False
         db.commit()
         db.refresh(existing)
         return _build_conversation_out(existing, current_user, db)
@@ -114,14 +113,16 @@ def _build_conversation_out(conv: Conversation, current_user: User, db: Session)
         "lastMessage": last_msg.content if last_msg else "No messages yet",
         "last_sender_id": last_msg.sender_id if last_msg else None,
         "unread_count": 0,
+        "conversation_type": conv.conversation_type,
+        "lesson_id": conv.lesson_id,
     }
-
 
 @router.get("", response_model=list[ConversationOut])
 def list_my_conversations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # 🔥 TINANGGAL ANG FILTER PARA LUMABAS ANG LAHAT NG CHATS
     conversations = db.query(Conversation).filter(
         or_(
             and_(Conversation.participant1_id == current_user.id,
@@ -167,9 +168,12 @@ def list_my_conversations(
             "updated_at": c.updated_at,
             "other_user_name": other_user.full_name if other_user else "Unknown User",
             "other_user_picture": other_user.profile_picture if other_user else None,
+            "other_user_is_online": other_user.is_online if other_user else False, # 🔥 IDINAGDAG
             "lastMessage": last_msg.content if last_msg else "No messages yet",
             "last_sender_id": last_msg.sender_id if last_msg else None,
             "unread_count": unread_count,
+            "conversation_type": c.conversation_type,
+            "lesson_id": c.lesson_id,
         })
     return result
 
@@ -288,11 +292,10 @@ async def send_message(
     if other_user and not other_user.is_active:
         raise HTTPException(status_code=403, detail="This user is currently disabled. You cannot send messages to them.")
 
-    # 🔥 FIX: Kung dinelete ng nag-send, gagawa tayo ng BAGONG conversation
-    if conversation.participant1_id == current_user.id:
-        conversation.is_deleted_by_p1 = False
-    elif conversation.participant2_id == current_user.id:
-        conversation.is_deleted_by_p2 = False
+    # 🔥 FIX: I-un-delete ang conversation para sa DALAWANG parties
+    # Para kapag may nag-message, babalik ang chat sa Messages list ninyong dalawa.
+    conversation.is_deleted_by_p1 = False
+    conversation.is_deleted_by_p2 = False
 
     message = Message(
         conversation_id=conversation_id,

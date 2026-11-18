@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 from typing import List
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from datetime import datetime
 from app.database import get_db
 from app.dependencies import get_current_user
@@ -98,14 +98,13 @@ def get_tutor_students(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Kunin lahat ng lessons na pagmamay-ari ng tutor
+    db.expire_all()
     lessons = db.query(Lesson).filter(Lesson.tutor_id == current_user.id).all()
     lesson_ids = [l.id for l in lessons]
     
     if not lesson_ids:
         return []
 
-    # Kunin lahat ng enrollments sa mga lessons na 'yon (exclude tutor)
     enrollments = db.query(Enrollment).filter(
         Enrollment.lesson_id.in_(lesson_ids),
         Enrollment.status != "tutor"
@@ -115,6 +114,11 @@ def get_tutor_students(
     for e in enrollments:
         student = db.query(User).filter(User.id == e.student_id).first()
         if student:
+            conv = db.query(Conversation).filter(
+                Conversation.conversation_type == "session",
+                Conversation.lesson_id == e.lesson_id
+            ).first()
+
             result.append({
                 "enrollment_id": e.id,
                 "lesson_id": e.lesson_id,
@@ -127,14 +131,13 @@ def get_tutor_students(
                 "payment_proof": e.payment_proof,
                 "payment_reference": e.payment_reference,
                 "rejection_reason": e.rejection_reason,
-                # 🔥 MGA DETALYE PARA SA 1v1 SESSION
                 "lesson_type": e.lesson_type,
                 "monthly_rate": float(e.lesson.monthly_rate) if e.lesson.monthly_rate else 0.0,
                 "next_meeting_date": e.lesson.next_meeting_date,
                 "next_meeting_time": e.lesson.next_meeting_time,
+                "conversation_id": conv.id if conv else None, 
             })
     return result
-
 
 @router.post("/sessions/apply")
 def apply_1v1_session(
@@ -154,7 +157,6 @@ def apply_1v1_session(
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
-    # Gumawa ng bagong Lesson (1v1 Session) na may date at time
     new_session = Lesson(
         tutor_id=post.user_id,
         gc_name=f"{post.subject} 1v1 Session",
@@ -169,7 +171,6 @@ def apply_1v1_session(
     db.commit()
     db.refresh(new_session)
 
-    # Gumawa ng enrollment
     enrollment = Enrollment(
         student_id=current_user.id,
         lesson_id=new_session.id,
@@ -243,6 +244,12 @@ def get_my_enrollments(
                 LessonMessage.sender_id != current_user.id,
             ).count()
 
+        # 🔥 FIX: Hanapin lang gamit ang lesson_id at conversation_type
+        conv = db.query(Conversation).filter(
+            Conversation.conversation_type == "session",
+            Conversation.lesson_id == e.lesson_id
+        ).first()
+
         result.append({
             "id": e.id,
             "student_id": e.student_id,
@@ -255,6 +262,7 @@ def get_my_enrollments(
             "payment_status": e.payment_status,
             "payment_proof": e.payment_proof,
             "payment_reference": e.payment_reference,
+            "conversation_id": conv.id if conv else None,
         })
     return result
 
@@ -304,13 +312,46 @@ async def approve_payment(
         raise HTTPException(status_code=404, detail="Enrollment not found")
 
     if enrollment.status != "pending_payment":
-        raise HTTPException(
-            status_code=400,
-            detail=f"Cannot approve. Current status: {enrollment.status}",
-        )
+        raise HTTPException(status_code=400, detail="Already approved or rejected.")
 
     enrollment.status = "enrolled"
     enrollment.payment_status = "paid"
+    
+    # 🔥 FIX: HANAPIN ANG EXISTING PRIVATE CHAT PARA DITO I-SEND ANG MESSAGE
+    existing_conv = db.query(Conversation).filter(
+        or_(
+            and_(Conversation.participant1_id == current_user.id, Conversation.participant2_id == student_id),
+            and_(Conversation.participant1_id == student_id, Conversation.participant2_id == current_user.id)
+        )
+    ).first()
+
+    if existing_conv:
+        # I-update ang existing chat para maging session
+        existing_conv.conversation_type = "session"
+        existing_conv.lesson_id = lesson_id
+        existing_conv.is_deleted_by_p1 = False
+        existing_conv.is_deleted_by_p2 = False
+        session_conv = existing_conv
+        db.commit()
+    else:
+        # Kung wala talagang existing chat (bihira mangyari), gumawa ng bago
+        session_conv = Conversation(
+            participant1_id=current_user.id,
+            participant2_id=student_id,
+            conversation_type="session",   
+            lesson_id=lesson_id,            
+        )
+        db.add(session_conv)
+        db.commit()
+        db.refresh(session_conv)
+    
+    # 🔥 I-SEND ANG APPROVAL MESSAGE SA EXISTING CHAT
+    initial_msg = Message(
+        conversation_id=session_conv.id,
+        sender_id=current_user.id,
+        content=f"Hi! I have approved your 1v1 session for {lesson.gc_name}. Let's discuss the details here."
+    )
+    db.add(initial_msg)
     db.commit()
 
     await manager.send_to_user(current_user.id, {
@@ -388,18 +429,16 @@ async def reject_payment(
     enrollment.rejection_reason = reason_data.get("reason", "No reason provided")
     db.commit()
     
-    conv = db.query(Conversation).filter(
-        or_(
-            (Conversation.participant1_id == current_user.id) & (Conversation.participant2_id == student_id),
-            (Conversation.participant1_id == student_id) & (Conversation.participant2_id == current_user.id)
-        )
-    ).first()
-
-    if not conv:
-        conv = Conversation(participant1_id=current_user.id, participant2_id=student_id)
-        db.add(conv)
-        db.commit()
-        db.refresh(conv)
+    # 🔥 GUMAWA NG BAGONG SESSION CONVERSATION PARA SA REJECTION NOTICE
+    conv = Conversation(
+        participant1_id=current_user.id,
+        participant2_id=student_id,
+        conversation_type="session",
+        lesson_id=lesson_id,
+    )
+    db.add(conv)
+    db.commit()
+    db.refresh(conv)
 
     msg = Message(
         conversation_id=conv.id,
@@ -444,15 +483,28 @@ def get_lesson_members(
 
         student = db.query(User).filter(User.id == e.student_id).first()
         if student:
+            conv = db.query(Conversation).filter(
+                Conversation.conversation_type == "session",
+                Conversation.lesson_id == e.lesson_id,
+                or_(
+                    (Conversation.participant1_id == current_user.id) & (Conversation.participant2_id == e.lesson.tutor_id),
+                    (Conversation.participant1_id == e.lesson.tutor_id) & (Conversation.participant2_id == current_user.id)
+                )
+            ).first()
+
             result.append({
-                "enrollment_id": e.id,
-                "student_id": student.id,
-                "full_name": student.full_name,
-                "profile_picture": student.profile_picture,
+                "id": e.id,
+                "student_id": e.student_id,
+                "lesson_id": e.lesson_id,
                 "status": e.status,
+                "enrolled_at": e.enrolled_at,
+                "last_read_at": e.last_read_at,
+                "unread_count": 0,
+                "lesson": e.lesson,
                 "payment_status": e.payment_status,
-                "payment_proof": e.payment_proof if is_tutor else None,
-                "payment_reference": e.payment_reference if is_tutor else None,
+                "payment_proof": e.payment_proof,
+                "payment_reference": e.payment_reference,
+                "conversation_id": conv.id if conv else None,
             })
     return result
 

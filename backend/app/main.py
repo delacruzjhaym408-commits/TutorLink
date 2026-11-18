@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
 import os
-
+from datetime import datetime
 from app.routers import auth, tutor_posts, users, conversations, lessons, admin, reports, uploads, reviews, admin_messages, calendar
 from app.database import get_db, SessionLocal
 from app.websocket import manager
@@ -53,17 +53,33 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     user_id = int(payload.get("sub"))
     db = SessionLocal()
     user = db.query(User).filter(User.id == user_id).first()
-    db.close()
+    
     if not user:
+        db.close()
         await websocket.close(code=1008)
         return
 
+    # 🔥 I-SET NA ONLINE
+    user.is_online = True
+    db.commit()
+    db.close()
+
     await manager.connect(user_id, websocket)
+    
     try:
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(user_id, websocket)
+        
+        # 🔥 I-SET NA OFFLINE PAG NAG-DISCONNECT
+        db = SessionLocal()
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            user.is_online = False
+            user.last_seen_at = datetime.now()
+            db.commit()
+        db.close()
 
 # ===========================================
 

@@ -11,7 +11,13 @@ export const routes: Routes = [
   
   // 🔥 MGA RUTA PARA SA POST AT TUTOR DETAILS
   { path: 'tutor-details/:id', canActivate: [authGuard], loadComponent: () => import('./pages/tutor-details/tutor-details.page').then((m) => m.TutorDetailsPage) },
-  { path: 'post-details/:id', canActivate: [authGuard], loadComponent: () => import('./pages/post-details/post-details.page').then((m) => m.PostDetailsPage) }, // 🔥 BAGONG DAGDAG ITO
+  { path: 'post-details/:id', canActivate: [authGuard], loadComponent: () => import('./pages/post-details/post-details.page').then((m) => m.PostDetailsPage) }, 
+  
+  // 🔥 ITO YUNG INayos NATIN (Nilagyan ng comma sa dulo)
+  {
+    path: 'view-post/:id',
+    loadComponent: () => import('./pages/view-post/view-post.page').then(m => m.ViewPostPage)
+  }, 
   
   { path: 'edit-post/:id', canActivate: [authGuard], loadComponent: () => import('./pages/edit-post/edit-post.page').then((m) => m.EditPostPage) },
   { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile.page').then((m) => m.ProfilePage) },
@@ -20,8 +26,6 @@ export const routes: Routes = [
   { path: 'my-lesson', canActivate: [authGuard], loadComponent: () => import('./pages/my-lesson/my-lesson.page').then((m) => m.MyLessonPage) },
   { path: 'settings', canActivate: [authGuard], loadComponent: () => import('./pages/settings/settings.page').then((m) => m.SettingsPage) },
   { path: 'lesson-chat/:id', canActivate: [authGuard], loadComponent: () => import('./pages/lesson-chat/lesson-chat.page').then((m) => m.LessonChatPage) },
-
-  // IDINAGDAG: RUTA PARA SA MY REVIEWS
   { path: 'my-reviews', canActivate: [authGuard], loadComponent: () => import('./pages/my-reviews/my-reviews.page').then((m) => m.MyReviewsPage) },
 
   // ============ ADMIN ROUTES ============

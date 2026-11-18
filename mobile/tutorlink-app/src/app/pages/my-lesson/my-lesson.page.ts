@@ -1,27 +1,27 @@
-import { Component, OnInit, inject, signal, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectorRef, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonIcon,
-  IonAvatar, IonSpinner, IonButtons, IonBackButton, IonList,
-  IonItem, IonLabel, AlertController, IonMenu, MenuController,
-  IonMenuToggle, ToastController, IonModal, IonTextarea, IonInput,
-  IonRefresher, IonRefresherContent, IonBadge, IonSegment, IonSegmentButton,
-  IonCard, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCardContent,
-  IonImg
+  IonAvatar, IonSpinner, IonButtons, IonBackButton, IonList, IonItem,
+  IonLabel, AlertController, IonMenu, MenuController, IonMenuToggle,
+  ToastController, IonModal, IonTextarea, IonInput, IonRefresher,
+  IonRefresherContent, IonBadge, IonSegment, IonSegmentButton,
+  IonCard, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCardContent, IonImg
 } from '@ionic/angular';
 import { 
   homeOutline, personOutline, chatbubbleOutline, settingsOutline, 
   bookOutline, logOutOutline, menuOutline, addOutline, 
   peopleOutline, calendarOutline, timeOutline, cameraOutline,
-  checkmarkCircleOutline, closeCircleOutline, cashOutline
+  checkmarkCircleOutline, closeCircleOutline, cashOutline,
+  chatbubblesOutline, chatbubbleEllipsesOutline, trashOutline
 } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { LessonService, Enrollment } from '../../services/lesson.service';
 import { SessionService } from '../../services/session.service';
 import { AppStateService } from '../../services/app-state.service';
+import { API_BASE_URL } from '../../config';
 
 @Component({
   selector: 'app-my-lesson',
@@ -29,18 +29,15 @@ import { AppStateService } from '../../services/app-state.service';
   styleUrls: ['./my-lesson.page.scss'],
   standalone: true,
   imports: [
-    CommonModule, FormsModule, 
-    IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonIcon,
-    IonAvatar, IonSpinner, IonButtons, IonBackButton, IonList,
-    IonItem, IonLabel, IonMenuToggle, IonMenu, IonModal, IonTextarea,
-    IonInput, IonRefresher, IonRefresherContent, IonBadge, IonSegment, IonSegmentButton,
-    IonCard, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCardContent,
-    IonImg
+    CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent,
+    IonButton, IonIcon, IonAvatar, IonSpinner, IonButtons, IonBackButton,
+    IonList, IonItem, IonLabel, IonMenuToggle, IonMenu, IonModal,
+    IonTextarea, IonInput, IonRefresher, IonRefresherContent, IonBadge,
+    IonSegment, IonSegmentButton, IonCard, IonCardHeader, IonCardSubtitle,
+    IonCardTitle, IonCardContent, IonImg
   ],
 })
 export class MyLessonPage implements OnInit {
-  @ViewChild('createGcModal') createGcModal!: IonModal;
-
   private lessonService = inject(LessonService);
   private session = inject(SessionService);
   private router = inject(Router);
@@ -49,41 +46,32 @@ export class MyLessonPage implements OnInit {
   private toastCtrl = inject(ToastController);
   private appState = inject(AppStateService);
   
-  // 🔥 DEFAULT TAB AY 1v1 SESSIONS NA
   activeTab = signal<string>('students'); 
+  paymentTab = signal<string>('pending'); 
   
+  // 🔥 RECEIPT MODAL SIGNALS
+  isReceiptModalOpen = signal(false);
+  selectedReceiptImage = signal<string>('');
+
   enrollments = signal<Enrollment[]>([]);
   tutorStudents = signal<any[]>([]);
   loading = signal(true);
   currentUser = this.session.user;
-
-  // PAYMENTS FILTER
-  paymentFilter = signal<string>('pending'); 
-
-  // CREATE GC VARIABLES (Iwinaksi na natin ito pero itatago natin para hindi mag-error ang HTML)
-  newGcName = '';
-  newGcDescription = '';
-  newGcPhoto = signal<string | null>(null);
-  newGcNumber = '';
-  newMonthlyRate: number | null = null;
-
-  selectedLessonId = signal<number | null>(null);
-  members = signal<any[]>([]);
-  loadingMembers = signal(false);
-
-  pendingCounts: { [lessonId: number]: number } = {};
+  
+  isTutor = computed(() => this.currentUser()?.role === 'tutor' || this.tutorStudents().length > 0); 
 
   constructor(public menuController: MenuController) {
     addIcons({ 
       homeOutline, personOutline, chatbubbleOutline, settingsOutline, 
       bookOutline, logOutOutline, menuOutline, addOutline, 
       peopleOutline, calendarOutline, timeOutline, cameraOutline,
-      checkmarkCircleOutline, closeCircleOutline, cashOutline 
+      checkmarkCircleOutline, closeCircleOutline, cashOutline,
+      chatbubblesOutline, chatbubbleEllipsesOutline, trashOutline
     });
   }
 
-  ngOnInit() { 
-    this.loadLessons(); 
+  ngOnInit() {
+    this.loadLessons();
     this.loadStudents();
   }
 
@@ -98,7 +86,6 @@ export class MyLessonPage implements OnInit {
       next: (data) => { 
         this.enrollments.set(data); 
         this.loading.set(false); 
-        this.checkPendingCounts(); 
         this.cdr.detectChanges(); 
       },
       error: () => { 
@@ -111,95 +98,53 @@ export class MyLessonPage implements OnInit {
   loadStudents() {
     this.lessonService.getTutorStudents().subscribe({
       next: (data) => {
-        const grouped: any = {};
-        data.forEach(s => {
-          if (!grouped[s.lesson_name]) grouped[s.lesson_name] = [];
-          grouped[s.lesson_name].push(s);
-        });
-        
-        const groupedArray = Object.keys(grouped).map(key => ({
-          gc_name: key,
-          students: grouped[key]
-        }));
-        
-        this.tutorStudents.set(groupedArray);
+        this.tutorStudents.set(data);
         this.cdr.detectChanges();
       }
     });
   }
 
-  checkPendingCounts() {
-    for (let item of this.enrollments()) {
-      if (this.isTutor(item)) {
-        this.lessonService.getLessonMembers(item.lesson.id).subscribe({
-          next: (members) => {
-            const pending = members.filter(m => m.status === 'pending_payment').length;
-            this.pendingCounts[item.lesson.id] = pending;
-            this.cdr.detectChanges();
+  getFilteredSessions(status: string) {
+    if (this.isTutor()) { 
+      return this.tutorStudents().filter((s: any) => s.status === status);
+    } else {
+      return this.enrollments().filter((e: any) => e.status === status);
+    }
+  }
+
+  getImageUrl(pic: string | null | undefined): string {
+    if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
+    if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
+      return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
+    }
+    if (pic.startsWith('/uploads/')) return `${API_BASE_URL}${pic}`;
+    if (!pic.startsWith('http')) return `${API_BASE_URL}/uploads/${pic}`;
+    return pic;
+  }
+
+  async cancelSession(s: any) {
+    const alert = await this.alertCtrl.create({
+      header: 'Cancel Session',
+      message: `Sigurado ka bang gusto mong i-cancel ang session kay ${s.full_name}?`,
+      buttons: [
+        { text: 'No', role: 'cancel' },
+        { 
+          text: 'Yes, Cancel', 
+          role: 'destructive',
+          handler: () => {
+            this.lessonService.kickMember(s.lesson_id, s.student_id).subscribe({
+              next: () => {
+                this.showToast('Session Cancelled.');
+                this.loadLessons();
+                this.loadStudents();
+              },
+              error: () => this.showToast('Failed to cancel session.')
+            });
           }
-        });
-      }
-    }
-  }
-
-  // 🔥 MGA METHODS PARA SA LUMANG GC (Pwedeng iwan kahit hindi na ginagamit)
-  openCreateGcModal() {
-    this.newGcName = '';
-    this.newGcDescription = '';
-    this.newGcPhoto.set(null);
-    this.newGcNumber = '';
-    this.newMonthlyRate = null;
-    this.createGcModal.present();
-  }
-
-  async pickGcImage() {
-    try {
-      const image = await Camera.getPhoto({
-        quality: 90,
-        allowEditing: true,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Photos,
-      });
-      if (image.dataUrl) {
-        this.newGcPhoto.set(image.dataUrl);
-      }
-    } catch (e) {}
-  }
-
-  saveGroupChat() {
-    // Not used anymore, but kept for safety
-  }
-
-  openChat(chat: Enrollment) {
-    this.router.navigate(['/lesson-chat', chat.lesson.id]);
-  }
-
-  isTutor(item: Enrollment): boolean {
-    return item.status === 'tutor';
-  }
-
-  onSelectPaymentGc(lessonId: string) {
-    if (lessonId) {
-      this.openMembersModal(Number(lessonId));
-    }
-  }
-
-  openMembersModal(lessonId: number) {
-    this.selectedLessonId.set(lessonId);
-    this.loadingMembers.set(true);
-    this.members.set([]);
-
-    this.lessonService.getLessonMembers(lessonId).subscribe({
-      next: (data: any[]) => {
-        this.members.set(data);
-        this.loadingMembers.set(false);
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.showToast('Error loading members.');
-        this.loadingMembers.set(false);
-      }
+        }
+      ]
     });
+    await alert.present();
   }
 
   approveStudent(studentId: number, lessonId: number) {
@@ -251,21 +196,10 @@ export class MyLessonPage implements OnInit {
     await toast.present();
   }
 
-  getFilteredMembers() {
-    const filter = this.paymentFilter();
-    return this.members().filter(m => {
-      if (filter === 'pending') return m.status === 'pending_payment';
-      if (filter === 'approved') return m.status === 'enrolled';
-      if (filter === 'rejected') return m.status === 'rejected';
-      return true;
-    });
-  }
-
   doRefresh(event: any) {
     this.lessonService.getMyEnrollments().subscribe({
       next: (data) => {
         this.enrollments.set(data);
-        this.checkPendingCounts();
         this.loadStudents();
         event.target.complete();
       },
@@ -275,15 +209,36 @@ export class MyLessonPage implements OnInit {
     });
   }
 
-  async openReceipt(base64Image: string) {
+  // 🔥 PINAL NA FIX PARA SA RECEIPT
+  openReceipt(base64Image: string) {
     if (!base64Image) return;
     
-    const alert = await this.alertCtrl.create({
-      header: 'Payment Receipt',
-      message: `<img src="${base64Image}" style="width: 100%; border-radius: 8px;" />`,
-      buttons: ['Close']
-    });
-    await alert.present();
+    let cleanImage = base64Image;
+    
+    // 1. Kung naka-format bilang HTML tag, kunin ang src
+    if (cleanImage.startsWith('<img')) {
+      const match = cleanImage.match(/src="([^"]+)"/);
+      if (match && match[1]) {
+        cleanImage = match[1];
+      }
+    }
+    
+    // 2. Siguraduhing may "data:image" prefix
+    if (!cleanImage.startsWith('data:image') && cleanImage.length > 100) {
+      cleanImage = `data:image/jpeg;base64,${cleanImage}`;
+    }
+
+    // 3. Buksan ang modal
+    this.selectedReceiptImage.set(cleanImage);
+    this.isReceiptModalOpen.set(true);
+  }
+
+  goToChat(conversationId: number | null | undefined) {
+    if (!conversationId) {
+      this.showToast('Conversation is being prepared. Please refresh in a moment.');
+      return;
+    }
+    this.router.navigate(['/chat', conversationId]);
   }
 
   goToHome() { this.menuController.close('main-menu'); this.router.navigate(['/home']); }

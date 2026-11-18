@@ -59,7 +59,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         const url = event.urlAfterRedirects;
-        this.showLayout.set(!(url.includes('/login') || url.includes('/register') || url.startsWith('/admin') || url === '/'));
+        
+        // 🔥 ITAGO ANG TABS KAPAG NASA LOOB NG CHAT
+        const isChatPage = url.includes('/chat/') || url.includes('/lesson-chat/');
+        const isAuthPage = url.includes('/login') || url.includes('/register');
+        const isAdminPage = url.startsWith('/admin');
+        
+        this.showLayout.set(!(isAuthPage || isAdminPage || url === '/' || isChatPage));
 
         if (this.isAuthenticated()) {
           if (url.includes('/lesson-chat/')) {
@@ -157,7 +163,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   async showNewLessonToast(senderName: string) {
     const toast = await this.toastCtrl.create({
-      message: `New message in Group Chat from ${senderName}`,
+      message: `New message in Lesson Chat from ${senderName}`,
       duration: 3000,
       position: 'top',
       color: 'secondary',

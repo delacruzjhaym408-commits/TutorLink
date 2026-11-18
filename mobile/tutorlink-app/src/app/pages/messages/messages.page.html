@@ -30,8 +30,10 @@
   <div class="messages-list" *ngIf="!loading() && conversations().length > 0">
     <div *ngFor="let conv of conversations()" class="message-card" (click)="openChat(conv)">
       
-      <ion-avatar class="msg-avatar">
+      <!-- 🔥 GREEN DOT SA MESSAGES LIST -->
+      <ion-avatar class="msg-avatar" style="position: relative;">
         <img [src]="getImageUrl(conv.other_user_picture)" />
+        <span *ngIf="conv.other_user_is_online" style="position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; background-color: #10b981; border-radius: 50%; border: 2px solid #fff;"></span>
       </ion-avatar>
 
       <div class="msg-content">
@@ -40,7 +42,6 @@
           <span style="font-size: 0.7rem; color: #9ca3af;">{{ conv.updated_at | date:'medium' }}</span>
         </div>
         
-        <!-- 🔥 LOGIC PARA SA IMAGE MESSAGE -->
         <p class="msg-preview" *ngIf="conv.lastMessage.startsWith('[IMAGE]'); else textMessage">
           {{ conv.last_sender_id === currentUser?.id ? 'You' : conv.other_user_name }} sent a photo
         </p>

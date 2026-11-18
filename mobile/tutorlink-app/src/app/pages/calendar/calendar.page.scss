@@ -1,1 +1,60 @@
-/* Custom styles for Calendar Page */
+.modern-header {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.bg-content {
+  --background: #f8f9fa;
+}
+
+.calendar-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+ion-datetime {
+  --background: #ffffff;
+  --background-rgb: 255, 255, 255;
+  --ion-color-primary: #2563eb;
+  border-radius: 16px;
+  width: 100%;
+}
+
+.schedule-section {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.no-schedule {
+  text-align: center;
+  color: #9ca3af;
+  padding: 16px 0;
+  font-size: 0.9rem;
+}
+
+.time-item {
+  --background: #f8f9fa;
+  --border-radius: 8px;
+  --padding-start: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.add-btn {
+  --border-radius: 12px;
+  height: 48px;
+  font-weight: 600;
+  margin-top: 16px;
+  --box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}

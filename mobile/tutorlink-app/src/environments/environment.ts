@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'https://tutorlink-api-9lcu.onrender.com',
+  apiUrl: 'http://localhost:8000',
 };
 
 /*

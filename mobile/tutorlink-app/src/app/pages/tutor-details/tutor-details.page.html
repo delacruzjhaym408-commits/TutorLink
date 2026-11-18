@@ -148,24 +148,36 @@
   <ng-template>
     <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>1v1 Session Booking</ion-title>
+        <ion-title>Book a Session</ion-title>
         <ion-buttons slot="end"><ion-button (click)="paymentModal.dismiss()">Close</ion-button></ion-buttons>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding">
-      <h3>Available Days ni Tutor</h3>
-      <div *ngIf="tutorAvailabilities().length === 0" class="ion-text-center ion-padding" style="background: #f3f4f6; border-radius: 8px;">
-        <p style="color: #666;">Wala pang naka-set na availability si Tutor.</p>
-      </div>
-      <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px;" *ngIf="tutorAvailabilities().length > 0">
-        <ion-badge color="primary" *ngFor="let avail of tutorAvailabilities()" style="padding: 8px 12px; font-size: 0.9rem; white-space: nowrap;">
-          {{ avail.day_of_week }}: {{ avail.start_time }} - {{ avail.end_time }}
-        </ion-badge>
+      
+      <!-- 🔥 LEGEND (INDICATOR) SA ITAAS -->
+      <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 16px; font-size: 0.85rem;">
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #10b981;"></div>
+          <span>Available</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444;"></div>
+          <span>Booked</span>
+        </div>
       </div>
 
-      <h3 style="margin-top: 24px;">Pumili ng Petsa</h3>
-      <ion-datetime presentation="date" [(ngModel)]="selectedDate" (ionChange)="onBookingDateChange($event)" [firstDayOfWeek]="1" style="border-radius: 8px; border: 1px solid #ccc;"></ion-datetime>
+      <!-- 🔥 TINANGGAL NA ANG "Available Days ni Tutor" DITO -->
+
+      <h3 style="margin-top: 16px;">Pumili ng Petsa</h3>
+      <ion-datetime 
+        presentation="date" 
+        [(ngModel)]="selectedDate" 
+        (ionChange)="onBookingDateChange($event)" 
+        [firstDayOfWeek]="1" 
+        [highlightedDates]="highlightedDates()"
+        style="border-radius: 8px; border: 1px solid #ccc; margin: 0 auto; display: block;">
+      </ion-datetime>
 
       <div style="display: flex; gap: 16px; margin-top: 16px;">
         <div style="flex: 1;">
@@ -201,7 +213,6 @@
          <img [src]="getImageUrl(post()?.tutor_gcash)" style="max-width: 200px; border-radius: 8px; border: 1px solid #ccc;" />
       </div>
 
-      <!-- 🔥 TOTAL AMOUNT: READONLY & AUTO-COMPUTED -->
       <div class="input-group" style="margin-top: 16px;">
         <label>Total Amount to Pay (₱)</label>
         <ion-input 
@@ -211,9 +222,6 @@
           readonly="true" 
           style="font-weight: bold; color: #059669; font-size: 1.2rem;"
         ></ion-input>
-        <small style="color: #666; font-size: 0.75rem; margin-top: 4px; display: block;">
-          (Auto-computed based on hourly rate and selected time)
-        </small>
       </div>
 
       <div class="input-group" style="margin-top: 16px;">

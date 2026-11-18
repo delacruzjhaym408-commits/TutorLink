@@ -112,6 +112,8 @@ class TutorPostOut(BaseModel):
     updated_at: datetime
     learners_count: Optional[int] = 0
     total_reviews: Optional[int] = 0
+    is_online: Optional[bool] = False
+    last_seen_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
 
 class ConversationCreate(BaseModel):
@@ -127,9 +129,12 @@ class ConversationOut(BaseModel):
     participant2_id: int
     other_user_name: Optional[str] = None
     other_user_picture: Optional[str] = None
+    other_user_is_online: Optional[bool] = False 
     lastMessage: Optional[str] = None
-    last_sender_id: Optional[int] = None 
+    last_sender_id: Optional[int] = None
     unread_count: Optional[int] = 0
+    conversation_type: Optional[str] = "private"
+    lesson_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
@@ -209,6 +214,7 @@ class EnrollmentOut(BaseModel):
     lesson: LessonOut
     model_config = ConfigDict(from_attributes=True)
     rejection_reason: Optional[str] = None
+    conversation_id: Optional[int] = None
 
 class EnrollmentStatusUpdate(BaseModel):
     status: str = Field(..., example="completed")
@@ -285,7 +291,8 @@ class AppealOut(BaseModel):
 
 # --- Tutor Availability Schemas ---
 class TutorAvailabilityBase(BaseModel):
-    day_of_week: str = Field(..., example="Saturday")
+    day_of_week: Optional[str] = Field(default=None, example="Saturday")
+    specific_date: Optional[str] = Field(default=None, example="2026-11-17") # 🔥 BAGONG DAGDAG
     start_time: str = Field(..., example="14:00")
     end_time: str = Field(..., example="16:00")
 

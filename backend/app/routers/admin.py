@@ -16,17 +16,14 @@ from app.schemas import UserOut, TutorPostOut, ReportOut, user_to_out
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-# Schema para sa Disable Request
 class UserDisableRequest(BaseModel):
     reason: str
 
-# 1. Manage Users (List at Delete)
 @router.get("/users", response_model=List[UserOut])
 def get_all_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     users = db.query(User).all()
     return [user_to_out(u) for u in users]
 
-# 🔥 DISABLE USER (AUTO-DISABLE POSTS AND LESSONS)
 @router.put("/users/{user_id}/disable", response_model=UserOut)
 def disable_user(
     user_id: int, 
@@ -40,18 +37,15 @@ def disable_user(
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot disable your own admin account")
     
-    # 1. I-disable ang account
     user.is_active = False
     user.disabled_reason = data.reason.strip()
     user.disabled_at = datetime.now()
 
-    # 2. I-disable ang lahat ng Posts ng user
     posts = db.query(TutorPost).filter(TutorPost.user_id == user.id).all()
     for post in posts:
         post.status = "disabled"
         post.disabled_reason = "Tutor account disabled"
 
-    # 3. I-disable ang lahat ng Group Chats (Lessons) ng user
     lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
     for lesson in lessons:
         lesson.status = "disabled"
@@ -61,7 +55,6 @@ def disable_user(
     db.refresh(user)
     return user_to_out(user)
 
-# 🔥 ENABLE USER (AUTO-ENABLE POSTS AND LESSONS)
 @router.put("/users/{user_id}/enable", response_model=UserOut)
 def enable_user(
     user_id: int, 
@@ -72,18 +65,15 @@ def enable_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # 1. I-enable ang account
     user.is_active = True
     user.disabled_reason = None
     user.disabled_at = None
 
-    # 2. I-enable ang lahat ng Posts
     posts = db.query(TutorPost).filter(TutorPost.user_id == user.id).all()
     for post in posts:
         post.status = "published"
         post.disabled_reason = None
 
-    # 3. I-enable ang lahat ng Group Chats
     lessons = db.query(Lesson).filter(Lesson.tutor_id == user.id).all()
     for lesson in lessons:
         lesson.status = "active"
@@ -136,7 +126,6 @@ def delete_user(user_id: int, current_user: User = Depends(require_admin), db: S
     
     return None
 
-# 2. Manage Posts (List at Delete)
 @router.get("/posts", response_model=List[TutorPostOut])
 def get_all_posts(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     posts = db.query(TutorPost).order_by(TutorPost.created_at.desc()).all()
@@ -164,7 +153,6 @@ def delete_post(post_id: int, current_user: User = Depends(require_admin), db: S
     
     return None
 
-# 3. Manage Reports (List)
 @router.get("/reports", response_model=List[ReportOut])
 def get_all_reports(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     reports = db.query(Report).order_by(Report.created_at.desc()).all()
@@ -225,7 +213,6 @@ def resolve_report(report_id: int, current_user: User = Depends(require_admin), 
     db.commit()
     return {"status": "success"}
 
-# 🔥 BAGONG ENDPOINTS PARA SA POSTS
 class PostDisableRequest(BaseModel):
     reason: str
 
@@ -251,7 +238,6 @@ def enable_post(post_id: int, current_user: User = Depends(require_admin), db: S
     db.refresh(post)
     return post
 
-# 🔥 BAGONG ENDPOINTS PARA SA LESSONS (GC)
 class LessonDisableRequest(BaseModel):
     reason: str
 
@@ -291,7 +277,6 @@ def get_all_lessons(current_user: User = Depends(require_admin), db: Session = D
         })
     return result
 
-
 @router.post("/trigger-automatic-disable")
 def trigger_automatic_disable(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     try:
@@ -309,7 +294,6 @@ def trigger_automatic_disable(current_user: User = Depends(require_admin), db: S
             tutor.disabled_reason = "Automatically disabled: Inactive for 1 month."
             tutor.disabled_at = datetime.now()
             
-            # Auto-disable posts and lessons
             posts = db.query(TutorPost).filter(TutorPost.user_id == tutor.id).all()
             for post in posts:
                 post.status = "disabled"
@@ -351,12 +335,21 @@ def trigger_automatic_disable(current_user: User = Depends(require_admin), db: S
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 
+# 🔥 FIXED: MAGIGING TUTOR ANG USER PAG NA-APPROVE ANG POST
 @router.put("/posts/{post_id}/approve", response_model=TutorPostOut)
 def approve_post(post_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     post = db.query(TutorPost).filter(TutorPost.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+    
+    # 1. I-approve (publish) ang post
     post.status = "published"
+    
+    # 2. GAWING TUTOR ANG USER NA NAG-POST
+    owner = db.query(User).filter(User.id == post.user_id).first()
+    if owner and owner.role == UserRole.student:
+        owner.role = UserRole.tutor
+        
     db.commit()
     db.refresh(post)
     return post
@@ -371,13 +364,8 @@ def reject_post(post_id: int, current_user: User = Depends(require_admin), db: S
     db.refresh(post)
     return post
 
-# ==========================================
-# 🔥 APPEALS ENDPOINTS
-# ==========================================
-
 @router.get("/appeals")
 def get_all_appeals(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    # Kunin lahat ng appeals, pinakabago (latest) ang nasa unahan
     appeals = db.query(UserAppeal).order_by(UserAppeal.created_at.desc()).all()
     result = []
     for a in appeals:
@@ -402,17 +390,14 @@ def approve_appeal(appeal_id: int, current_user: User = Depends(require_admin), 
     if not appeal:
         raise HTTPException(status_code=404, detail="Appeal not found")
     
-    # I-update ang appeal status
     appeal.status = "approved"
     
-    # I-enable ang user
     user = db.query(User).filter(User.id == appeal.user_id).first()
     if user:
         user.is_active = True
         user.disabled_reason = None
         user.disabled_at = None
         
-        # I-enable ang posts at lessons
         posts = db.query(TutorPost).filter(TutorPost.user_id == user.id).all()
         for post in posts:
             post.status = "published"

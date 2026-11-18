@@ -75,6 +75,10 @@ def list_published_posts(
         post_dict['tutor_description'] = post.owner.description
         post_dict['tutor_description_picture'] = post.owner.description_picture
         
+        # 🔥 ITO ANG KULANG KANINA:
+        post_dict['is_online'] = post.owner.is_online
+        post_dict['last_seen_at'] = post.owner.last_seen_at
+
         lessons = db.query(Lesson).filter(Lesson.tutor_id == post.user_id).all()
         lesson_ids = [l.id for l in lessons]
         learners_count = db.query(Enrollment).filter(
@@ -89,6 +93,41 @@ def list_published_posts(
         result.append(post_dict)
     return result
 
+@router.get("/me", response_model=list[TutorPostOut])
+def get_my_posts(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # 🔥 FILTER: Kunin lang ang published posts ng current user
+    posts = db.query(TutorPost).filter(
+        TutorPost.user_id == current_user.id,
+        TutorPost.status == "published" 
+    ).order_by(TutorPost.created_at.desc()).all()
+    
+    result = []
+    for post in posts:
+        post_dict = TutorPostOut.model_validate(post).model_dump()
+        post_dict['tutor_name'] = current_user.full_name
+        post_dict['tutor_picture'] = current_user.profile_picture or post.tutor_picture
+        post_dict['tutor_description'] = current_user.description
+        post_dict['tutor_description_picture'] = current_user.description_picture
+        post_dict['is_online'] = post.owner.is_online
+        post_dict['last_seen_at'] = post.owner.last_seen_at
+        
+        # Kunin ang stats
+        lessons = db.query(Lesson).filter(Lesson.tutor_id == post.user_id).all()
+        lesson_ids = [l.id for l in lessons]
+        learners_count = db.query(Enrollment).filter(
+            Enrollment.lesson_id.in_(lesson_ids),
+            Enrollment.status.in_(["enrolled", "completed"])
+        ).count() if lesson_ids else 0
+        total_reviews = db.query(Review).filter(Review.tutor_id == post.user_id).count()
+        
+        post_dict['learners_count'] = learners_count
+        post_dict['total_reviews'] = total_reviews
+        result.append(post_dict)
+        
+    return result
 
 @router.get("/{post_id}", response_model=TutorPostOut)
 def get_post(post_id: int, db: Session = Depends(get_db)):
@@ -179,3 +218,23 @@ def get_tutor_gallery(user_id: int, db: Session = Depends(get_db)):
                 pass
                 
     return {"images": all_images}
+
+@router.get("/me", response_model=list[TutorPostOut])
+def get_my_posts(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Kunin lang ang mga published na posts ng current user
+    posts = db.query(TutorPost).filter(
+        TutorPost.user_id == current_user.id,
+        TutorPost.status == "published" # 🔥 FILTER: Published lang
+    ).order_by(TutorPost.created_at.desc()).all()
+    
+    result = []
+    for post in posts:
+        post_dict = TutorPostOut.model_validate(post).model_dump()
+        post_dict['tutor_name'] = current_user.full_name
+        post_dict['tutor_picture'] = current_user.profile_picture or post.tutor_picture
+        # ... (same logic as your other endpoints)
+        result.append(post_dict)
+    return result

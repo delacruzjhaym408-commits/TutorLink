@@ -110,6 +110,10 @@ class Conversation(Base):
     is_deleted_by_p1 = Column(Boolean, default=False)
     is_deleted_by_p2 = Column(Boolean, default=False)
 
+    # 🔥 BAGONG DAGDAG: Distinguish private vs session conversations
+    conversation_type = Column(String(20), nullable=False, default="private", server_default="private")
+    lesson_id = Column(Integer, ForeignKey("lessons.id", ondelete="CASCADE"), nullable=True)
+
     participant1 = relationship("User", foreign_keys=[participant1_id])
     participant2 = relationship("User", foreign_keys=[participant2_id])
     messages = relationship(
@@ -257,7 +261,8 @@ class TutorAvailability(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     tutor_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    day_of_week = Column(String(20), nullable=False)
+    day_of_week = Column(String(20), nullable=True) # 🔥 Ginawa nating nullable
+    specific_date = Column(String(20), nullable=True) # 🔥 BAGONG DAGDAG PARA SA PETSA
     start_time = Column(String(10), nullable=False)
     end_time = Column(String(10), nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)

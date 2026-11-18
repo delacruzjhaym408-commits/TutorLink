@@ -58,6 +58,7 @@ export class TutorDetailsPage implements OnInit {
   private calendarService = inject(CalendarService);
   
   tutorAvailabilities = signal<TutorAvailability[]>([]);
+  highlightedDates = signal<any[]>([]);
   
   selectedDate = signal<string>(new Date().toISOString());
   selectedStartTime = '';
@@ -73,7 +74,6 @@ export class TutorDetailsPage implements OnInit {
   loading = signal(true);
   errorMessage = signal('');
   
-  // 🔥 REVIEW GATING SIGNALS
   canReview = signal(false);
   canReviewReason = signal('');
   canReviewSource = signal<string | null>(null);
@@ -120,7 +120,6 @@ export class TutorDetailsPage implements OnInit {
     if (id) {
       this.loadPost(Number(id));
       
-      // 🔥 CHECK KUNG MAY ?apply=true SA URL
       this.route.queryParams.subscribe(params => {
         if (params['apply'] === 'true') {
           setTimeout(() => { this.applyLesson(); }, 500);
@@ -211,7 +210,10 @@ export class TutorDetailsPage implements OnInit {
     if (!currentPost) return;
 
     this.calendarService.getTutorAvailability(currentPost.user_id).subscribe({
-      next: (avails) => this.tutorAvailabilities.set(avails)
+      next: (avails) => {
+        this.tutorAvailabilities.set(avails);
+        this.generateStudentCalendarMarkings(avails);
+      }
     });
 
     this.selectedDate.set(new Date().toISOString());
@@ -225,7 +227,23 @@ export class TutorDetailsPage implements OnInit {
     this.paymentModal.present();
   }
 
-  // 🔥 COMPUTE: Auto-calculate base sa hourly rate at time duration
+  // 🔥 FIXED: SPECIFIC DATES LANG ANG GINAWANG GREEN
+  generateStudentCalendarMarkings(avails: TutorAvailability[]) {
+    const dates: any[] = [];
+
+    for (const a of avails) {
+      if (a.specific_date) {
+        dates.push({ 
+          date: a.specific_date, 
+          backgroundColor: '#10b981', // GREEN
+          textColor: '#ffffff' 
+        });
+      }
+    }
+    
+    this.highlightedDates.set(dates);
+  }
+
   computeBookingAmount() {
     const currentPost = this.post();
     if (!currentPost || !this.selectedStartTime || !this.selectedEndTime) {
@@ -238,11 +256,11 @@ export class TutorDetailsPage implements OnInit {
     let diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
     if (diffHours <= 0) {
-      this.bookingAmount.set(0); // Invalid time (End time is before Start time)
+      this.bookingAmount.set(0); 
     } else {
-      if (diffHours < 1) diffHours = 1; // Minimum 1 hour
+      if (diffHours < 1) diffHours = 1;
       const computed = currentPost.hourly_rate * diffHours;
-      this.bookingAmount.set(computed); // I-set ang total
+      this.bookingAmount.set(computed); 
     }
   }
 
@@ -270,7 +288,6 @@ export class TutorDetailsPage implements OnInit {
     const currentPost = this.post();
     if (!currentPost) return;
 
-    // Validation
     if (!this.selectedDate() || !this.selectedStartTime || !this.selectedEndTime) {
       this.showToast('Please select date, start time, and end time.'); return;
     }
@@ -281,7 +298,6 @@ export class TutorDetailsPage implements OnInit {
       this.showToast('Please enter reference number and upload receipt.'); return;
     }
 
-    // I-submit sa backend
     this.lessonService.apply1v1Session({
       post_id: currentPost.id,
       reference: this.bookingRef.trim(),
@@ -304,7 +320,6 @@ export class TutorDetailsPage implements OnInit {
     const val = event.detail.value;
     if (typeof val === 'string') {
       this.selectedDate.set(val);
-      // 🔥 TAWAGIN ANG COMPUTE PARA MAG-UPDATE ANG TOTAL KAPAG NAGBAGO ANG PETSA
       this.computeBookingAmount(); 
     }
   }

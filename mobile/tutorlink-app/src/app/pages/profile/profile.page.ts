@@ -14,7 +14,7 @@ import {
   personOutline, mailOutline, callOutline, createOutline, trashOutline, 
   addOutline, starOutline, logOutOutline, chatbubbleOutline, bookOutline, 
   settingsOutline, menuOutline, homeOutline, shieldCheckmarkOutline,
-  documentTextOutline, star // 🔥 IDINAGDAG
+  documentTextOutline, star
 } from 'ionicons/icons';
 import { TutorPost, TutorPostService } from '../../services/tutor-post.service';
 import { AuthUser } from '../../models/user.model';
@@ -28,7 +28,7 @@ import { API_BASE_URL } from '../../config';
   imports: [
     CommonModule, IonHeader, IonToolbar, IonTitle, IonContent,
     IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle,
-    IonCardContent, IonAvatar, IonSpinner, IonNote, IonButtons, IonList, IonItem, IonLabel, IonBackButton,IonMenu, IonRefresher, IonRefresherContent
+    IonCardContent, IonAvatar, IonSpinner, IonNote, IonButtons, IonList, IonItem, IonLabel, IonBackButton, IonMenu, IonRefresher, IonRefresherContent
   ],
 })
 export class ProfilePage implements OnInit {
@@ -67,24 +67,40 @@ export class ProfilePage implements OnInit {
   async loadMyPosts() {
     this.loading.set(true);
     this.cdr.detectChanges();
+    
     this.tutorPostService.getMyPosts().subscribe({
-      next: (posts) => { this.myPosts.set(posts); this.loading.set(false); this.cdr.detectChanges(); },
-      error: (err) => { this.loading.set(false); this.cdr.detectChanges(); },
+      next: (posts) => { 
+        // 🔥 FILTER: Published lang ang ipapakita
+        const publishedPosts = posts.filter(p => p.status === 'published');
+        publishedPosts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        
+        this.myPosts.set(publishedPosts); 
+        this.loading.set(false); 
+        this.cdr.detectChanges(); 
+      },
+      error: (err) => { 
+        console.error('Error loading my posts:', err);
+        this.showToast('Failed to load posts. Please try again.', 'danger');
+        this.loading.set(false); 
+        this.cdr.detectChanges(); 
+      },
     });
   }
 
-  // 🔥 FIXED: Dynamic replacement
+  private async showToast(message: string, color: string) {
+    const toast = await this.toastCtrl.create({ message, duration: 3000, color });
+    await toast.present();
+  }
+
   parseImages(jsonString: string | null | undefined): string[] {
     if (!jsonString) return [];
     try {
       const images = JSON.parse(jsonString);
       return images.map((img: string) => {
         if (!img) return img;
-
         if (img.includes('localhost') || img.includes('127.0.0.1') || img.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
           return img.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
         }
-        
         if (img.startsWith('/uploads/')) {
           return `${API_BASE_URL}${img}`;
         }
@@ -98,15 +114,12 @@ export class ProfilePage implements OnInit {
     }
   }
 
-  // 🔥 FIXED: Dynamic replacement
   getProfilePictureUrl(): string {
     const pic = this.user()?.profile_picture;
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
-
     if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
       return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
     }
-    
     if (pic.startsWith('/uploads/')) {
       return `${API_BASE_URL}${pic}`;
     }
@@ -116,15 +129,12 @@ export class ProfilePage implements OnInit {
     return pic;
   }
 
-  // 🔥 FIXED: Dynamic replacement
   getDescriptionPictureUrl(): string | null {
     const pic = this.user()?.description_picture;
     if (!pic) return null;
-
     if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
       return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
     }
-    
     if (pic.startsWith('/uploads/')) {
       return `${API_BASE_URL}${pic}`;
     }
@@ -140,12 +150,8 @@ export class ProfilePage implements OnInit {
 
   goToCreatePost() { this.router.navigate(['/create-post']); }
   goToEditPost(post: TutorPost) { this.router.navigate(['/edit-post', post.id]); }
-  
   goToMyReviews() { this.router.navigate(['/my-reviews']); }
-
-  goToAdminChat() {
-    this.router.navigate(['/admin-chat']);
-  }
+  goToAdminChat() { this.router.navigate(['/admin-chat']); }
 
   logout() {
     this.menuController.close();
@@ -162,14 +168,19 @@ export class ProfilePage implements OnInit {
     await alert.present();
   }
 
+  // 🔥 AYOS NA REFRESH LOGIC (May error handling at status filtering)
   doRefresh(event: any) {
     this.user.set(this.session.user() || this.getUserFromStorage());
     this.tutorPostService.getMyPosts().subscribe({
       next: (posts) => {
-        this.myPosts.set(posts);
+        const publishedPosts = posts.filter(p => p.status === 'published');
+        publishedPosts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        this.myPosts.set(publishedPosts);
         event.target.complete();
       },
-      error: () => {
+      error: (err) => {
+        console.error('Refresh failed:', err);
+        this.showToast('Failed to refresh posts.', 'danger');
         event.target.complete();
       }
     });

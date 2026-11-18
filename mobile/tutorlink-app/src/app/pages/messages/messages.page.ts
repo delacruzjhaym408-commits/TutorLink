@@ -10,14 +10,15 @@ import {
 import { 
   trashOutline, homeOutline, personOutline, chatbubbleOutline, 
   bookOutline, settingsOutline, logOutOutline, menuOutline,
-  chatbubblesOutline,
-  send
+  chatbubblesOutline, send
 } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
+import { Subscription } from 'rxjs'; // 🔥 IDINAGDAG PARA SA SUBSCRIPTION
 
 import { MessageService } from '../../services/message.service';
 import { AuthUser } from '../../models/user.model';
 import { SessionService } from '../../services/session.service';
+import { WebSocketService } from '../../services/websocket.service'; // 🔥 IDINAGDAG PARA SA WEBSOCKET
 import { API_BASE_URL } from '../../config';
 
 @Component({
@@ -38,43 +39,47 @@ export class MessagesPage implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private alertCtrl = inject(AlertController);
   private toastCtrl = inject(ToastController);
+  private wsService = inject(WebSocketService); // 🔥 INJECT NG WEBSOCKET SERVICE
 
   conversations = signal<any[]>([]);
   loading = signal(true);
   currentUser: AuthUser | null = null;
 
   private pollingInterval: any;
+  private wsSubscription!: Subscription; // 🔥 PARA SA SUBSCRIPTION
 
   constructor(public menuController: MenuController) {
     addIcons({ 
       trashOutline, homeOutline, personOutline, chatbubbleOutline, 
       bookOutline, settingsOutline, logOutOutline, menuOutline,
-      chatbubblesOutline,
-      send
+      chatbubblesOutline, send
     });
   }
 
   ngOnInit() {
-    const userJson = localStorage.getItem('user');
-    if (userJson) this.currentUser = JSON.parse(userJson);
-    
     this.loadConversations();
 
-    this.pollingInterval = setInterval(() => {
-      this.fetchConversationsSilently();
-    }, 3000);
+    // 🔥 Makinig sa WebSocket para mag-refresh ang listahan kapag may bagong message
+    this.wsSubscription = this.wsService.messages$.subscribe((data: any) => {
+      if (data.type === 'new_message') {
+        console.log('🔄 New message received, refreshing conversation list...');
+        this.fetchConversationsSilently(); // 🔥 GAMITIN ANG SILENT FETCH PARA HINDI MAG-FLICKER
+      }
+    });
   }
-
+  
   ngOnDestroy() {
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
+    }
+    if (this.wsSubscription) {
+      this.wsSubscription.unsubscribe(); // 🔥 LINISIN ANG SUBSCRIPTION
     }
   }
 
   getImageUrl(pic: string | null | undefined): string {
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
     
-    // 🔥 Dynamic replacement para sa kahit anong local IP
     if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
       return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
     }

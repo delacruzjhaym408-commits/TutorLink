@@ -1,116 +1,99 @@
-<ion-header>
-  <ion-toolbar color="primary">
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar color="primary" class="header-toolbar">
     <ion-buttons slot="start">
-      <ion-menu-button></ion-menu-button>
+      <ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button>
     </ion-buttons>
-    <ion-title>My Calendar</ion-title>
-  </ion-toolbar>
-
-  <ion-toolbar>
-    <ion-segment [(ngModel)]="activeTab" (ionChange)="onTabChange($event)">
-      <ion-segment-button value="student_view">
-        <ion-label>My Classes (As Student)</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="tutor_view">
-        <ion-label>My Schedule (As Tutor)</ion-label>
-      </ion-segment-button>
-    </ion-segment>
+    <ion-title>My Schedule</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content class="bg-content ion-padding">
+  
   <div *ngIf="loading()" class="ion-text-center ion-padding">
-    <ion-spinner color="primary"></ion-spinner>
-    <p>Loading calendar...</p>
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading schedule...</p>
   </div>
 
   <div *ngIf="!loading()">
-    <ng-container *ngIf="activeTab() === 'student_view'">
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>My Class Calendar</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-datetime 
-            presentation="date" 
-            [highlightedDates]="highlightedDates"
-            [(ngModel)]="selectedDate"
-            (ionChange)="onDateChange($event)"
-            [firstDayOfWeek]="1">
-          </ion-datetime>
+    <!-- 🔥 CALENDAR VIEW -->
+    <div class="calendar-wrapper">
+      <ion-datetime 
+        presentation="date" 
+        [value]="selectedDate()" 
+        (ionChange)="onDateChange($event)"
+        [highlightedDates]="highlightedDates()"
+        color="primary"
+        style="border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); width: 100%;">
+      </ion-datetime>
+    </div>
+
+    <!-- LEGEND -->
+    <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 16px; font-size: 0.8rem;">
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #10b981;"></div>
+        <span>Available Date</span>
+      </div>
+    </div>
+
+    <!-- 🔥 SELECTED DAY SCHEDULE -->
+    <div class="schedule-section">
+      <h3 class="section-title">
+        Schedule for <span style="color: #2563eb;">{{ selectedDateFormatted() }}</span>
+      </h3>
+      
+      <div *ngIf="getAvailabilitiesForSelectedDay().length === 0" class="no-schedule">
+        <p>No available time set for this date.</p>
+      </div>
+
+      <ion-list lines="none" *ngIf="getAvailabilitiesForSelectedDay().length > 0">
+        <ion-item *ngFor="let a of getAvailabilitiesForSelectedDay()" class="time-item">
+          <ion-icon name="time-outline" slot="start" color="primary"></ion-icon>
+          <ion-label>
+            <h2 style="font-weight: 700; color: #111827; margin: 0;">{{ a.start_time }} - {{ a.end_time }}</h2>
+          </ion-label>
           
-          <div class="ion-text-center ion-margin-top" style="font-size: 12px; display: flex; justify-content: center; gap: 10px;">
-            <span style="color: #2dd36f;">🟢 Completed</span>
-            <span style="color: #ffc409;">🟡 Pending</span>
-            <span style="color: #3880ff;">🔵 Ongoing</span>
-          </div>
-        </ion-card-content>
-      </ion-card>
+          <!-- 🔥 TUTOR-ONLY: Delete Button -->
+          <ion-button *ngIf="role() === 'tutor'" fill="clear" color="danger" slot="end" (click)="deleteAvailability(a.id)">
+            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-item>
+      </ion-list>
 
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Sessions on {{ selectedDate() | date:'mediumDate' }}</ion-card-title>
-        </ion-card-header>
-        <ion-list *ngIf="getSessionsForDate(selectedDate()).length > 0; else noSessions">
-          <ion-item *ngFor="let s of getSessionsForDate(selectedDate())">
-            <ion-label>
-              <h2>{{ s.subject }}</h2>
-              <p>{{ s.start_time }} - {{ s.end_time }}</p>
-              <ion-badge [color]="s.status === 'completed' ? 'success' : (s.status === 'pending' ? 'warning' : 'primary')">
-                {{ s.status | uppercase }}
-              </ion-badge>
-            </ion-label>
-          </ion-item>
-        </ion-list>
-        <ng-template #noSessions>
-          <ion-card-content class="ion-text-center">
-            <p>Walang klase sa araw na ito.</p>
-          </ion-card-content>
-        </ng-template>
-      </ion-card>
-    </ng-container>
+      <!-- 🔥 TUTOR-ONLY: Add Time Button -->
+      <ion-button *ngIf="role() === 'tutor'" (click)="addModal.present()" expand="block" color="primary" class="add-btn">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Add Time for {{ selectedDateFormatted() }}
+      </ion-button>
+    </div>
+  </div>
 
-    <ng-container *ngIf="activeTab() === 'tutor_view'">
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Set 1v1 Availability</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
+  <!-- MODAL FOR ADDING SCHEDULE -->
+  <ion-modal #addModal>
+    <ng-template>
+      <ion-header class="modal-header">
+        <ion-toolbar color="primary">
+          <ion-title>Add Schedule ({{ selectedDateFormatted() }})</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="addModal.dismiss()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-list lines="full">
           <ion-item>
-            <ion-label position="stacked">Day of Week</ion-label>
-            <ion-select [(ngModel)]="selectedDay">
-              <ion-select-option *ngFor="let day of daysOfWeek" [value]="day">{{ day }}</ion-select-option>
-            </ion-select>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">Start Time</ion-label>
+            <ion-label position="stacked" style="font-weight: 600;">Start Time</ion-label>
             <ion-input type="time" [(ngModel)]="startTime"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">End Time</ion-label>
+            <ion-label position="stacked" style="font-weight: 600;">End Time</ion-label>
             <ion-input type="time" [(ngModel)]="endTime"></ion-input>
           </ion-item>
-          <ion-button expand="block" class="ion-margin-top" (click)="addAvailability()" [disabled]="isSaving">
-            <ion-icon name="add-outline" slot="start"></ion-icon>
-            {{ isSaving ? 'Saving...' : 'Add Availability' }}
-          </ion-button>
-        </ion-card-content>
-      </ion-card>
-
-      <ion-card *ngIf="availabilities().length > 0">
-        <ion-card-header>
-          <ion-card-title>Your Available Days</ion-card-title>
-        </ion-card-header>
-        <ion-list>
-          <ion-item *ngFor="let avail of availabilities()">
-            <ion-icon name="time-outline" slot="start" color="primary"></ion-icon>
-            <ion-label>
-              <h2>{{ avail.day_of_week }}</h2>
-              <p>{{ avail.start_time }} - {{ avail.end_time }}</p>
-            </ion-label>
-          </ion-item>
         </ion-list>
-      </ion-card>
-    </ng-container>
-  </div>
+        
+        <ion-button expand="block" color="success" class="ion-margin-top" (click)="addAvailability()" style="height: 50px; --border-radius: 12px; font-weight: 700;">
+          Save Schedule
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>

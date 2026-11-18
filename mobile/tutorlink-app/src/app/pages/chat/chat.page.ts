@@ -1,16 +1,12 @@
-import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectorRef, ViewChild, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
-  IonFooter, IonInput, IonButton, IonIcon, IonSpinner, IonAvatar, AlertController
+  IonFooter, IonInput, IonButton, IonIcon, IonSpinner, IonAvatar, ToastController
 } from '@ionic/angular';
-import { 
-  sendOutline, callOutline, videocamOutline,
-  chatbubblesOutline,
-  cameraOutline, banOutline
-} from 'ionicons/icons';
+import { send, chatbubblesOutline, cameraOutline, calendarOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { Subscription } from 'rxjs';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -19,7 +15,6 @@ import { MessageService, Message } from '../../services/message.service';
 import { AuthUser } from '../../models/user.model';
 import { WebSocketService } from '../../services/websocket.service';
 import { AppStateService } from '../../services/app-state.service';
-import { SessionService } from '../../services/session.service';
 import { API_BASE_URL } from '../../config'; 
 
 @Component({
@@ -39,8 +34,8 @@ export class ChatPage implements OnInit, OnDestroy {
   private wsService = inject(WebSocketService);
   private appState = inject(AppStateService);
   private cdr = inject(ChangeDetectorRef);
-  private session = inject(SessionService);
-  private alertCtrl = inject(AlertController);
+  private ngZone = inject(NgZone);
+  private toastCtrl = inject(ToastController);
 
   @ViewChild(IonContent) content!: IonContent;
 
@@ -53,24 +48,19 @@ export class ChatPage implements OnInit, OnDestroy {
   
   otherUserName = signal<string>('Chat');
   otherUserPicture = signal<string | null>(null);
-  
-  // 🔥 BAGONG SIGNALS PARA SA DISABLED STATE
-  otherUserIsActive = signal<boolean>(true);
-  otherUserDisabledReason = signal<string>('');
+  otherUserIsOnline = signal<boolean>(false); // 🔥 SIGNAL PARA SA GREEN DOT
 
   private wsSubscription!: Subscription;
 
   constructor() {
-    addIcons({ sendOutline, callOutline, videocamOutline, chatbubblesOutline, cameraOutline, banOutline });
+    addIcons({ send, chatbubblesOutline, cameraOutline, calendarOutline });
   }
 
   getImageUrl(pic: string | null | undefined): string {
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
-    
     if (pic.includes('localhost') || pic.includes('127.0.0.1') || pic.match(/http:\/\/192\.168\.\d+\.\d+:\d+/)) {
       return pic.replace(/http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+/, API_BASE_URL);
     }
-    
     if (pic.startsWith('/uploads/')) return `${API_BASE_URL}${pic}`;
     if (!pic.startsWith('http')) return `${API_BASE_URL}/uploads/${pic}`;
     return pic;
@@ -86,15 +76,17 @@ export class ChatPage implements OnInit, OnDestroy {
     this.loadChatDetails();
     this.loadMessages();
 
-    this.wsSubscription = this.wsService.messages$.subscribe((data) => {
-      if (data.type === 'new_message' && data.conversation_id === this.conversationId) {
-        if (data.message.sender_id !== this.currentUser?.id) {
-          this.messages.update(m => [...m, data.message]);
-          this.cdr.detectChanges();
-          setTimeout(() => this.content?.scrollToBottom(300), 100);
-          
-          this.messageService.markAsRead(this.conversationId).subscribe(() => {
-            this.appState.triggerRefreshBadges();
+    this.wsSubscription = this.wsService.messages$.subscribe((data: any) => {
+      if (data.type === 'new_message' && Number(data.conversation_id) === Number(this.conversationId)) {
+        if (Number(data.message.sender_id) !== Number(this.currentUser?.id)) {
+          this.ngZone.run(() => {
+            this.messages.update(m => [...m, data.message]);
+            this.cdr.detectChanges();
+            setTimeout(() => this.content?.scrollToBottom(300), 100);
+            
+            this.messageService.markAsRead(this.conversationId).subscribe(() => {
+              this.appState.triggerRefreshBadges();
+            });
           });
         }
       }
@@ -106,21 +98,14 @@ export class ChatPage implements OnInit, OnDestroy {
   }
 
   loadChatDetails() {
-    this.messageService.getMyConversations().subscribe({
-      next: (convs) => {
-        const currentConv = convs.find(c => c.id === this.conversationId);
-        if (currentConv) {
-          this.otherUserName.set(currentConv.other_user_name);
-          this.otherUserPicture.set(this.getImageUrl(currentConv.other_user_picture)); 
-          this.cdr.detectChanges();
-        }
-      },
-      error: (err) => {
-        if (err?.status === 401) {
-          this.session.logout();
-          this.router.navigate(['/login']);
-        }
-      },
+    this.messageService.getMyConversations().subscribe(convs => {
+      const currentConv = convs.find(c => c.id === this.conversationId);
+      if (currentConv) {
+        this.otherUserName.set(currentConv.other_user_name);
+        this.otherUserPicture.set(currentConv.other_user_picture);
+        this.otherUserIsOnline.set(currentConv.other_user_is_online || false); // 🔥 SET ONLINE STATUS
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -136,12 +121,7 @@ export class ChatPage implements OnInit, OnDestroy {
           this.appState.triggerRefreshBadges();
         });
       },
-      error: (err) => {
-        if (err?.status === 401) {
-          this.session.logout();
-          this.router.navigate(['/login']);
-          return;
-        }
+      error: () => {
         this.loading.set(false);
         this.cdr.detectChanges();
       },
@@ -149,36 +129,28 @@ export class ChatPage implements OnInit, OnDestroy {
   }
 
   async send() {
-    if (!this.newMessage.trim() || !this.otherUserIsActive()) return;
+    if (!this.newMessage.trim()) return;
     this.sending.set(true);
 
     this.messageService.sendMessage(this.conversationId, this.newMessage.trim()).subscribe({
       next: (msg) => {
-        this.messages.update((m) => [...m, msg]);
-        this.newMessage = '';
-        this.sending.set(false);
-        this.cdr.detectChanges();
-        setTimeout(() => this.content?.scrollToBottom(300), 100);
+        this.ngZone.run(() => {
+          this.messages.update((m) => [...m, msg]);
+          this.newMessage = '';
+          this.sending.set(false);
+          this.cdr.detectChanges();
+          setTimeout(() => this.content?.scrollToBottom(300), 100);
+        });
       },
-      error: (err) => { 
-        this.sending.set(false); 
-        this.showToast(err.error?.detail || 'Error sending message.');
-      },
+      error: () => { this.sending.set(false); },
     });
   }
 
   async sendImage() {
-    if (!this.otherUserIsActive()) return;
-    
     try {
       const image = await Camera.getPhoto({
-        quality: 30,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Photos,
-        width: 800,
-        height: 800,
-        correctOrientation: true
+        quality: 30, allowEditing: false, resultType: CameraResultType.DataUrl,
+        source: CameraSource.Photos, width: 800, height: 800, correctOrientation: true
       });
 
       if (image.dataUrl) {
@@ -187,97 +159,46 @@ export class ChatPage implements OnInit, OnDestroy {
 
         this.messageService.sendMessage(this.conversationId, content).subscribe({
           next: (msg) => {
-            this.messages.update((m) => [...m, msg]);
-            this.sending.set(false);
-            this.cdr.detectChanges();
-            setTimeout(() => this.content?.scrollToBottom(300), 100);
+            this.ngZone.run(() => {
+              this.messages.update((m) => [...m, msg]);
+              this.sending.set(false);
+              this.cdr.detectChanges();
+              setTimeout(() => this.content?.scrollToBottom(300), 100);
+            });
           },
-          error: (err) => { 
+          error: () => { 
             this.sending.set(false); 
-            this.showToast('Error: ' + (err.error?.detail || 'Server error'));
+            alert('Error sending image.'); 
           }
         });
       }
     } catch (e) {
-      this.showToast('Failed to pick image. Please check permissions.');
+      console.log('Camera cancelled or failed', e);
     }
   }
 
-    // 🔥 BAGONG METHOD PARA SA MESSAGE DELETE
-  async deleteMessage(msg: Message) {
-    if (!this.isMine(msg)) return; // Safety: only own messages
-
-    const alert = await this.alertCtrl.create({
-      header: 'Delete Message',
-      message: 'Sigurado ka bang gusto mong i-delete ang message na ito? (Ikaw lang ang makakita nito — hindi mawawala sa kausap mo.)',
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        {
-          text: 'Delete',
-          role: 'destructive',
-          handler: () => {
-            this.messageService.deleteMessage(this.conversationId, msg.id).subscribe({
-              next: () => {
-                // Remove from local list
-                this.messages.update((m) => m.filter((x) => x.id !== msg.id));
-                this.cdr.detectChanges();
-              },
-              error: (err) => this.showToast(err.error?.detail || 'Failed to delete message.')
-            });
-          }
-        }
-      ]
-    });
-    await alert.present();
-  }
-
-  private async showToast(msg: string) {
-    const toast = document.createElement('ion-toast');
-    toast.message = msg;
-    toast.duration = 2500;
-    toast.color = 'danger';
-    document.body.appendChild(toast);
-    await toast.present();
-  }
-
-  startCall() {
-    if (!this.otherUserIsActive()) return;
-    const roomName = `TutorLink-Chat-${this.conversationId}`;
-    this.sendCallMessage("📞 Voice Call", roomName);
-  }
-
-  startVideoCall() {
-    if (!this.otherUserIsActive()) return;
-    const roomName = `TutorLink-Chat-${this.conversationId}`;
-    this.sendCallMessage("🎥 Video Call", roomName);
-  }
-
-  private sendCallMessage(type: string, roomName: string) {
-    const content = `${type} started. Click to join: [ROOM:${roomName}]`;
+  async bookSession() {
+    const postMsg = this.messages().find(m => m.post_id);
     
-    this.messageService.sendMessage(this.conversationId, content).subscribe({
-      next: (msg) => {
-        this.messages.update((m) => [...m, msg]);
-        this.cdr.detectChanges();
-        setTimeout(() => this.content?.scrollToBottom(300), 100);
-      }
-    });
-  }
-
-  joinCall(content: string) {
-    const match = content.match(/\[ROOM:(.*?)\]/);
-    if (match && match[1]) {
-      this.router.navigate(['/video-call', match[1]]);
+    if (postMsg && postMsg.post_id) {
+      this.router.navigate(['/tutor-details', postMsg.post_id], { queryParams: { apply: 'true' } });
+    } else {
+      const toast = await this.toastCtrl.create({
+        message: 'Walang naka-attach na post sa chat na ito. Pumunta sa Tutor Profile para mag-book.',
+        duration: 3000,
+        color: 'warning'
+      });
+      await toast.present();
     }
-  }
-
-  isMine(msg: Message): boolean {
-    return msg.sender_id === this.currentUser?.id;
   }
 
   goToPost(postId: number | null | undefined) {
     if (postId) {
-      this.router.navigate(['/tutor-details', postId]);
+      this.router.navigate(['/view-post', postId]);
     }
+  }
+
+  isMine(msg: Message): boolean {
+    return Number(msg.sender_id) === Number(this.currentUser?.id);
   }
 }

@@ -29,11 +29,11 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
   
-  <!-- SEGMENTS / TABS (WALA NANG GROUP CHATS) -->
+  <!-- MAIN TABS (My Students vs Payments) -->
   <div style="background: #fff; padding: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10;">
     <ion-segment [value]="activeTab()" (ionChange)="activeTab.set($any($event).detail.value)" color="primary" mode="md">
       <ion-segment-button value="students">
-        <ion-label>1v1 Sessions</ion-label>
+        <ion-label>My Students (1v1)</ion-label>
       </ion-segment-button>
       <ion-segment-button value="payments">
         <ion-label>Payments</ion-label>
@@ -41,170 +41,169 @@
     </ion-segment>
   </div>
 
-  <div class="ion-padding">
-    <!-- TAB 1: 1V1 SESSIONS -->
+  <div class="ion-padding" style="padding-bottom: 80px;">
+    
+    <!-- 🔥 TAB 1: MY STUDENTS (Listahan at Cancel Button) -->
     <div *ngIf="activeTab() === 'students'">
-      <div *ngIf="tutorStudents().length === 0" class="ion-text-center ion-padding empty-state">
-        <ion-icon name="calendar-outline" class="empty-icon" style="font-size: 60px; color: #ccc;"></ion-icon>
-        <h3>No 1v1 Sessions Yet</h3>
-        <p>Students who apply will appear here.</p>
+      <div *ngIf="getFilteredSessions('enrolled').length === 0" class="ion-text-center ion-padding empty-state">
+        <ion-icon name="people-outline" class="empty-icon" style="font-size: 60px; color: #ccc;"></ion-icon>
+        <h3>No Active Students</h3>
+        <p>Approved 1v1 sessions will appear here.</p>
       </div>
 
-      <div *ngFor="let group of tutorStudents()" style="margin-bottom: 24px;">
-        <h3 style="font-size: 1.1rem; font-weight: 700; color: #111827; margin-bottom: 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 4px;">
-          {{ group.gc_name }}
-        </h3>
-        
-        <ion-card *ngFor="let s of group.students" style="margin-bottom: 12px;">
+      <ion-list lines="full" style="background: transparent; padding: 0;">
+        <ion-item *ngFor="let s of getFilteredSessions('enrolled')" style="--background: #fff; margin-bottom: 8px; border-radius: 8px; --padding-start: 12px; --inner-padding-end: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <ion-avatar slot="start" style="width: 50px; height: 50px;">
+            <img [src]="getImageUrl(s.profile_picture || s.lesson?.tutor?.profile_picture)" />
+          </ion-avatar>
+          <ion-label>
+            <h2 style="font-weight: 700; color: #111827; margin-bottom: 2px;">
+              {{ isTutor() ? s.full_name : (s.lesson?.tutor?.full_name || 'Tutor') }}
+            </h2>
+            <p style="font-size: 0.85rem; color: #059669; font-weight: 600; margin-bottom: 2px;">1v1 Session Active</p>
+            <p style="font-size: 0.8rem; color: #6b7280;">{{ isTutor() ? s.lesson_name : s.lesson?.gc_name }}</p>
+          </ion-label>
+          <div slot="end" style="display: flex; gap: 8px;">
+            <ion-button color="primary" fill="solid" size="small" (click)="goToChat(s.conversation_id)">
+              <ion-icon name="chatbubble-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+             <ion-button color="danger" fill="outline" size="small" (click)="cancelSession(s)">
+               Cancel
+             </ion-button>
+          </div>
+        </ion-item>
+      </ion-list>
+    </div>
+
+    <!-- 🔥 TAB 2: PAYMENTS (Pending, Approved, Rejected) -->
+    <div *ngIf="activeTab() === 'payments'">
+      
+      <ion-segment [value]="paymentTab()" (ionChange)="paymentTab.set($any($event).detail.value)" color="tertiary" mode="ios" style="margin-bottom: 16px;">
+        <ion-segment-button value="pending">
+          <ion-label>Pending</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="enrolled">
+          <ion-label>Approved</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="rejected">
+          <ion-label>Rejected</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+
+      <!-- PENDING SECTION -->
+      <div *ngIf="paymentTab() === 'pending'">
+        <div *ngIf="getFilteredSessions('pending_payment').length === 0" class="ion-text-center ion-padding" style="color: #9ca3af;">
+          No pending applications.
+        </div>
+
+        <ion-card *ngFor="let s of getFilteredSessions('pending_payment')" style="margin-bottom: 12px;">
           <ion-card-content>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
               <ion-avatar style="width: 40px; height: 40px;">
-                <img [src]="s.profile_picture || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
+                <img [src]="getImageUrl(s.profile_picture)" />
               </ion-avatar>
               <div>
                 <strong style="font-size: 1.1rem;">{{ s.full_name }}</strong>
-                <p style="margin: 0; font-size: 0.8rem; color: #6b7280; text-transform: capitalize;">
-                  Status: <strong>{{ s.status === 'pending_payment' ? 'Waiting for Approval' : s.status }}</strong>
-                </p>
+                <p style="margin: 0; font-size: 0.8rem; color: #6b7280;">{{ s.lesson_name }}</p>
               </div>
             </div>
-
             <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
               <p style="margin-bottom: 4px; font-size: 0.9rem;">
-                <strong>Date & Time:</strong> 
-                {{ s.next_meeting_date || 'TBA' }} 
-                <span *ngIf="s.next_meeting_time"> • {{ s.next_meeting_time }}</span>
+                <strong>Date & Time:</strong> {{ s.next_meeting_date || 'TBA' }} <span *ngIf="s.next_meeting_time">• {{ s.next_meeting_time }}</span>
               </p>
               <p style="margin-bottom: 8px; font-size: 0.9rem;">
-                <strong>Amount to Pay:</strong> 
-                <strong style="color: #059669;">₱{{ s.monthly_rate || 0 }}</strong>
+                <strong>Amount:</strong> <strong style="color: #059669;">₱{{ s.monthly_rate || 0 }}</strong>
               </p>
-              
-              <p *ngIf="s.payment_reference" style="margin-bottom: 8px; font-size: 0.9rem;">
-                <strong>Reference No:</strong> {{ s.payment_reference }}
-              </p>
-
               <ion-button *ngIf="s.payment_proof" size="small" fill="outline" color="primary" (click)="openReceipt(s.payment_proof)" style="margin-bottom: 12px;">
                 View Receipt
               </ion-button>
 
-              <div style="display: flex; gap: 8px;" *ngIf="s.status === 'pending_payment'">
+              <div *ngIf="isTutor()" style="display: flex; gap: 8px;">
                 <ion-button expand="block" color="success" style="flex: 1;" (click)="approveStudent(s.student_id, s.lesson_id)">
-                  <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon> Approve
+                  Approve
                 </ion-button>
                 <ion-button expand="block" color="danger" style="flex: 1;" (click)="rejectStudent(s.student_id, s.lesson_id)">
-                  <ion-icon name="close-circle-outline" slot="start"></ion-icon> Reject
+                  Reject
                 </ion-button>
               </div>
 
-              <div *ngIf="s.status === 'rejected'" style="margin-top: 8px;">
-                <p style="color: #ef4444; font-size: 0.85rem;">
-                  <strong>Reason:</strong> {{ s.rejection_reason || 'No reason provided.' }}
-                </p>
+              <div *ngIf="!isTutor()" style="text-align: center; color: #f59e0b; font-weight: 600; font-size: 0.9rem; padding: 8px; background: #fffbeb; border-radius: 6px;">
+                ⏳ Waiting for Tutor Approval
               </div>
+
             </div>
           </ion-card-content>
         </ion-card>
       </div>
-    </div>
 
-    <!-- TAB 2: PAYMENTS (Para sa mga lumang GC na may pending) -->
-    <div *ngIf="activeTab() === 'payments'">
-      <div class="input-group" style="margin-bottom: 16px;">
-        <label style="font-size: 0.9rem; font-weight: 600; color: #374151;">Select Group Chat to View Payments</label>
-        <select 
-          style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db; margin-top: 4px; font-size: 1rem; background: #fff;"
-          (change)="onSelectPaymentGc($any($event).target.value)"
-          [value]="selectedLessonId() || ''"
-        >
-          <option value="" disabled>-- Choose Group Chat --</option>
-          <ng-container *ngFor="let item of enrollments()">
-            <option *ngIf="isTutor(item)" [value]="item.lesson.id">
-              {{ item.lesson.gc_name }}
-            </option>
-          </ng-container>
-        </select>
-      </div>
-
-      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-        <ion-button size="small" [fill]="paymentFilter() === 'pending' ? 'solid' : 'outline'" color="warning" (click)="paymentFilter.set('pending')">Pending</ion-button>
-        <ion-button size="small" [fill]="paymentFilter() === 'approved' ? 'solid' : 'outline'" color="success" (click)="paymentFilter.set('approved')">Approved</ion-button>
-        <ion-button size="small" [fill]="paymentFilter() === 'rejected' ? 'solid' : 'outline'" color="danger" (click)="paymentFilter.set('rejected')">Rejected</ion-button>
-      </div>
-
-      <div *ngIf="!selectedLessonId()" class="ion-text-center ion-padding" style="margin-top: 40px; color: #9ca3af;">
-        <ion-icon name="cash-outline" style="font-size: 60px; opacity: 0.5;"></ion-icon>
-        <h3>Select a Group Chat</h3>
-        <p>Choose a group above to see its payment applications.</p>
-      </div>
-
-      <div *ngIf="selectedLessonId() && getFilteredMembers().length === 0" class="ion-text-center ion-padding" style="margin-top: 40px;">
-        <ion-icon name="checkmark-done-circle-outline" color="success" style="font-size: 60px;"></ion-icon>
-        <h3>No {{ paymentFilter() }} applications</h3>
-      </div>
-
-      <div *ngIf="selectedLessonId() && getFilteredMembers().length > 0">
-        <ion-card *ngFor="let m of getFilteredMembers()" style="margin-bottom: 16px;">
-          <ion-card-header>
-            <ion-card-title style="font-size: 1.1rem; display: flex; align-items: center;">
-              <ion-avatar style="width: 30px; height: 30px; margin-right: 8px;">
-                <img [src]="m.profile_picture || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
-              </ion-avatar>
-              {{ m.full_name }}
-            </ion-card-title>
-          </ion-card-header>
+      <!-- APPROVED SECTION -->
+      <div *ngIf="paymentTab() === 'enrolled'">
+        <div *ngIf="getFilteredSessions('enrolled').length === 0" class="ion-text-center ion-padding" style="color: #9ca3af;">
+          No approved applications.
+        </div>
+        <ion-card *ngFor="let s of getFilteredSessions('enrolled')" style="margin-bottom: 12px;">
           <ion-card-content>
-            <div style="margin-bottom: 8px;">
-              <ion-badge [color]="m.status === 'pending_payment' ? 'warning' : (m.status === 'enrolled' ? 'success' : 'danger')">
-                {{ m.status === 'pending_payment' ? 'WAITING FOR APPROVAL' : m.status | uppercase }}
-              </ion-badge>
-            </div>
-
-            <div *ngIf="m.payment_status === 'pending' && m.payment_proof">
-              <p style="font-size: 0.9rem; margin-bottom: 4px;">
-                <strong>Reference:</strong> {{ m.payment_reference }}
-              </p>
-              <p style="font-size: 0.9rem; margin-bottom: 8px;">
-                <strong>Receipt:</strong>
-              </p>
-              <ion-img [src]="m.payment_proof" style="width: 100%; max-height: 300px; object-fit: contain; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 12px;"></ion-img>
-              
-              <div style="display: flex; gap: 8px;" *ngIf="m.status === 'pending_payment'">
-                <ion-button expand="block" color="success" style="flex: 1;" (click)="approveStudent(m.student_id, selectedLessonId()!)">
-                  <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon> Approve
-                </ion-button>
-                <ion-button expand="block" color="danger" style="flex: 1;" (click)="rejectStudent(m.student_id, selectedLessonId()!)">
-                  <ion-icon name="close-circle-outline" slot="start"></ion-icon> Reject
-                </ion-button>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <ion-avatar style="width: 40px; height: 40px;">
+                  <img [src]="getImageUrl(s.profile_picture)" />
+                </ion-avatar>
+                <div>
+                  <strong style="font-size: 1.1rem;">{{ s.full_name }}</strong>
+                  <p style="margin: 0; font-size: 0.8rem; color: #059669;">Approved</p>
+                </div>
               </div>
-            </div>
-
-            <div *ngIf="m.status === 'rejected'">
-               <p style="color: #ef4444; font-size: 0.9rem;">
-                 <strong>Reason:</strong> {{ m.rejection_reason || 'No reason provided.' }}
-               </p>
+              
+              <ion-button size="small" fill="solid" color="primary" (click)="goToChat(s.conversation_id)">
+                <ion-icon name="chatbubble-outline" slot="start"></ion-icon> Chat
+              </ion-button>
             </div>
           </ion-card-content>
         </ion-card>
       </div>
+
+      <!-- REJECTED SECTION -->
+      <div *ngIf="paymentTab() === 'rejected'">
+        <div *ngIf="getFilteredSessions('rejected').length === 0" class="ion-text-center ion-padding" style="color: #9ca3af;">
+          No rejected applications.
+        </div>
+        <ion-card *ngFor="let s of getFilteredSessions('rejected')" style="margin-bottom: 12px;">
+          <ion-card-content>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <ion-avatar style="width: 40px; height: 40px;">
+                <img [src]="getImageUrl(s.profile_picture)" />
+              </ion-avatar>
+              <div>
+                <strong style="font-size: 1.1rem;">{{ s.full_name }}</strong>
+                <p style="margin: 0; font-size: 0.8rem; color: #ef4444;">Rejected</p>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
     </div>
 
   </div>
 </ion-content>
 
-<!-- CREATE GC MODAL (Nakatago na ito pero nasa code pa rin para hindi mag-error) -->
-<ion-modal #createGcModal>
+<!-- 🔥 RECEIPT MODAL (ITO NA ANG TOTOONG FIX) -->
+<ion-modal [isOpen]="isReceiptModalOpen()" (didDismiss)="isReceiptModalOpen.set(false)">
   <ng-template>
-    <ion-header class="modal-header">
+    <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>Create Group Chat</ion-title>
+        <ion-title>Payment Receipt</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="createGcModal.dismiss()">Cancel</ion-button>
+          <ion-button (click)="isReceiptModalOpen.set(false)">Close</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="modal-content ion-padding">
-       <!-- Laman ng modal... -->
+    <ion-content class="ion-padding" style="text-align: center;">
+      <img 
+        [src]="selectedReceiptImage()" 
+        style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-top: 16px;" 
+        alt="Payment Receipt" 
+      />
     </ion-content>
   </ng-template>
 </ion-modal>

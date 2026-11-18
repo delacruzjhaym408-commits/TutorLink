@@ -6,43 +6,35 @@
     
     <ion-title class="chat-title">
       <div style="display: flex; align-items: center; gap: 10px;">
-        <ion-avatar style="width: 36px; height: 36px; border: 2px solid #e5e7eb;">
+        <!-- 🔥 GREEN DOT SA CHAT HEADER -->
+        <ion-avatar style="width: 36px; height: 36px; border: 2px solid #e5e7eb; position: relative;">
           <img [src]="otherUserPicture() || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
+          <span *ngIf="otherUserIsOnline()" style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; border: 2px solid #fff;"></span>
         </ion-avatar>
-        <div>
-          <span class="chat-name">{{ otherUserName() }}</span>
-          <!-- 🔥 DISABLED BADGE -->
-          <span *ngIf="!otherUserIsActive()" style="display: block; font-size: 0.7rem; color: #ef4444; font-weight: 600;">Account Disabled</span>
-        </div>
+        <span class="chat-name">{{ otherUserName() }}</span>
       </div>
     </ion-title>
-    
-    <ion-buttons slot="end">
-      <ion-button (click)="startCall()" class="menu-btn" [disabled]="!otherUserIsActive()">
-        <ion-icon name="call-outline"></ion-icon>
-      </ion-button>
-      <ion-button (click)="startVideoCall()" class="menu-btn" [disabled]="!otherUserIsActive()">
-        <ion-icon name="videocam-outline"></ion-icon>
+
+    <ion-buttons slot="end" *ngIf="currentUser?.role === 'student'">
+      <ion-button (click)="bookSession()" fill="solid" color="light" size="small" style="margin-right: 8px; font-weight: 700;">
+        <ion-icon name="calendar-outline" slot="start"></ion-icon>
+        Book
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="bg-content">
+<ion-content class="bg-content" #content>
   <div *ngIf="loading()" class="ion-text-center loading-container">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading messages...</p>
   </div>
 
-  <!-- 🔥 ITO ANG NAWALA: messages-container -->
   <div class="messages-container" *ngIf="!loading()">
-    
-    <!-- 🔥 MESSAGE LOOP NA MAY CONTEXTMENU -->
     <div 
       *ngFor="let msg of messages()" 
       class="message-row"
       [class.mine]="isMine(msg)"
-      (contextmenu)="deleteMessage(msg)"
     >
       <ion-avatar class="sender-avatar" *ngIf="!isMine(msg)">
         <img [src]="msg.sender_picture || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
@@ -53,19 +45,19 @@
         
         <div 
           *ngIf="msg.post_subject" 
-          class="post-ref-card" 
+          class="embedded-post" 
           (click)="goToPost(msg.post_id)"
         >
           <img 
             *ngIf="msg.post_picture" 
-            [src]="msg.post_picture" 
-            class="post-ref-thumb" 
+            [src]="getImageUrl(msg.post_picture)" 
+            class="embedded-post-image" 
             alt="post" 
           />
-          <div class="post-ref-body">
-            <span class="post-ref-label">📌 Referring to post</span>
-            <span class="post-ref-subject">{{ msg.post_subject }}</span>
-            <span class="post-ref-cta">Tap to view →</span>
+          <div class="embedded-post-content">
+            <span class="embedded-post-label">📌 Shared Post</span>
+            <h4 class="embedded-post-subject">{{ msg.post_subject }}</h4>
+            <span class="embedded-post-cta">Click to view post →</span>
           </div>
         </div>
 
@@ -74,60 +66,38 @@
         </div>
 
         <div *ngIf="!msg.content.startsWith('[IMAGE]')">
-          <div *ngIf="msg.content.includes('[ROOM:'); else normalMessage">
-            <p class="message-text">
-              {{ msg.content.split('[ROOM:')[0] }}
-            </p>
-            <ion-button expand="block" color="success" size="small" style="margin-top: 8px;" (click)="joinCall(msg.content)">
-              Join Now
-            </ion-button>
-          </div>
-
-          <ng-template #normalMessage>
-            <p class="message-text">{{ msg.content }}</p>
-          </ng-template>
+          <p class="message-text">{{ msg.content }}</p>
         </div>
 
         <small class="message-time">{{ msg.created_at | date:'shortTime' }}</small>
       </div>
     </div>
     
-    <!-- EMPTY STATE -->
     <div *ngIf="messages().length === 0" class="ion-text-center empty-state">
       <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
       <h3>No messages yet</h3>
       <p>Say hello to start the conversation! 👋</p>
     </div>
-
   </div>
 </ion-content>
 
 <ion-footer class="modern-footer">
-  <!-- 🔥 BANNER NOTIFICATION KAPAG DISABLED ANG KAUSAP -->
-  <div *ngIf="!otherUserIsActive()" style="background: #ffebee; padding: 12px; text-align: center; border-top: 1px solid #ffcdd2;">
-    <p style="margin: 0; color: #c62828; font-weight: 600; font-size: 0.9rem;">
-      ⛔ This user's account is currently disabled by the Admin. You cannot send messages.
-    </p>
-  </div>
-
   <ion-toolbar class="footer-toolbar">
     <div class="input-container">
-      <!-- 🔥 DISABLED CAMERA BUTTON KAPAG DISABLED ANG KAUSAP -->
-      <ion-button fill="clear" (click)="sendImage()" class="camera-btn" [disabled]="!otherUserIsActive()">
+      <ion-button fill="clear" (click)="sendImage()" class="camera-btn" [disabled]="sending()">
         <ion-icon name="camera-outline" slot="icon-only" color="medium"></ion-icon>
       </ion-button>
 
       <ion-input
         [(ngModel)]="newMessage"
-        placeholder="{{ otherUserIsActive() ? 'Type a message...' : 'User is disabled' }}"
+        placeholder="Type a message..."
         (keyup.enter)="send()"
         class="chat-input"
-        [disabled]="!otherUserIsActive()"
       ></ion-input>
       
       <ion-button 
         (click)="send()" 
-        [disabled]="sending() || !newMessage.trim() || !otherUserIsActive()"
+        [disabled]="sending() || !newMessage.trim()"
         class="send-btn"
         shape="round"
       >
