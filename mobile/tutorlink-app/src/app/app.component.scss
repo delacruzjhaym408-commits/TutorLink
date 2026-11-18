@@ -1,9 +1,11 @@
-/* GLOBAL LAYOUT */
+/* ============================================
+   GLOBAL LAYOUT
+   ============================================ */
 ion-app {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f8f9fa;
+  background: #F8F9FA; /* Updated to match Home background */
 }
 
 .main-outlet {
@@ -12,17 +14,19 @@ ion-app {
   overflow-y: auto;
 }
 
-/* ==================== SIDE MENU ==================== */
+/* ============================================
+   SIDE MENU
+   ============================================ */
 .modern-menu {
   --width: 280px;
 }
 
 .menu-header {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0 1px 0 #E5E7EB;
 }
 
 .menu-toolbar {
-  --background: #ffffff;
+  --background: #FFFFFF;
   --padding-top: 24px;
   --padding-bottom: 24px;
   --padding-start: 20px;
@@ -38,7 +42,7 @@ ion-app {
 .avatar-wrapper {
   width: 56px;
   height: 56px;
-  background: #eef2ff;
+  background: #F3EFFF; /* Light violet tint */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -46,7 +50,7 @@ ion-app {
 
   ion-icon {
     font-size: 2.5rem;
-    color: #2563eb;
+    color: #5835F5; /* Primary Royal Blue */
   }
 }
 
@@ -55,22 +59,22 @@ ion-app {
   flex-direction: column;
 
   h2 {
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: #111827;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1A1A1A; /* Dark Charcoal */
     margin: 0;
   }
 
   p {
     font-size: 0.85rem;
-    color: #6b7280;
+    color: #8E8E93; /* Muted Gray */
     margin: 2px 0 0 0;
   }
 }
 
 /* MENU LIST */
 .menu-content {
-  --background: #ffffff;
+  --background: #FFFFFF;
 }
 
 .menu-list {
@@ -87,18 +91,19 @@ ion-app {
   transition: background 0.2s ease;
 
   ion-icon {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     margin-right: 12px;
+    color: #8E8E93; /* Muted Gray */
   }
 
   ion-label {
     font-weight: 600;
-    font-size: 1rem;
-    color: #374151;
+    font-size: 0.95rem;
+    color: #333333; /* Dark Body Text */
   }
 
   &:hover, &:active {
-    --background: #f3f4f6;
+    --background: #F8F9FA;
   }
 }
 
@@ -106,47 +111,69 @@ ion-app {
   border-radius: 50%;
   padding: 4px 8px;
   font-weight: bold;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   min-width: 24px;
   text-align: center;
 }
 
 .menu-divider {
   height: 1px;
-  background: #f3f4f6;
+  background: #E5E7EB;
   margin: 16px 0;
 }
 
 .logout-item {
   ion-label {
-    color: #ef4444;
+    color: #EF4444;
+  }
+
+  ion-icon {
+    color: #EF4444;
   }
 
   &:hover, &:active {
-    --background: #fef2f2;
+    --background: #FEF2F2;
   }
 }
 
-/* ==================== BOTTOM TABS ==================== */
+/* Active menu item (Vibrant Blue Tint) */
+.active-menu-item {
+  --background: #F3EFFF;
+  --color: #5835F5;
+  border-radius: 12px;
+
+  ion-icon {
+    color: #5835F5 !important;
+  }
+
+  ion-label {
+    color: #5835F5;
+  }
+}
+
+/* ============================================
+   BOTTOM TAB BAR (Vibrant Royal Blue)
+   ============================================ */
 .modern-tab-bar {
-  --background: #ffffff;
+  --background: #FFFFFF;
   --border: none;
   height: 64px;
-  box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
-  border-top: 1px solid #f3f4f6;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+  border-top: 1px solid #E5E7EB;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
 .tab-btn {
-  --color: #9ca3af;
-  --color-selected: #2563eb;
+  --color: #8E8E93; /* Muted Gray for inactive */
+  --color-selected: #5835F5; /* Vibrant Blue for active */
   --padding-top: 8px;
   --padding-bottom: 8px;
   --ripple-color: transparent;
-  transition: transform 0.2s ease;
+  transition: color 0.2s ease;
+  position: relative;
 
   ion-icon {
-    font-size: 24px;
+    font-size: 23px;
     margin-bottom: 2px;
     transition: transform 0.2s ease;
   }
@@ -157,9 +184,25 @@ ion-app {
     letter-spacing: 0.2px;
   }
 
-  &.tab-selected {
+  &.active-tab {
+    --color: #5835F5;
+    --color-selected: #5835F5;
+
     ion-icon {
       transform: translateY(-2px);
+    }
+
+    /* Small dot indicator below the icon */
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #5835F5;
     }
   }
 }
@@ -178,30 +221,4 @@ ion-app {
   border-radius: 10px;
   min-width: 16px;
   text-align: center;
-}
-
-/* 🔥 ACTIVE INDICATOR SA BURGER MENU */
-.active-menu-item {
-  --background: rgba(37, 99, 235, 0.1);
-  --color: #2563eb;
-  border-radius: 8px;
-  margin: 4px 8px;
-  
-  ion-icon {
-    color: #2563eb !important;
-  }
-}
-
-/* 🔥 ACTIVE INDICATOR SA BOTTOM TAB BAR */
-.tab-btn.active-tab {
-  --color: #ffffff;
-  --color-selected: #ffffff;
-  --background: #2563eb;
-  border-radius: 12px;
-  margin: 4px 8px;
-  transition: all 0.2s ease;
-
-  ion-icon {
-    transform: translateY(-2px);
-  }
 }

@@ -1,28 +1,63 @@
-<ion-header>
-  <ion-toolbar color="dark">
-    <ion-buttons slot="start"><ion-back-button defaultHref="/admin/dashboard"></ion-back-button></ion-buttons>
-    <ion-title>Manage Group Chats</ion-title>
+<ion-header class="modern-header">
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/admin/dashboard" class="back-btn"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="page-title">Manage Lessons</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <ion-list>
-    <ion-item *ngFor="let lesson of lessons()">
-      <ion-label>
-        <h2>
-          {{ lesson.gc_name }} 
-          <ion-badge color="danger" *ngIf="lesson.status === 'disabled'">DISABLED</ion-badge>
-        </h2>
-        <p>Tutor: {{ lesson.tutor_name }}</p>
-        <p *ngIf="lesson.status === 'disabled'" style="color: red;">Reason: {{ lesson.disabled_reason }}</p>
-      </ion-label>
+<ion-content class="page-content">
+  
+  <!-- EMPTY STATE -->
+  <div *ngIf="lessons().length === 0" class="empty-state">
+    <div class="icon-circle">
+      <ion-icon name="book-outline"></ion-icon>
+    </div>
+    <h3>No lessons found</h3>
+    <p>There are no active lesson group chats right now.</p>
+  </div>
+
+  <!-- LESSONS LIST -->
+  <div class="lessons-list" *ngIf="lessons().length > 0">
+    <div class="lesson-card" *ngFor="let lesson of lessons()">
       
-      <ion-button fill="clear" color="warning" *ngIf="lesson.status !== 'disabled'" (click)="confirmDisable(lesson)">
-        <ion-icon name="ban-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-      <ion-button fill="clear" color="success" *ngIf="lesson.status === 'disabled'" (click)="confirmEnable(lesson)">
-        <ion-icon name="checkmark-circle-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-    </ion-item>
-  </ion-list>
+      <div class="lesson-info">
+        <h2 class="lesson-subject">{{ lesson.subject || 'Untitled Lesson' }}</h2>
+        <p class="lesson-tutor">Tutor: <strong>{{ lesson.tutor_name || 'Unknown' }}</strong></p>
+        
+        <div class="status-badge" [class.disabled]="lesson.is_disabled">
+          <ion-icon [name]="lesson.is_disabled ? 'ban-outline' : 'checkmark-circle-outline'"></ion-icon>
+          <span>{{ lesson.is_disabled ? 'Disabled' : 'Active' }}</span>
+        </div>
+
+        <p class="disabled-reason" *ngIf="lesson.is_disabled && lesson.disabled_reason">
+          <strong>Reason:</strong> {{ lesson.disabled_reason }}
+        </p>
+      </div>
+
+      <div class="lesson-actions">
+        <ion-button 
+          *ngIf="!lesson.is_disabled" 
+          fill="solid" 
+          color="danger" 
+          class="action-btn disable-btn" 
+          (click)="confirmDisable(lesson)">
+          <ion-icon name="ban-outline" slot="start"></ion-icon>
+          Disable GC
+        </ion-button>
+
+        <ion-button 
+          *ngIf="lesson.is_disabled" 
+          fill="solid" 
+          color="success" 
+          class="action-btn enable-btn" 
+          (click)="confirmEnable(lesson)">
+          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+          Enable GC
+        </ion-button>
+      </div>
+
+    </div>
+  </div>
 </ion-content>

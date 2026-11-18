@@ -1,20 +1,44 @@
-<ion-menu id="main-menu" contentId="main-content" side="end">
-  <ion-header><ion-toolbar color="primary"><ion-title>Menu</ion-title></ion-toolbar></ion-header>
-  <ion-content>
-    <ion-list>
-      <ion-item routerLink="/home" button (click)="menuController.close()"><ion-icon name="home-outline" slot="start"></ion-icon><ion-label>Home</ion-label></ion-item>
-      <ion-item routerLink="/profile" button (click)="menuController.close()"><ion-icon name="person-outline" slot="start"></ion-icon><ion-label>Profile</ion-label></ion-item>
-      <ion-item routerLink="/messages" button (click)="menuController.close()"><ion-icon name="chatbubble-outline" slot="start"></ion-icon><ion-label>Messages</ion-label></ion-item>
-      <ion-item routerLink="/my-lesson" button (click)="menuController.close()"><ion-icon name="book-outline" slot="start"></ion-icon><ion-label>My Lesson</ion-label></ion-item>
-      <ion-item (click)="logout()" button color="danger"><ion-icon name="log-out-outline" slot="start"></ion-icon><ion-label>Log Out</ion-label></ion-item>
+<!-- SIDE MENU -->
+<ion-menu id="main-menu" contentId="main-content" side="end" class="modern-menu">
+  <ion-header class="menu-header">
+    <ion-toolbar class="menu-toolbar">
+      <ion-title class="menu-title">Menu</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content class="menu-content">
+    <ion-list lines="none" class="menu-list">
+      <ion-item routerLink="/home" button (click)="menuController.close()" class="menu-item">
+        <ion-icon name="home-outline" slot="start"></ion-icon>
+        <ion-label>Home</ion-label>
+      </ion-item>
+      <ion-item routerLink="/profile" button (click)="menuController.close()" class="menu-item">
+        <ion-icon name="person-outline" slot="start"></ion-icon>
+        <ion-label>Profile</ion-label>
+      </ion-item>
+      <ion-item routerLink="/messages" button (click)="menuController.close()" class="menu-item">
+        <ion-icon name="chatbubble-outline" slot="start"></ion-icon>
+        <ion-label>Messages</ion-label>
+      </ion-item>
+      <ion-item routerLink="/my-lesson" button (click)="menuController.close()" class="menu-item">
+        <ion-icon name="book-outline" slot="start"></ion-icon>
+        <ion-label>My Lesson</ion-label>
+      </ion-item>
+      <div class="menu-divider"></div>
+      <ion-item (click)="logout()" button class="menu-item logout-item">
+        <ion-icon name="log-out-outline" slot="start" color="danger"></ion-icon>
+        <ion-label color="danger">Log Out</ion-label>
+      </ion-item>
     </ion-list>
   </ion-content>
 </ion-menu>
 
+<!-- HEADER -->
 <ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar color="primary" class="header-toolbar">
-    <ion-buttons slot="start"><ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button></ion-buttons>
-    <ion-title class="app-title">Settings</ion-title>
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" class="back-btn"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="page-title">Settings</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="openMenu()" class="menu-btn">
         <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
@@ -23,16 +47,20 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content id="main-content" class="bg-content ion-padding">
+<ion-content id="main-content" class="page-content ion-padding">
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
   
   <div class="form-container">
-    <h2 class="form-title">Account Settings</h2>
-    <p class="form-subtitle">Manage your personal information and security.</p>
+    <div class="form-header">
+      <h2 class="form-title">Account Settings</h2>
+      <p class="form-subtitle">Manage your personal information and security.</p>
+    </div>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      
+      <!-- PROFILE PICTURE -->
       <div class="profile-pic-section">
         <ion-avatar class="profile-avatar" (click)="pickImage()">
           <img [src]="selectedImage() || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
@@ -71,12 +99,13 @@
         <ion-textarea fill="outline" formControlName="description" [autoGrow]="true" rows="3" class="custom-input"></ion-textarea>
       </div>
 
+      <!-- DESCRIPTION PICTURE -->
       <div class="desc-pic-section">
         <label>Description Picture (Optional)</label>
         <div class="upload-box" (click)="pickDescImage()">
-          <ion-avatar class="desc-avatar" *ngIf="!selectedDescImage()">
+          <div class="desc-avatar" *ngIf="!selectedDescImage()">
             <ion-icon name="camera-outline"></ion-icon>
-          </ion-avatar>
+          </div>
           <div *ngIf="selectedDescImage()" class="desc-preview">
             <img [src]="selectedDescImage()" />
             <ion-button fill="clear" size="small" (click)="pickDescImage()">Change</ion-button>
@@ -84,21 +113,20 @@
         </div>
       </div>
 
-      <!-- 🔥 HIDE LOW RATINGS TOGGLE -->
+      <!-- REVIEW SETTINGS -->
       <div class="section-divider"><h3>Review Settings</h3></div>
       
-      <ion-item lines="none" style="margin-bottom: 16px; --background: transparent;">
+      <div class="toggle-item">
         <ion-toggle 
           [checked]="hideLowRatings" 
           (ionChange)="toggleHideLowRatings($event)"
           color="primary">
           Hide Low Ratings (1 & 2 stars)
         </ion-toggle>
-      </ion-item>
-      <p style="font-size: 0.8rem; color: #6b7280; margin-top: -10px; margin-bottom: 16px; padding-left: 4px;">
-        Hide 1- and 2-star reviews from the public (but the overall score will not change).
-      </p>
+        <p class="toggle-hint">Hide 1- and 2-star reviews from the public (but the overall score will not change).</p>
+      </div>
 
+      <!-- CHANGE PASSWORD -->
       <div class="section-divider"><h3>Change Password (Optional)</h3></div>
 
       <div class="input-group">
@@ -122,7 +150,11 @@
         </ion-input>
       </div>
 
-      @if (errorMessage()) { <ion-text color="danger"><p class="error-text">{{ errorMessage() }}</p></ion-text> }
+      @if (errorMessage()) { 
+        <div class="error-box">
+          <p>{{ errorMessage() }}</p>
+        </div>
+      }
 
       <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting()" class="submit-btn">
         <ion-spinner *ngIf="submitting()" name="crescent" slot="start"></ion-spinner>

@@ -1,24 +1,30 @@
 <ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar color="primary" class="header-toolbar">
+  <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/profile" class="menu-btn"></ion-back-button>
+      <ion-back-button defaultHref="/profile" class="back-btn"></ion-back-button>
     </ion-buttons>
-    <ion-title class="app-title">Edit Post</ion-title>
+    <ion-title class="page-title">Edit Post</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="bg-content ion-padding">
-  <div *ngIf="loading()" class="ion-text-center ion-padding loading-container">
+<ion-content class="page-content ion-padding">
+  
+  <!-- LOADING STATE -->
+  <div *ngIf="loading()" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading post details...</p>
   </div>
 
+  <!-- FORM -->
   <div class="form-container" *ngIf="!loading()">
-    <h2 class="form-title">Update Listing</h2>
-    <p class="form-subtitle">Make changes to your tutor post below.</p>
+    <div class="form-header">
+      <h2 class="form-title">Update Listing</h2>
+      <p class="form-subtitle">Make changes to your tutor post below.</p>
+    </div>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
       
+      <!-- SUBJECT -->
       <div class="input-group">
         <label>Subject</label>
         <ion-input
@@ -33,6 +39,7 @@
         }
       </div>
 
+      <!-- HOURLY RATE & SESSION RATE -->
       <div class="input-row">
         <div class="input-group">
           <label>Hourly Rate (₱)</label>
@@ -62,6 +69,7 @@
         </div>
       </div>
 
+      <!-- EDUCATION LEVEL -->
       <div class="input-group">
         <label>Education Level</label>
         <ion-input
@@ -76,6 +84,7 @@
         }
       </div>
 
+      <!-- DESCRIPTION -->
       <div class="input-group">
         <label>Description (Optional)</label>
         <ion-textarea
@@ -98,13 +107,13 @@
         </div>
 
         <div class="uploading-state" *ngIf="uploadingImages()">
-          <ion-spinner name="crescent" color="primary"></ion-spinner>
+          <ion-spinner name="crescent"></ion-spinner>
           <span>Uploading images...</span>
         </div>
 
         <!-- IMAGE PREVIEWS -->
         <div class="image-previews" *ngIf="uploadedImageUrls().length > 0">
-          <div *ngFor="let img of uploadedImageUrls(); let i = index" class="image-preview-wrapper">
+          <div class="image-preview-wrapper" *ngFor="let img of uploadedImageUrls(); let i = index">
             <img [src]="img" />
             <div class="remove-icon" (click)="removeImage(i)">
               <ion-icon name="close"></ion-icon>
@@ -113,10 +122,14 @@
         </div>
       </div>
 
+      <!-- ERROR MESSAGE -->
       @if (errorMessage()) {
-        <ion-text color="danger"><p class="error-text">{{ errorMessage() }}</p></ion-text>
+        <div class="error-box">
+          <p>{{ errorMessage() }}</p>
+        </div>
       }
 
+      <!-- SUBMIT BUTTON -->
       <ion-button
         expand="block"
         type="submit"

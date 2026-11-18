@@ -1,170 +1,179 @@
-<ion-header>
-  <ion-toolbar color="dark">
+<ion-header class="modern-header">
+  <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/admin/dashboard"></ion-back-button>
+      <ion-back-button defaultHref="/admin/dashboard" class="back-btn"></ion-back-button>
     </ion-buttons>
-    <ion-title>Reports</ion-title>
+    <ion-title class="page-title">Reports</ion-title>
+  </ion-toolbar>
+
+  <ion-toolbar class="segment-toolbar">
+    <ion-segment [value]="activeTab()" (ionChange)="setActiveTab($event.detail.value)" class="modern-segment">
+      <ion-segment-button value="post">
+        <ion-label>Post Reports</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="user">
+        <ion-label>User Reports</ion-label>
+      </ion-segment-button>
+    </ion-segment>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content class="page-content">
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
-  
-  <ion-segment [value]="activeTab()" (ionChange)="setActiveTab($event.detail.value)" color="dark" style="padding: 8px 16px;">
-    <ion-segment-button value="post">
-      <ion-label>Post Reports</ion-label>
-    </ion-segment-button>
-    <ion-segment-button value="user">
-      <ion-label>User Reports</ion-label>
-    </ion-segment-button>
-  </ion-segment>
 
-  <div *ngIf="loading()" class="ion-text-center ion-padding"><ion-spinner></ion-spinner></div>
-
-  <div *ngIf="!loading() && getFilteredReports().length === 0" class="ion-text-center ion-padding">
-    <p>No {{ activeTab() === 'post' ? 'post' : 'user' }} reports yet.</p>
+  <!-- LOADING STATE -->
+  <div *ngIf="loading()" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
   </div>
 
-  <ion-list *ngIf="!loading()">
-    <ion-item *ngFor="let report of getFilteredReports()" (click)="openDetails(report)" button detail="true">
-      <ion-label class="ion-text-wrap">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h2 style="font-weight: bold;">Reason: {{ report.reason }}</h2>
-          <ion-badge [color]="report.status === 'pending' ? 'warning' : 'success'">
-            {{ report.status | uppercase }}
-          </ion-badge>
-        </div>
-        
-        <p>Reporter: {{ report.reporter_name }}</p>
-        
-        <div *ngIf="activeTab() === 'user' && report.reported_user_name">
-          <p>
-            Reported User: <strong>{{ report.reported_user_name }}</strong>
-            <ion-badge color="danger" style="margin-left: 8px;" *ngIf="report.total_user_reports > 1">
-              ⚠️ {{ report.total_user_reports }} Reports
-            </ion-badge>
-          </p>
-        </div>
+  <!-- EMPTY STATE -->
+  <div *ngIf="!loading() && getFilteredReports().length === 0" class="empty-state">
+    <div class="icon-circle">
+      <ion-icon name="shield-checkmark-outline"></ion-icon>
+    </div>
+    <h3>No reports found</h3>
+    <p>There are no {{ activeTab() === 'post' ? 'post' : 'user' }} reports at the moment.</p>
+  </div>
 
-        <div *ngIf="activeTab() === 'post' && report.reported_post_subject">
-          <p>
-            Reported Post: <strong>{{ report.reported_post_subject }}</strong>
-            <ion-badge color="danger" style="margin-left: 8px;" *ngIf="report.total_post_reports > 1">
-              ⚠️ {{ report.total_post_reports }} Reports
-            </ion-badge>
-          </p>
-        </div>
-        
-        <p style="font-size: 0.8rem; color: gray;">{{ report.created_at | date:'medium' }}</p>
-      </ion-label>
+  <!-- REPORTS LIST -->
+  <div class="reports-list" *ngIf="!loading() && getFilteredReports().length > 0">
+    <div class="report-card" *ngFor="let report of getFilteredReports()" (click)="openDetails(report)">
       
-      <div slot="end" style="display: flex; flex-direction: column; gap: 4px;">
-        <ion-button *ngIf="report.status === 'pending'" fill="clear" color="success" (click)="$event.stopPropagation(); resolve(report)">
-          <ion-icon name="checkmark-circle-outline" slot="icon-only"></ion-icon>
+      <div class="report-header">
+        <h2 class="report-reason">{{ report.reason }}</h2>
+        <ion-badge [color]="report.status === 'pending' ? 'warning' : 'success'" class="status-badge">
+          {{ report.status | uppercase }}
+        </ion-badge>
+      </div>
+      
+      <p class="reporter-text">Reporter: <strong>{{ report.reporter_name }}</strong></p>
+      
+      <!-- USER REPORT DETAILS -->
+      <div class="target-info" *ngIf="activeTab() === 'user' && report.reported_user_name">
+        <p>Reported User: <strong>{{ report.reported_user_name }}</strong></p>
+        <ion-badge color="danger" class="alert-badge" *ngIf="report.total_user_reports > 1">
+          ⚠️ {{ report.total_user_reports }} Reports
+        </ion-badge>
+      </div>
+
+      <!-- POST REPORT DETAILS -->
+      <div class="target-info" *ngIf="activeTab() === 'post' && report.reported_post_subject">
+        <p>Reported Post: <strong>{{ report.reported_post_subject }}</strong></p>
+        <ion-badge color="danger" class="alert-badge" *ngIf="report.total_post_reports > 1">
+          ⚠️ {{ report.total_post_reports }} Reports
+        </ion-badge>
+      </div>
+      
+      <p class="date-text">{{ report.created_at | date:'medium' }}</p>
+      
+      <div class="report-actions" *ngIf="report.status === 'pending'">
+        <ion-button fill="solid" class="resolve-btn" (click)="$event.stopPropagation(); resolve(report)">
+          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+          Mark as Resolved
         </ion-button>
       </div>
-    </ion-item>
-  </ion-list>
+    </div>
+  </div>
 </ion-content>
 
 <!-- DETAILS MODAL -->
-<ion-modal #detailModal>
+<ion-modal #detailModal class="modern-modal">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="dark">
-        <ion-title>Report Details</ion-title>
+    <ion-header class="modern-header">
+      <ion-toolbar class="header-toolbar">
+        <ion-title class="page-title">Report Details</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="detailModal.dismiss()">Close</ion-button>
+          <ion-button (click)="detailModal.dismiss()" class="close-btn">Close</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding" *ngIf="selectedReport">
+    <ion-content class="modal-content" *ngIf="selectedReport">
       
-      <h3 style="font-weight: bold; margin-bottom: 8px;">Reason for Report:</h3>
-      <p style="background: #f3f4f6; padding: 12px; border-radius: 8px; margin-bottom: 16px;">{{ selectedReport.reason }}</p>
+      <h3 class="section-title">Reason for Report:</h3>
+      <div class="reason-box">{{ selectedReport.reason }}</div>
 
-      <!-- KUNG POST REPORT -->
-      <div *ngIf="selectedReport.post_details">
-        <h3 style="font-weight: bold; margin-bottom: 8px;">Reported Post:</h3>
-        <ion-card style="margin: 0;">
-          <div *ngIf="selectedReport.post_details.post_pictures" style="width: 100%; height: 200px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-            <img [src]="getImageUrl(selectedReport.post_details.post_pictures)" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+      <!-- POST REPORT DETAILS -->
+      <div *ngIf="selectedReport.post_details" class="details-section">
+        <h3 class="section-title">Reported Post:</h3>
+        <ion-card class="detail-card">
+          <div *ngIf="selectedReport.post_details.post_pictures" class="detail-image-wrapper">
+            <img [src]="getImageUrl(selectedReport.post_details.post_pictures)" class="detail-image" />
           </div>
           <ion-card-header>
             <ion-card-title>{{ selectedReport.post_details.subject }}</ion-card-title>
             <ion-card-subtitle>By: {{ selectedReport.post_details.tutor_name }} ({{ selectedReport.post_details.tutor_email }})</ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
-            <p>{{ selectedReport.post_details.description }}</p>
-            <p style="font-weight: bold; color: #2563eb;">₱{{ selectedReport.post_details.hourly_rate }} / hour</p>
+            <p class="card-desc">{{ selectedReport.post_details.description }}</p>
+            <p class="card-price">₱{{ selectedReport.post_details.hourly_rate }} / hour</p>
           </ion-card-content>
         </ion-card>
         
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
-          <ion-button expand="block" color="warning" (click)="openMessagePrompt(selectedReport)">
+        <div class="modal-actions">
+          <ion-button expand="block" class="action-btn warn-btn" (click)="openMessagePrompt(selectedReport)">
             <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Send Warning to Tutor
           </ion-button>
-          <ion-button expand="block" color="danger" (click)="confirmDisablePost(selectedReport.reported_post_id, selectedReport.id)">
+          <ion-button expand="block" class="action-btn disable-btn" (click)="confirmDisablePost(selectedReport.reported_post_id, selectedReport.id)">
             <ion-icon name="ban-outline" slot="start"></ion-icon> Disable this Post
           </ion-button>
         </div>
       </div>
 
-      <!-- KUNG USER REPORT -->
-      <div *ngIf="selectedReport.user_details">
-        <h3 style="font-weight: bold; margin-bottom: 8px;">Reported User:</h3>
-        <ion-item lines="none" style="background: #f3f4f6; border-radius: 8px;">
-          <ion-avatar slot="start">
+      <!-- USER REPORT DETAILS -->
+      <div *ngIf="selectedReport.user_details" class="details-section">
+        <h3 class="section-title">Reported User:</h3>
+        <div class="user-card">
+          <ion-avatar class="user-avatar">
             <img [src]="getImageUrl(selectedReport.user_details.profile_picture)" />
           </ion-avatar>
-          <ion-label>
+          <div class="user-info">
             <h2>{{ selectedReport.user_details.full_name }}</h2>
             <p>{{ selectedReport.user_details.email }}</p>
-            <p style="margin-top: 4px; font-size: 0.8rem; color: red;" *ngIf="selectedReport.total_user_reports > 1">
-              ⚠️ Na-report na nang {{ selectedReport.total_user_reports }} beses
+            <p class="alert-text" *ngIf="selectedReport.total_user_reports > 1">
+              ⚠️ Reported {{ selectedReport.total_user_reports }} times
             </p>
-          </ion-label>
-        </ion-item>
+          </div>
+        </div>
         
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
-          <ion-button expand="block" color="warning" (click)="openMessagePrompt(selectedReport)">
+        <div class="modal-actions">
+          <ion-button expand="block" class="action-btn warn-btn" (click)="openMessagePrompt(selectedReport)">
             <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Send Warning Message
           </ion-button>
-          <ion-button expand="block" color="danger" (click)="confirmDisableUser(selectedReport.reported_user_id, selectedReport.id)">
+          <ion-button expand="block" class="action-btn disable-btn" (click)="confirmDisableUser(selectedReport.reported_user_id, selectedReport.id)">
             <ion-icon name="ban-outline" slot="start"></ion-icon> Disable this User
           </ion-button>
         </div>
       </div>
-
     </ion-content>
   </ng-template>
 </ion-modal>
 
 <!-- MESSAGE MODAL -->
-<ion-modal #messageModal>
+<ion-modal #messageModal class="modern-modal">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="danger">
-        <ion-title>Send Warning</ion-title>
+    <ion-header class="modern-header">
+      <ion-toolbar class="header-toolbar">
+        <ion-title class="page-title">Send Warning</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="messageModal.dismiss()">Close</ion-button>
+          <ion-button (click)="messageModal.dismiss()" class="close-btn">Close</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
-      <p style="color: #666; margin-bottom: 16px;">This message will be sent to the user's account. They cannot reply.</p>
+    <ion-content class="modal-content">
+      <p class="modal-subtext">This message will be sent to the user's account. They cannot reply.</p>
       <ion-textarea 
         label="Warning Message" 
         labelPlacement="stacked" 
         fill="outline" 
         [(ngModel)]="warningMessage" 
-        rows="6">
+        rows="6"
+        class="warning-textarea">
       </ion-textarea>
       <ion-button 
         expand="block" 
-        color="danger" 
+        class="action-btn send-btn" 
         style="margin-top: 24px;" 
         (click)="sendWarningMessage()" 
         [disabled]="!warningMessage.trim()">

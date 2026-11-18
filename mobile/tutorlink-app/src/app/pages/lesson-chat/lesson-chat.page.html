@@ -1,61 +1,71 @@
-<ion-header [translucent]="true">
-  <ion-toolbar color="primary">
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/my-lesson"></ion-back-button>
+      <ion-back-button defaultHref="/my-lesson" class="back-btn"></ion-back-button>
     </ion-buttons>
-    <ion-title>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <ion-avatar style="width: 32px; height: 32px;">
+    
+    <ion-title class="chat-title">
+      <div class="chat-user-info">
+        <ion-avatar class="header-avatar">
           <img [src]="lesson?.photo || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
         </ion-avatar>
-        {{ lesson?.gc_name || 'Group Chat' }}
+        <span class="chat-name">{{ lesson?.gc_name || 'Group Chat' }}</span>
       </div>
     </ion-title>
     
     <ion-buttons slot="end">
-      <div *ngIf="isCreator" style="display: flex;">
-        <ion-button (click)="startCall()">
+      <div *ngIf="isCreator" class="call-buttons">
+        <ion-button (click)="startCall()" fill="clear" class="icon-btn">
           <ion-icon name="call-outline" slot="icon-only"></ion-icon>
         </ion-button>
-        <ion-button (click)="startVideoCall()">
+        <ion-button (click)="startVideoCall()" fill="clear" class="icon-btn">
           <ion-icon name="videocam-outline" slot="icon-only"></ion-icon>
         </ion-button>
       </div>
-      <ion-button (click)="settingsModal.present()">
+      <ion-button (click)="settingsModal.present()" fill="clear" class="icon-btn">
         <ion-icon name="settings-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="bg-content ion-padding">
-  <div *ngIf="loading()" class="ion-text-center"><ion-spinner></ion-spinner></div>
+<ion-content class="page-content ion-padding">
   
-  <div *ngIf="!loading() && myStatus() === 'pending_payment'" class="ion-text-center ion-padding" style="margin-top: 50px;">
-    <ion-icon name="time-outline" color="warning" style="font-size: 80px;"></ion-icon>
-    <h2 style="font-weight: bold; margin-top: 16px;">Waiting for Approval</h2>
-    <p style="color: gray;">Your payment receipt has been submitted. Please wait for the tutor to verify and approve your enrollment before you can join the chat.</p>
+  <!-- LOADING -->
+  <div *ngIf="loading()" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+  
+  <!-- PENDING PAYMENT STATE -->
+  <div *ngIf="!loading() && myStatus() === 'pending_payment'" class="status-state">
+    <div class="icon-circle warning-circle">
+      <ion-icon name="time-outline"></ion-icon>
+    </div>
+    <h2>Waiting for Approval</h2>
+    <p>Your payment receipt has been submitted. Please wait for the tutor to verify and approve your enrollment before you can join the chat.</p>
   </div>
 
-  <div *ngIf="!loading() && myStatus() === 'rejected'" class="ion-text-center ion-padding" style="margin-top: 50px;">
-    <ion-icon name="close-circle-outline" color="danger" style="font-size: 80px;"></ion-icon>
-    <h2 style="font-weight: bold; margin-top: 16px; color: #d32f2f;">Application Rejected</h2>
-    <p style="color: gray;">Your application to join this group has been rejected by the tutor.</p>
+  <!-- REJECTED STATE -->
+  <div *ngIf="!loading() && myStatus() === 'rejected'" class="status-state">
+    <div class="icon-circle danger-circle">
+      <ion-icon name="close-circle-outline"></ion-icon>
+    </div>
+    <h2 class="danger-text">Application Rejected</h2>
+    <p>Your application to join this group has been rejected by the tutor.</p>
     
-    <div *ngIf="rejectionReason()" style="background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 8px; padding: 16px; margin-top: 16px; text-align: left;">
+    <div *ngIf="rejectionReason()" class="reason-box">
       <strong>Reason:</strong>
-      <p style="margin-top: 4px;">{{ rejectionReason() }}</p>
+      <p>{{ rejectionReason() }}</p>
     </div>
   </div>
 
+  <!-- MESSAGES CONTAINER -->
   <div class="messages-container" *ngIf="!loading() && (myStatus() === 'enrolled' || myStatus() === 'tutor')">
-    
-        <div 
+    <div 
       *ngFor="let msg of messages()" 
       class="message-row" 
       [class.mine]="isMine(msg)"
-      (contextmenu)="deleteLessonMessage(msg)"
-    >
+      (contextmenu)="deleteLessonMessage(msg)">
       
       <ion-avatar class="sender-avatar" *ngIf="!isMine(msg)">
         <img [src]="msg.sender_picture || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
@@ -64,16 +74,16 @@
       <div class="message-bubble">
         <span class="sender-name" *ngIf="!isMine(msg)">{{ msg.sender_name }}</span>
 
-        <!-- 🔥 IMAGE MESSAGE -->
+        <!-- IMAGE MESSAGE -->
         <div *ngIf="msg.content.startsWith('[IMAGE]')" class="image-message">
-          <img [src]="msg.content.replace('[IMAGE]', '')" alt="Sent Image" style="max-width: 100%; border-radius: 8px;" />
+          <img [src]="msg.content.replace('[IMAGE]', '')" alt="Sent Image" />
         </div>
 
-        <!-- CALL MESSAGE FORMAT -->
+        <!-- TEXT / CALL MESSAGE -->
         <div *ngIf="!msg.content.startsWith('[IMAGE]')">
-          <div *ngIf="msg.content.includes('[ROOM:'); else normalMessage">
+          <div *ngIf="msg.content.includes('[ROOM:'); else normalMessage" class="call-message">
             <p>{{ msg.content.split('[ROOM:')[0] }}</p>
-            <ion-button expand="block" color="success" size="small" style="margin-top: 8px;" (click)="joinCall(msg.content)">
+            <ion-button expand="block" class="join-btn" (click)="joinCall(msg.content)">
               Join Now
             </ion-button>
           </div>
@@ -87,18 +97,18 @@
       </div>
     </div>
     
-    <div *ngIf="messages().length === 0" class="ion-text-center empty-state">
+    <div *ngIf="messages().length === 0" class="empty-state">
       <p>No messages yet. Say hello! 👋</p>
     </div>
   </div>
 </ion-content>
 
+<!-- MODERN FOOTER -->
 <ion-footer class="modern-footer" *ngIf="!loading() && (myStatus() === 'enrolled' || myStatus() === 'tutor')">
   <ion-toolbar class="footer-toolbar">
     <div class="input-container">
-      <!-- 🔥 IDINAGDAG: CAMERA BUTTON -->
       <ion-button fill="clear" (click)="sendImage()" class="camera-btn">
-        <ion-icon name="camera-outline" slot="icon-only" color="medium"></ion-icon>
+        <ion-icon name="camera-outline" slot="icon-only"></ion-icon>
       </ion-button>
 
       <ion-input class="chat-input" [(ngModel)]="newMessage" placeholder="Type a message..." (keyup.enter)="send()"></ion-input>
@@ -110,73 +120,78 @@
   </ion-toolbar>
 </ion-footer>
 
-<ion-modal #settingsModal>
+<!-- SETTINGS MODAL -->
+<ion-modal #settingsModal class="modern-modal">
   <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Group Settings</ion-title>
+    <ion-header class="modern-header">
+      <ion-toolbar class="header-toolbar">
+        <ion-title class="page-title">Group Settings</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="settingsModal.dismiss()">Close</ion-button>
+          <ion-button (click)="settingsModal.dismiss()" class="close-btn">Close</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
+    <ion-content class="modal-content ion-padding">
       
+      <!-- CREATOR VIEW -->
       <div *ngIf="isCreator">
-        <h3>Edit Group Chat</h3>
+        <h3 class="section-title">Edit Group Chat</h3>
         
-        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 16px;">
-          <ion-avatar style="width: 80px; height: 80px;" (click)="pickGcImage()">
+        <div class="gc-photo-container">
+          <div class="gc-photo-wrapper" (click)="pickGcImage()">
             <img [src]="editPhoto() || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
-          </ion-avatar>
-          <ion-button fill="clear" size="small" (click)="pickGcImage()">
-            <ion-icon name="camera-outline" slot="start"></ion-icon> Change Photo
-          </ion-button>
+            <div class="add-icon">
+              <ion-icon name="camera-outline"></ion-icon>
+            </div>
+          </div>
+          <p>Change Photo</p>
         </div>
 
-        <ion-list lines="none">
-          <ion-item>
-            <ion-input label="Group Chat Name" labelPlacement="stacked" [(ngModel)]="editName"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input label="Next Meeting Date" labelPlacement="stacked" type="date" [(ngModel)]="editDate"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input label="Next Meeting Time" labelPlacement="stacked" type="time" [(ngModel)]="editTime"></ion-input>
-          </ion-item>
-        </ion-list>
-        <ion-button expand="block" color="primary" (click)="saveSettings()" style="margin-top: 16px;">
+        <div class="input-group">
+          <label>Group Chat Name</label>
+          <ion-input fill="outline" [(ngModel)]="editName" class="custom-input"></ion-input>
+        </div>
+        <div class="input-group">
+          <label>Next Meeting Date</label>
+          <ion-input fill="outline" type="date" [(ngModel)]="editDate" class="custom-input"></ion-input>
+        </div>
+        <div class="input-group">
+          <label>Next Meeting Time</label>
+          <ion-input fill="outline" type="time" [(ngModel)]="editTime" class="custom-input"></ion-input>
+        </div>
+        
+        <ion-button expand="block" class="save-btn" (click)="saveSettings()">
           Save Changes
         </ion-button>
-                <ion-button expand="block" color="success" (click)="markAsCompleted()" style="margin-top: 12px;">
+        <ion-button expand="block" class="complete-btn" (click)="markAsCompleted()">
           <ion-icon name="checkmark-circle" slot="start"></ion-icon>
           Mark Group as Completed
         </ion-button>
 
-        <h3 style="margin-top: 24px;">Members</h3>
-        <ion-list lines="none">
-          <ion-item *ngFor="let member of members()">
-            <ion-avatar slot="start">
+        <h3 class="section-title" style="margin-top: 24px;">Members</h3>
+        <div class="members-list">
+          <div class="member-item" *ngFor="let member of members()">
+            <ion-avatar class="member-avatar">
               <img [src]="member.profile_picture || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
             </ion-avatar>
-            <ion-label>
+            <div class="member-info">
               <h3>{{ member.full_name }}</h3>
               <p>{{ member.status === 'tutor' ? 'Tutor (You)' : 'Student' }}</p>
-            </ion-label>
+            </div>
             <ion-button 
               *ngIf="member.student_id !== currentUser?.id"
               fill="clear" 
-              color="danger" 
-              slot="end"
+              class="kick-btn"
               (click)="confirmKick(member)">
               <ion-icon name="person-remove-outline" slot="icon-only"></ion-icon>
             </ion-button>
-          </ion-item>
-        </ion-list>
+          </div>
+        </div>
       </div>
 
-      <div *ngIf="!isCreator" style="margin-top: 32px;">
-        <ion-button expand="block" color="danger" (click)="leaveGroup()">
+      <!-- STUDENT VIEW (LEAVE GROUP) -->
+      <div *ngIf="!isCreator" class="leave-group-section">
+        <ion-button expand="block" class="leave-btn" (click)="leaveGroup()">
           <ion-icon name="log-out-outline" slot="start"></ion-icon>
           Leave Group
         </ion-button>

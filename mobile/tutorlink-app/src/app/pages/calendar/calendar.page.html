@@ -1,21 +1,23 @@
 <ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar color="primary" class="header-toolbar">
+  <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button>
+      <ion-back-button defaultHref="/home" class="back-btn"></ion-back-button>
     </ion-buttons>
-    <ion-title>My Schedule</ion-title>
+    <ion-title class="page-title">My Schedule</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="bg-content ion-padding">
+<ion-content class="page-content ion-padding">
   
-  <div *ngIf="loading()" class="ion-text-center ion-padding">
+  <!-- LOADING STATE -->
+  <div *ngIf="loading()" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading schedule...</p>
   </div>
 
-  <div *ngIf="!loading()">
-    <!-- 🔥 CALENDAR VIEW -->
+  <div *ngIf="!loading()" class="calendar-container">
+    
+    <!-- CALENDAR VIEW -->
     <div class="calendar-wrapper">
       <ion-datetime 
         presentation="date" 
@@ -23,44 +25,47 @@
         (ionChange)="onDateChange($event)"
         [highlightedDates]="highlightedDates()"
         color="primary"
-        style="border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); width: 100%;">
+        class="modern-datetime">
       </ion-datetime>
     </div>
 
     <!-- LEGEND -->
-    <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 16px; font-size: 0.8rem;">
-      <div style="display: flex; align-items: center; gap: 4px;">
-        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #10b981;"></div>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot"></div>
         <span>Available Date</span>
       </div>
     </div>
 
-    <!-- 🔥 SELECTED DAY SCHEDULE -->
+    <!-- SELECTED DAY SCHEDULE -->
     <div class="schedule-section">
       <h3 class="section-title">
-        Schedule for <span style="color: #2563eb;">{{ selectedDateFormatted() }}</span>
+        Schedule for <span class="highlight-date">{{ selectedDateFormatted() }}</span>
       </h3>
       
+      <!-- EMPTY SCHEDULE -->
       <div *ngIf="getAvailabilitiesForSelectedDay().length === 0" class="no-schedule">
+        <ion-icon name="calendar-outline"></ion-icon>
         <p>No available time set for this date.</p>
       </div>
 
-      <ion-list lines="none" *ngIf="getAvailabilitiesForSelectedDay().length > 0">
-        <ion-item *ngFor="let a of getAvailabilitiesForSelectedDay()" class="time-item">
-          <ion-icon name="time-outline" slot="start" color="primary"></ion-icon>
-          <ion-label>
-            <h2 style="font-weight: 700; color: #111827; margin: 0;">{{ a.start_time }} - {{ a.end_time }}</h2>
-          </ion-label>
+      <!-- SCHEDULE LIST -->
+      <div class="time-list" *ngIf="getAvailabilitiesForSelectedDay().length > 0">
+        <div *ngFor="let a of getAvailabilitiesForSelectedDay()" class="time-card">
+          <div class="time-info">
+            <ion-icon name="time-outline" class="time-icon"></ion-icon>
+            <h2 class="time-text">{{ a.start_time }} - {{ a.end_time }}</h2>
+          </div>
           
-          <!-- 🔥 TUTOR-ONLY: Delete Button -->
-          <ion-button *ngIf="role() === 'tutor'" fill="clear" color="danger" slot="end" (click)="deleteAvailability(a.id)">
-            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          <!-- TUTOR-ONLY: Delete Button -->
+          <ion-button *ngIf="role() === 'tutor'" fill="solid" class="delete-btn" (click)="deleteAvailability(a.id)">
+            <ion-icon name="trash-outline"></ion-icon>
           </ion-button>
-        </ion-item>
-      </ion-list>
+        </div>
+      </div>
 
-      <!-- 🔥 TUTOR-ONLY: Add Time Button -->
-      <ion-button *ngIf="role() === 'tutor'" (click)="addModal.present()" expand="block" color="primary" class="add-btn">
+      <!-- TUTOR-ONLY: Add Time Button -->
+      <ion-button *ngIf="role() === 'tutor'" (click)="addModal.present()" expand="block" class="add-btn">
         <ion-icon name="add-outline" slot="start"></ion-icon>
         Add Time for {{ selectedDateFormatted() }}
       </ion-button>
@@ -68,29 +73,30 @@
   </div>
 
   <!-- MODAL FOR ADDING SCHEDULE -->
-  <ion-modal #addModal>
+  <ion-modal #addModal class="modern-modal">
     <ng-template>
-      <ion-header class="modal-header">
-        <ion-toolbar color="primary">
-          <ion-title>Add Schedule ({{ selectedDateFormatted() }})</ion-title>
+      <ion-header class="modern-header">
+        <ion-toolbar class="header-toolbar">
+          <ion-title class="page-title">Add Schedule</ion-title>
           <ion-buttons slot="end">
-            <ion-button (click)="addModal.dismiss()">Close</ion-button>
+            <ion-button (click)="addModal.dismiss()" class="close-btn">Close</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
-      <ion-content class="ion-padding">
-        <ion-list lines="full">
-          <ion-item>
-            <ion-label position="stacked" style="font-weight: 600;">Start Time</ion-label>
-            <ion-input type="time" [(ngModel)]="startTime"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked" style="font-weight: 600;">End Time</ion-label>
-            <ion-input type="time" [(ngModel)]="endTime"></ion-input>
-          </ion-item>
-        </ion-list>
+      <ion-content class="modal-content">
+        <p class="modal-subtext">Date: <strong>{{ selectedDateFormatted() }}</strong></p>
         
-        <ion-button expand="block" color="success" class="ion-margin-top" (click)="addAvailability()" style="height: 50px; --border-radius: 12px; font-weight: 700;">
+        <div class="input-group">
+          <label>Start Time</label>
+          <ion-input type="time" [(ngModel)]="startTime" class="custom-input"></ion-input>
+        </div>
+        
+        <div class="input-group">
+          <label>End Time</label>
+          <ion-input type="time" [(ngModel)]="endTime" class="custom-input"></ion-input>
+        </div>
+        
+        <ion-button expand="block" class="save-btn" (click)="addAvailability()">
           Save Schedule
         </ion-button>
       </ion-content>

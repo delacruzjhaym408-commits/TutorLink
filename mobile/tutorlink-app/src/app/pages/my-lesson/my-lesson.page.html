@@ -1,21 +1,60 @@
-<ion-menu id="main-menu" contentId="main-content" side="end">
-  <ion-header><ion-toolbar color="primary"><ion-title>Menu</ion-title></ion-toolbar></ion-header>
-  <ion-content>
-    <ion-list>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToHome()" button><ion-icon name="home-outline" slot="start"></ion-icon><ion-label>Home</ion-label></ion-item></ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToProfile()" button><ion-icon name="person-outline" slot="start"></ion-icon><ion-label>Profile</ion-label></ion-item></ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToMessagesPage()" button><ion-icon name="chatbubble-outline" slot="start"></ion-icon><ion-label>Messages</ion-label></ion-item></ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToMyLesson()" button><ion-icon name="book-outline" slot="start"></ion-icon><ion-label>My Lesson</ion-label></ion-item></ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToSettings()" button><ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label></ion-item></ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="logout()" button color="danger"><ion-icon name="log-out-outline" slot="start"></ion-icon><ion-label>Log Out</ion-label></ion-item></ion-menu-toggle>
+<!-- SIDE MENU -->
+<ion-menu id="main-menu" contentId="main-content" side="end" class="modern-menu">
+  <ion-header class="menu-header">
+    <ion-toolbar class="menu-toolbar">
+      <ion-title class="menu-title">Menu</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content class="menu-content">
+    <ion-list lines="none" class="menu-list">
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToHome()" button class="menu-item">
+          <ion-icon name="home-outline" slot="start"></ion-icon>
+          <ion-label>Home</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToProfile()" button class="menu-item">
+          <ion-icon name="person-outline" slot="start"></ion-icon>
+          <ion-label>Profile</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToMessagesPage()" button class="menu-item">
+          <ion-icon name="chatbubble-outline" slot="start"></ion-icon>
+          <ion-label>Messages</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToMyLesson()" button class="menu-item">
+          <ion-icon name="book-outline" slot="start"></ion-icon>
+          <ion-label>My Lesson</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToSettings()" button class="menu-item">
+          <ion-icon name="settings-outline" slot="start"></ion-icon>
+          <ion-label>Settings</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <div class="menu-divider"></div>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="logout()" button class="menu-item logout-item">
+          <ion-icon name="log-out-outline" slot="start" color="danger"></ion-icon>
+          <ion-label color="danger">Log Out</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
     </ion-list>
   </ion-content>
 </ion-menu>
 
+<!-- HEADER -->
 <ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar color="primary" class="header-toolbar">
-    <ion-buttons slot="start"><ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button></ion-buttons>
-    <ion-title class="app-title">My Lessons</ion-title>
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" class="back-btn"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="page-title">My Lessons</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="menuController.open('main-menu')" class="menu-btn">
         <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
@@ -24,14 +63,14 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content id="main-content" class="bg-content">
+<ion-content id="main-content" class="page-content">
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
   
-  <!-- MAIN TABS (My Students vs Payments) -->
-  <div style="background: #fff; padding: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10;">
-    <ion-segment [value]="activeTab()" (ionChange)="activeTab.set($any($event).detail.value)" color="primary" mode="md">
+  <!-- MAIN TABS -->
+  <div class="main-tabs-wrapper">
+    <ion-segment [value]="activeTab()" (ionChange)="activeTab.set($any($event).detail.value)" class="modern-segment">
       <ion-segment-button value="students">
         <ion-label>My Students (1v1)</ion-label>
       </ion-segment-button>
@@ -41,44 +80,48 @@
     </ion-segment>
   </div>
 
-  <div class="ion-padding" style="padding-bottom: 80px;">
+  <div class="content-container">
     
-    <!-- 🔥 TAB 1: MY STUDENTS (Listahan at Cancel Button) -->
+    <!-- TAB 1: MY STUDENTS -->
     <div *ngIf="activeTab() === 'students'">
-      <div *ngIf="getFilteredSessions('enrolled').length === 0" class="ion-text-center ion-padding empty-state">
-        <ion-icon name="people-outline" class="empty-icon" style="font-size: 60px; color: #ccc;"></ion-icon>
+      <div *ngIf="getFilteredSessions('enrolled').length === 0" class="empty-state">
+        <div class="icon-circle">
+          <ion-icon name="people-outline"></ion-icon>
+        </div>
         <h3>No Active Students</h3>
         <p>Approved 1v1 sessions will appear here.</p>
       </div>
 
-      <ion-list lines="full" style="background: transparent; padding: 0;">
-        <ion-item *ngFor="let s of getFilteredSessions('enrolled')" style="--background: #fff; margin-bottom: 8px; border-radius: 8px; --padding-start: 12px; --inner-padding-end: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-          <ion-avatar slot="start" style="width: 50px; height: 50px;">
+      <div class="sessions-list" *ngIf="getFilteredSessions('enrolled').length > 0">
+        <div class="session-card" *ngFor="let s of getFilteredSessions('enrolled')">
+          <ion-avatar class="session-avatar">
             <img [src]="getImageUrl(s.profile_picture || s.lesson?.tutor?.profile_picture)" />
           </ion-avatar>
-          <ion-label>
-            <h2 style="font-weight: 700; color: #111827; margin-bottom: 2px;">
+          
+          <div class="session-info">
+            <h2 class="session-name">
               {{ isTutor() ? s.full_name : (s.lesson?.tutor?.full_name || 'Tutor') }}
             </h2>
-            <p style="font-size: 0.85rem; color: #059669; font-weight: 600; margin-bottom: 2px;">1v1 Session Active</p>
-            <p style="font-size: 0.8rem; color: #6b7280;">{{ isTutor() ? s.lesson_name : s.lesson?.gc_name }}</p>
-          </ion-label>
-          <div slot="end" style="display: flex; gap: 8px;">
-            <ion-button color="primary" fill="solid" size="small" (click)="goToChat(s.conversation_id)">
-              <ion-icon name="chatbubble-outline" slot="icon-only"></ion-icon>
-            </ion-button>
-             <ion-button color="danger" fill="outline" size="small" (click)="cancelSession(s)">
-               Cancel
-             </ion-button>
+            <p class="session-status">1v1 Session Active</p>
+            <p class="session-subject">{{ isTutor() ? s.lesson_name : s.lesson?.gc_name }}</p>
           </div>
-        </ion-item>
-      </ion-list>
+          
+          <div class="session-actions">
+            <ion-button fill="solid" class="chat-btn" (click)="goToChat(s.conversation_id)">
+              <ion-icon name="chatbubble-outline"></ion-icon>
+            </ion-button>
+            <ion-button fill="outline" class="cancel-btn" (click)="cancelSession(s)">
+              Cancel
+            </ion-button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- 🔥 TAB 2: PAYMENTS (Pending, Approved, Rejected) -->
+    <!-- TAB 2: PAYMENTS -->
     <div *ngIf="activeTab() === 'payments'">
       
-      <ion-segment [value]="paymentTab()" (ionChange)="paymentTab.set($any($event).detail.value)" color="tertiary" mode="ios" style="margin-bottom: 16px;">
+      <ion-segment [value]="paymentTab()" (ionChange)="paymentTab.set($any($event).detail.value)" class="sub-segment">
         <ion-segment-button value="pending">
           <ion-label>Pending</ion-label>
         </ion-segment-button>
@@ -92,94 +135,83 @@
 
       <!-- PENDING SECTION -->
       <div *ngIf="paymentTab() === 'pending'">
-        <div *ngIf="getFilteredSessions('pending_payment').length === 0" class="ion-text-center ion-padding" style="color: #9ca3af;">
+        <div *ngIf="getFilteredSessions('pending_payment').length === 0" class="empty-text">
           No pending applications.
         </div>
 
-        <ion-card *ngFor="let s of getFilteredSessions('pending_payment')" style="margin-bottom: 12px;">
-          <ion-card-content>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-              <ion-avatar style="width: 40px; height: 40px;">
-                <img [src]="getImageUrl(s.profile_picture)" />
-              </ion-avatar>
-              <div>
-                <strong style="font-size: 1.1rem;">{{ s.full_name }}</strong>
-                <p style="margin: 0; font-size: 0.8rem; color: #6b7280;">{{ s.lesson_name }}</p>
-              </div>
+        <div class="payment-card" *ngFor="let s of getFilteredSessions('pending_payment')">
+          <div class="payment-header">
+            <ion-avatar class="payment-avatar">
+              <img [src]="getImageUrl(s.profile_picture)" />
+            </ion-avatar>
+            <div class="payment-user">
+              <strong>{{ s.full_name }}</strong>
+              <p>{{ s.lesson_name }}</p>
             </div>
-            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
-              <p style="margin-bottom: 4px; font-size: 0.9rem;">
-                <strong>Date & Time:</strong> {{ s.next_meeting_date || 'TBA' }} <span *ngIf="s.next_meeting_time">• {{ s.next_meeting_time }}</span>
-              </p>
-              <p style="margin-bottom: 8px; font-size: 0.9rem;">
-                <strong>Amount:</strong> <strong style="color: #059669;">₱{{ s.monthly_rate || 0 }}</strong>
-              </p>
-              <ion-button *ngIf="s.payment_proof" size="small" fill="outline" color="primary" (click)="openReceipt(s.payment_proof)" style="margin-bottom: 12px;">
-                View Receipt
+          </div>
+          
+          <div class="payment-details">
+            <p><strong>Date & Time:</strong> {{ s.next_meeting_date || 'TBA' }} <span *ngIf="s.next_meeting_time">• {{ s.next_meeting_time }}</span></p>
+            <p><strong>Amount:</strong> <span class="amount-text">₱{{ s.monthly_rate || 0 }}</span></p>
+            <ion-button *ngIf="s.payment_proof" fill="outline" class="receipt-btn" (click)="openReceipt(s.payment_proof)">
+              View Receipt
+            </ion-button>
+
+            <div *ngIf="isTutor()" class="payment-actions">
+              <ion-button expand="block" class="approve-btn" (click)="approveStudent(s.student_id, s.lesson_id)">
+                Approve
               </ion-button>
-
-              <div *ngIf="isTutor()" style="display: flex; gap: 8px;">
-                <ion-button expand="block" color="success" style="flex: 1;" (click)="approveStudent(s.student_id, s.lesson_id)">
-                  Approve
-                </ion-button>
-                <ion-button expand="block" color="danger" style="flex: 1;" (click)="rejectStudent(s.student_id, s.lesson_id)">
-                  Reject
-                </ion-button>
-              </div>
-
-              <div *ngIf="!isTutor()" style="text-align: center; color: #f59e0b; font-weight: 600; font-size: 0.9rem; padding: 8px; background: #fffbeb; border-radius: 6px;">
-                ⏳ Waiting for Tutor Approval
-              </div>
-
+              <ion-button expand="block" class="reject-btn" (click)="rejectStudent(s.student_id, s.lesson_id)">
+                Reject
+              </ion-button>
             </div>
-          </ion-card-content>
-        </ion-card>
+
+            <div *ngIf="!isTutor()" class="waiting-badge">
+              ⏳ Waiting for Tutor Approval
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- APPROVED SECTION -->
       <div *ngIf="paymentTab() === 'enrolled'">
-        <div *ngIf="getFilteredSessions('enrolled').length === 0" class="ion-text-center ion-padding" style="color: #9ca3af;">
+        <div *ngIf="getFilteredSessions('enrolled').length === 0" class="empty-text">
           No approved applications.
         </div>
-        <ion-card *ngFor="let s of getFilteredSessions('enrolled')" style="margin-bottom: 12px;">
-          <ion-card-content>
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <ion-avatar style="width: 40px; height: 40px;">
-                  <img [src]="getImageUrl(s.profile_picture)" />
-                </ion-avatar>
-                <div>
-                  <strong style="font-size: 1.1rem;">{{ s.full_name }}</strong>
-                  <p style="margin: 0; font-size: 0.8rem; color: #059669;">Approved</p>
-                </div>
-              </div>
-              
-              <ion-button size="small" fill="solid" color="primary" (click)="goToChat(s.conversation_id)">
-                <ion-icon name="chatbubble-outline" slot="start"></ion-icon> Chat
-              </ion-button>
+        
+        <div class="payment-card" *ngFor="let s of getFilteredSessions('enrolled')">
+          <div class="payment-header">
+            <ion-avatar class="payment-avatar">
+              <img [src]="getImageUrl(s.profile_picture)" />
+            </ion-avatar>
+            <div class="payment-user">
+              <strong>{{ s.full_name }}</strong>
+              <p class="success-text">Approved</p>
             </div>
-          </ion-card-content>
-        </ion-card>
+            <ion-button fill="solid" class="chat-btn" (click)="goToChat(s.conversation_id)">
+              <ion-icon name="chatbubble-outline" slot="start"></ion-icon> Chat
+            </ion-button>
+          </div>
+        </div>
       </div>
 
       <!-- REJECTED SECTION -->
       <div *ngIf="paymentTab() === 'rejected'">
-        <div *ngIf="getFilteredSessions('rejected').length === 0" class="ion-text-center ion-padding" style="color: #9ca3af;">
+        <div *ngIf="getFilteredSessions('rejected').length === 0" class="empty-text">
           No rejected applications.
         </div>
-        <ion-card *ngFor="let s of getFilteredSessions('rejected')" style="margin-bottom: 12px;">
-          <ion-card-content>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <ion-avatar style="width: 40px; height: 40px;">
-                <img [src]="getImageUrl(s.profile_picture)" />
-              </ion-avatar>
-              <div>
-                <strong style="font-size: 1.1rem;">{{ s.full_name }}</strong>
-                <p style="margin: 0; font-size: 0.8rem; color: #ef4444;">Rejected</p>
-              </div>
+        
+        <div class="payment-card" *ngFor="let s of getFilteredSessions('rejected')">
+          <div class="payment-header">
+            <ion-avatar class="payment-avatar">
+              <img [src]="getImageUrl(s.profile_picture)" />
+            </ion-avatar>
+            <div class="payment-user">
+              <strong>{{ s.full_name }}</strong>
+              <p class="danger-text">Rejected</p>
             </div>
-          </ion-card-content>
-        </ion-card>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -187,23 +219,25 @@
   </div>
 </ion-content>
 
-<!-- 🔥 RECEIPT MODAL (ITO NA ANG TOTOONG FIX) -->
-<ion-modal [isOpen]="isReceiptModalOpen()" (didDismiss)="isReceiptModalOpen.set(false)">
+<!-- RECEIPT MODAL -->
+<ion-modal [isOpen]="isReceiptModalOpen()" (didDismiss)="isReceiptModalOpen.set(false)" class="modern-modal">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>Payment Receipt</ion-title>
+    <ion-header class="modern-header">
+      <ion-toolbar class="header-toolbar">
+        <ion-title class="page-title">Payment Receipt</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="isReceiptModalOpen.set(false)">Close</ion-button>
+          <ion-button (click)="isReceiptModalOpen.set(false)" class="close-btn">Close</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding" style="text-align: center;">
-      <img 
-        [src]="selectedReceiptImage()" 
-        style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-top: 16px;" 
-        alt="Payment Receipt" 
-      />
+    <ion-content class="modal-content">
+      <div class="receipt-wrapper">
+        <img 
+          [src]="selectedReceiptImage()" 
+          class="receipt-image" 
+          alt="Payment Receipt" 
+        />
+      </div>
     </ion-content>
   </ng-template>
 </ion-modal>

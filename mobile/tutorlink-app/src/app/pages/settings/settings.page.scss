@@ -1,50 +1,135 @@
-/* MODERN HEADER */
+/* ============================================
+   GLOBAL
+   ============================================ */
+.page-content {
+  --background: #F8F9FA;
+}
+
+/* ============================================
+   SIDE MENU
+   ============================================ */
+.modern-menu {
+  --width: 280px;
+}
+
+.menu-header {
+  box-shadow: 0 1px 0 #E5E7EB;
+}
+
+.menu-toolbar {
+  --background: #FFFFFF;
+  --padding-top: 24px;
+  --padding-bottom: 24px;
+  --padding-start: 20px;
+  --padding-end: 20px;
+}
+
+.menu-title {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #1A1A1A;
+}
+
+.menu-content {
+  --background: #FFFFFF;
+}
+
+.menu-list {
+  padding: 16px 12px;
+}
+
+.menu-item {
+  --background: transparent;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 52px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+
+  ion-icon {
+    font-size: 1.35rem;
+    margin-right: 12px;
+    color: #8E8E93;
+  }
+
+  ion-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #333333;
+  }
+
+  &:hover, &:active {
+    --background: #F8F9FA;
+  }
+}
+
+.menu-divider {
+  height: 1px;
+  background: #E5E7EB;
+  margin: 16px 0;
+}
+
+.logout-item {
+  ion-label, ion-icon { color: #EF4444 !important; }
+  &:hover, &:active { --background: #FEF2F2; }
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
 .modern-header {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  z-index: 10;
+  box-shadow: 0 1px 0 #E5E7EB;
 }
+
 .header-toolbar {
-  --background: #ffffff;
-  --color: #1a1a1a;
+  --background: #FFFFFF;
+  --color: #1A1A1A;
+  --border-width: 0;
 }
-.app-title {
+
+.back-btn, .menu-btn {
+  --color: #5835F5;
+}
+
+.page-title {
   font-weight: 800;
   font-size: 1.3rem;
-}
-.menu-btn {
-  --color: #1a1a1a;
+  color: #1A1A1A;
 }
 
-/* BACKGROUND */
-.bg-content {
-  --background: #f8f9fa;
-}
-
-/* FORM CONTAINER */
+/* ============================================
+   FORM CONTAINER
+   ============================================ */
 .form-container {
   max-width: 600px;
   margin: 0 auto;
-  background: #ffffff;
-  border-radius: 16px;
+  background: #FFFFFF;
+  border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-  border: 1px solid rgba(0,0,0,0.02);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid #F1F5F9;
+}
+
+.form-header {
+  margin-bottom: 24px;
 }
 
 .form-title {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  color: #111827;
+  color: #1A1A1A;
   margin: 0 0 4px 0;
 }
 
 .form-subtitle {
-  font-size: 0.9rem;
-  color: #6b7280;
-  margin: 0 0 24px 0;
+  font-size: 0.95rem;
+  color: #8E8E93;
+  margin: 0;
 }
 
-/* PROFILE PICTURE */
+/* ============================================
+   PROFILE PICTURE
+   ============================================ */
 .profile-pic-section {
   display: flex;
   flex-direction: column;
@@ -55,7 +140,7 @@
 .profile-avatar {
   width: 100px;
   height: 100px;
-  border: 3px solid #e5e7eb;
+  border: 3px solid #F3EFFF;
   margin-bottom: 8px;
   cursor: pointer;
   img { object-fit: cover; }
@@ -64,64 +149,75 @@
 .change-pic-btn {
   font-weight: 600;
   text-transform: none;
-  --color: #2563eb;
+  --color: #5835F5;
 }
 
-/* SECTION DIVIDER */
+/* ============================================
+   SECTION DIVIDER
+   ============================================ */
 .section-divider {
   margin-top: 24px;
   margin-bottom: 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #F1F5F9;
   padding-bottom: 8px;
 
   h3 {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #111827;
+    color: #1A1A1A;
     margin: 0;
   }
 }
 
-/* INPUT GROUPS */
+/* ============================================
+   INPUT GROUPS
+   ============================================ */
 .input-group {
   display: flex;
   flex-direction: column;
   margin-bottom: 16px;
-  
+
   label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #374151;
+    color: #333333;
     margin-bottom: 6px;
     margin-left: 4px;
   }
 }
 
 .custom-input {
-  --background: #f9fafb;
-  --border-radius: 10px;
+  --background: #F9FAFB;
+  --border-radius: 12px;
   --padding-start: 14px;
   --padding-end: 14px;
-  --padding-top: 12px;
-  --padding-bottom: 12px;
-  --border-color: #e5e7eb;
+  --padding-top: 14px;
+  --padding-bottom: 14px;
+  --border-color: #E5E7EB;
+  --color: #1A1A1A;
   font-size: 0.95rem;
+
+  &.ion-focused {
+    --border-color: #5835F5;
+  }
 }
 
 .readonly-input {
-  --background: #f3f4f6;
+  --background: #F1F5F9;
   opacity: 0.8;
 }
 
-/* DESCRIPTION PIC */
+/* ============================================
+   DESCRIPTION PICTURE
+   ============================================ */
 .desc-pic-section {
   margin-bottom: 24px;
-  
+
   label {
     display: block;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #374151;
+    color: #333333;
     margin-bottom: 8px;
     margin-left: 4px;
   }
@@ -132,8 +228,8 @@
   max-width: 200px;
   height: 120px;
   border-radius: 12px;
-  background: #f9fafb;
-  border: 2px dashed #d1d5db;
+  background: #F8F9FA;
+  border: 2px dashed #CBD5E1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -142,7 +238,8 @@
   transition: background 0.2s;
 
   &:hover {
-    background: #f3f4f6;
+    background: #F3EFFF;
+    border-color: #5835F5;
   }
 }
 
@@ -152,10 +249,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   ion-icon {
     font-size: 2rem;
-    color: #9ca3af;
+    color: #8E8E93;
   }
 }
 
@@ -163,7 +260,7 @@
   position: relative;
   width: 100%;
   height: 100%;
-  
+
   img {
     width: 100%;
     height: 100%;
@@ -174,27 +271,68 @@
     position: absolute;
     bottom: 0;
     right: 0;
-    --background: rgba(0,0,0,0.6);
-    --color: white;
+    --background: rgba(0, 0, 0, 0.6);
+    --color: #FFFFFF;
     font-size: 0.7rem;
     height: 24px;
     margin: 4px;
   }
 }
 
-/* ERROR & SUBMIT */
-.error-text {
+/* ============================================
+   REVIEW SETTINGS (TOGGLE)
+   ============================================ */
+.toggle-item {
+  background: #F8F9FA;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #F1F5F9;
+
+  ion-toggle {
+    --track-background: #E5E7EB;
+    --track-background-checked: #5835F5;
+    --handle-background: #FFFFFF;
+    --handle-background-checked: #FFFFFF;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #333333;
+  }
+}
+
+.toggle-hint {
+  font-size: 0.8rem;
+  color: #8E8E93;
+  margin: 8px 0 0 0;
+  line-height: 1.4;
+}
+
+/* ============================================
+   ERROR & SUBMIT
+   ============================================ */
+.error-box {
+  background: #FEF2F2;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 16px;
   text-align: center;
-  margin-top: 8px;
-  font-weight: 500;
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #EF4444;
+  }
 }
 
 .submit-btn {
   --border-radius: 12px;
-  height: 50px;
+  --background: #5835F5;
+  --background-activated: #472bc4;
+  --box-shadow: 0 6px 20px rgba(88, 53, 245, 0.3);
   font-weight: 700;
   text-transform: none;
+  height: 52px;
   font-size: 1rem;
-  margin-top: 24px;
-  --box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  margin-top: 12px;
 }

@@ -1,65 +1,81 @@
-<ion-header>
-  <ion-toolbar color="dark">
+<ion-header class="modern-header">
+  <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/admin/dashboard"></ion-back-button>
+      <ion-back-button defaultHref="/admin/dashboard" class="back-btn"></ion-back-button>
     </ion-buttons>
-    <ion-title>Manage Users</ion-title>
+    <ion-title class="page-title">Manage Users</ion-title>
   </ion-toolbar>
 
   <!-- SEARCH BAR -->
-  <ion-toolbar>
+  <ion-toolbar class="search-toolbar">
     <ion-searchbar 
       placeholder="Search by name or email..." 
       (ionInput)="onSearchChange($event)" 
-      [debounce]="300">
+      [debounce]="300"
+      class="modern-search">
     </ion-searchbar>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content class="page-content">
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
   
-  <div *ngIf="loading()" class="ion-text-center ion-padding"><ion-spinner></ion-spinner></div>
-
-  <div *ngIf="!loading() && filteredUsers.length === 0" class="ion-text-center ion-padding">
-    <p>No users found.</p>
+  <!-- LOADING STATE -->
+  <div *ngIf="loading()" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
   </div>
 
-  <ion-list *ngIf="!loading() && filteredUsers.length > 0">
-    <ion-item *ngFor="let user of filteredUsers">
-      <ion-avatar slot="start">
-        <img [src]="getProfilePictureUrl(user.profile_picture)" [style.opacity]="user.is_active ? '1' : '0.5'" />
-      </ion-avatar>
-      
-      <ion-label>
-        <h2>
-          {{ user.full_name }}
-          <ion-badge color="danger" *ngIf="!user.is_active" style="margin-left: 8px;">DISABLED</ion-badge>
-        </h2>
-        <p>{{ user.email }} · <strong>{{ user.role }}</strong></p>
-        <p *ngIf="!user.is_active" style="color: #eb445a; font-size: 0.8rem;">
-          Reason: {{ user.disabled_reason }}
-        </p>
-      </ion-label>
+  <!-- EMPTY STATE -->
+  <div *ngIf="!loading() && filteredUsers.length === 0" class="empty-state">
+    <div class="icon-circle">
+      <ion-icon name="people-outline"></ion-icon>
+    </div>
+    <h3>No users found</h3>
+    <p>Try adjusting your search or wait for new registrations.</p>
+  </div>
 
-      <div slot="end" style="display: flex; gap: 4px;">
+  <!-- USERS LIST -->
+  <div class="users-list" *ngIf="!loading() && filteredUsers.length > 0">
+    <div class="user-card" *ngFor="let user of filteredUsers">
+      
+      <div class="user-main">
+        <ion-avatar class="user-avatar" [class.disabled-avatar]="!user.is_active">
+          <img [src]="getProfilePictureUrl(user.profile_picture)" />
+        </ion-avatar>
+        
+        <div class="user-details">
+          <div class="user-header">
+            <h2 class="user-name">{{ user.full_name }}</h2>
+            <ion-badge color="danger" *ngIf="!user.is_active" class="status-badge">DISABLED</ion-badge>
+          </div>
+          <p class="user-email">{{ user.email }}</p>
+          <p class="user-role">Role: <strong>{{ user.role | titlecase }}</strong></p>
+          
+          <p *ngIf="!user.is_active && user.disabled_reason" class="disabled-reason">
+            <strong>Reason:</strong> {{ user.disabled_reason }}
+          </p>
+        </div>
+      </div>
+
+      <div class="user-actions">
         <!-- ENABLE BUTTON -->
-        <ion-button fill="clear" color="success" *ngIf="!user.is_active" (click)="confirmEnable(user)" title="Enable User">
-          <ion-icon name="checkmark-circle-outline" slot="icon-only"></ion-icon>
+        <ion-button fill="solid" class="action-btn enable-btn" *ngIf="!user.is_active" (click)="confirmEnable(user)" title="Enable User">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
         </ion-button>
 
         <!-- DISABLE BUTTON -->
-        <ion-button fill="clear" color="warning" *ngIf="user.is_active" (click)="confirmDisable(user)" title="Disable User">
-          <ion-icon name="ban-outline" slot="icon-only"></ion-icon>
+        <ion-button fill="solid" class="action-btn disable-btn" *ngIf="user.is_active" (click)="confirmDisable(user)" title="Disable User">
+          <ion-icon name="ban-outline"></ion-icon>
         </ion-button>
 
         <!-- DELETE BUTTON -->
-        <ion-button fill="clear" color="danger" (click)="confirmDelete(user)" title="Delete User">
-          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+        <ion-button fill="solid" class="action-btn delete-btn" (click)="confirmDelete(user)" title="Delete User">
+          <ion-icon name="trash-outline"></ion-icon>
         </ion-button>
       </div>
-    </ion-item>
-  </ion-list>
+
+    </div>
+  </div>
 </ion-content>

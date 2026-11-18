@@ -1,1 +1,176 @@
-/* Walang special CSS kailangan, inline styles na tayo */
+/* ============================================
+   GLOBAL
+   ============================================ */
+.page-content {
+  --background: #F8F9FA;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.modern-header {
+  box-shadow: 0 1px 0 #E5E7EB;
+}
+
+.header-toolbar {
+  --background: #FFFFFF;
+  --color: #1A1A1A;
+  --border-width: 0;
+}
+
+.back-btn {
+  --color: #5835F5;
+}
+
+.page-title {
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: #1A1A1A;
+}
+
+/* ============================================
+   LOADING
+   ============================================ */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 60px;
+
+  ion-spinner {
+    --color: #5835F5;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+  margin-top: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px;
+  
+  .icon-circle {
+    width: 88px;
+    height: 88px;
+    background: #FFFFFF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(88, 53, 245, 0.08);
+    margin-bottom: 20px;
+    
+    ion-icon {
+      font-size: 44px;
+      color: #5835F5;
+    }
+  }
+
+  h3 {
+    color: #1A1A1A;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    color: #8E8E93;
+    font-size: 0.95rem;
+    margin: 0;
+    text-align: center;
+    max-width: 280px;
+  }
+}
+
+/* ============================================
+   MESSAGES CONTAINER
+   ============================================ */
+.messages-container {
+  padding: 16px;
+}
+
+/* ============================================
+   INFO BANNER
+   ============================================ */
+.info-banner {
+  background: #F3EFFF;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  border-left: 4px solid #5835F5;
+}
+
+.info-icon {
+  font-size: 1.4rem;
+  color: #5835F5;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.info-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #333333;
+  line-height: 1.4;
+
+  strong {
+    color: #1A1A1A;
+  }
+}
+
+/* ============================================
+   MESSAGE CARD
+   ============================================ */
+.message-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid #F1F5F9;
+  border-left: 4px solid #5835F5;
+}
+
+.message-header {
+  margin-bottom: 10px;
+}
+
+.admin-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  ion-icon {
+    font-size: 1.3rem;
+    color: #5835F5;
+  }
+
+  strong {
+    color: #5835F5;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+}
+
+.message-body {
+  margin: 0;
+  color: #333333;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.message-date {
+  display: block;
+  margin-top: 12px;
+  color: #8E8E93;
+  font-size: 0.75rem;
+  text-align: right;
+}

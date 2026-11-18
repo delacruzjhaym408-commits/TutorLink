@@ -1,58 +1,61 @@
 <ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar color="primary" class="header-toolbar">
+  <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button>
+      <ion-back-button defaultHref="/home" class="back-btn"></ion-back-button>
     </ion-buttons>
-    <ion-title class="app-title">Create Post</ion-title>
+    <ion-title class="page-title">Create Post</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="bg-content ion-padding">
+<ion-content class="page-content ion-padding">
   <div class="form-container">
-    <h2 class="form-title">Post a Lesson</h2>
-    <p class="form-subtitle">Fill in the details to create your tutor listing.</p>
+    <div class="form-header">
+      <h2 class="form-title">Post a Lesson</h2>
+      <p class="form-subtitle">Fill in the details to create your tutor listing.</p>
+    </div>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
       
+      <!-- SUBJECT -->
       <div class="input-group">
         <label>Subject</label>
         <ion-input fill="outline" type="text" placeholder="e.g. Mathematics, English" formControlName="subject" class="custom-input"></ion-input>
         @if (showError('subject')) { <ion-text color="danger"><small>Please enter a subject.</small></ion-text> }
       </div>
 
-      <div class="input-row">
-        <div class="input-group">
-          <label>Hourly Rate (₱)</label>
-          <ion-input fill="outline" type="number" placeholder="e.g. 150" formControlName="hourly_rate" min="1" class="custom-input"></ion-input>
-          @if (showError('hourly_rate')) { <ion-text color="danger"><small>Must be at least 1.</small></ion-text> }
-        </div>
+      <!-- HOURLY RATE -->
+      <div class="input-group">
+        <label>Hourly Rate (₱)</label>
+        <ion-input fill="outline" type="number" placeholder="e.g. 150" formControlName="hourly_rate" min="1" class="custom-input"></ion-input>
+        @if (showError('hourly_rate')) { <ion-text color="danger"><small>Must be at least 1.</small></ion-text> }
       </div>
 
+      <!-- EDUCATION LEVEL -->
       <div class="input-group">
         <label>Education Level</label>
         <ion-input fill="outline" type="text" placeholder="e.g. College Graduate, Licensed" formControlName="education_level" class="custom-input"></ion-input>
         @if (showError('education_level')) { <ion-text color="danger"><small>Please enter your education level.</small></ion-text> }
       </div>
 
-      <!-- 🔥 GCASH NUMBER -->
+      <!-- GCASH NUMBER -->
       <div class="input-group">
-        <label>GCash Number (for receiving payments)</label>
+        <label>GCash Number</label>
         <ion-input fill="outline" type="text" placeholder="e.g. 09123456789" formControlName="gcash_number" class="custom-input"></ion-input>
       </div>
 
-      <!-- 🔥 BAGONG DAGDAG: GCASH QR CODE -->
+      <!-- GCASH QR CODE -->
       <div class="input-group">
         <label>GCash QR Code (Optional)</label>
-        <div class="upload-box" (click)="pickQrImage()" style="text-align: center; padding: 16px; border: 2px dashed #ccc; border-radius: 8px;">
-          <img *ngIf="qrImage()" [src]="qrImage()" style="max-width: 150px; max-height: 150px; border-radius: 8px;" />
-          <div *ngIf="!qrImage()">
-            <ion-icon name="camera-outline" style="font-size: 40px; color: #666;"></ion-icon>
-            <p style="color: #666; font-size: 0.9rem;">Tap to upload QR Code</p>
+        <div class="upload-box" (click)="pickQrImage()">
+          <img *ngIf="qrImage()" [src]="qrImage()" class="qr-preview" />
+          <div *ngIf="!qrImage()" class="upload-placeholder">
+            <ion-icon name="camera-outline" class="upload-icon"></ion-icon>
+            <p>Tap to upload QR Code</p>
           </div>
         </div>
       </div>
 
-      <!-- 🔥 DELIVERY MODE -->
+      <!-- DELIVERY MODE -->
       <div class="input-group">
         <label>Mode of Delivery</label>
         <ion-select formControlName="delivery_mode" fill="outline" interface="action-sheet" class="custom-input">
@@ -62,6 +65,7 @@
         </ion-select>
       </div>
 
+      <!-- DESCRIPTION -->
       <div class="input-group">
         <label>Description (Optional)</label>
         <ion-textarea fill="outline" placeholder="Tell students about your teaching experience..." formControlName="description" [autoGrow]="true" rows="4" class="custom-input"></ion-textarea>
@@ -77,23 +81,29 @@
         </div>
 
         <div class="uploading-state" *ngIf="uploadingImages()">
-          <ion-spinner name="crescent" color="primary"></ion-spinner>
+          <ion-spinner name="crescent"></ion-spinner>
           <span>Uploading images...</span>
         </div>
 
-        <div class="image-previews" *ngIf="uploadedImageUrls().length > 0" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px;">
-          <div *ngFor="let img of uploadedImageUrls(); let i = index" style="position: relative; width: 100px; height: 100px; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #ddd;">
-            <img [src]="img" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
-            <div class="remove-icon" (click)="removeImage(i)" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-              <ion-icon name="close" style="font-size: 14px;"></ion-icon>
+        <div class="image-previews" *ngIf="uploadedImageUrls().length > 0">
+          <div class="image-preview-wrapper" *ngFor="let img of uploadedImageUrls(); let i = index">
+            <img [src]="img" />
+            <div class="remove-icon" (click)="removeImage(i)">
+              <ion-icon name="close"></ion-icon>
             </div>
           </div>
         </div>
       </div>
 
-      @if (errorMessage()) { <ion-text color="danger"><p class="error-text">{{ errorMessage() }}</p></ion-text> }
+      <!-- ERROR MESSAGE -->
+      @if (errorMessage()) { 
+        <div class="error-box">
+          <p>{{ errorMessage() }}</p>
+        </div>
+      }
 
-      <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting() || uploadingImages()" class="submit-btn" style="margin-top: 24px;">
+      <!-- SUBMIT BUTTON -->
+      <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting() || uploadingImages()" class="submit-btn">
         <ion-spinner *ngIf="submitting()" name="crescent" slot="start"></ion-spinner>
         {{ submitting() ? 'Publishing...' : 'Publish Post' }}
       </ion-button>

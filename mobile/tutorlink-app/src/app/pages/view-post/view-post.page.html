@@ -1,18 +1,21 @@
 <ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar color="primary">
+  <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home"></ion-back-button>
+      <ion-back-button defaultHref="/home" class="back-btn"></ion-back-button>
     </ion-buttons>
-    <ion-title>View Post</ion-title>
+    <ion-title class="page-title">View Post</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="bg-content">
-  <div *ngIf="loading()" class="ion-text-center loading-container">
+<ion-content class="page-content">
+  
+  <!-- LOADING STATE -->
+  <div *ngIf="loading()" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading post...</p>
   </div>
 
+  <!-- POST CONTENT -->
   <div *ngIf="!loading() && post()" class="post-container">
     
     <!-- IMAGE GALLERY -->
@@ -22,6 +25,8 @@
 
     <!-- POST CARD -->
     <div class="post-card">
+      
+      <!-- TUTOR INFO -->
       <div class="header-row">
         <ion-avatar class="tutor-avatar">
           <img [src]="getImageUrl(post()?.tutor_picture)" />
@@ -34,16 +39,20 @@
         </div>
       </div>
 
+      <!-- SUBJECT -->
       <h1 class="post-subject">{{ post()?.subject }}</h1>
       
+      <!-- PRICE -->
       <div class="price-tag">
         <ion-icon name="cash-outline"></ion-icon>
         <span>₱{{ post()?.hourly_rate }} / hour</span>
       </div>
 
+      <!-- DESCRIPTION -->
       <p class="post-description">{{ post()?.description }}</p>
 
-      <ion-button expand="block" color="primary" class="message-btn" (click)="goToMessages()">
+      <!-- ACTION -->
+      <ion-button expand="block" class="message-btn" (click)="goToMessages()">
         <ion-icon name="chatbubble-outline" slot="start"></ion-icon>
         Message Tutor
       </ion-button>

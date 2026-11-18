@@ -1,16 +1,25 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonIcon, IonBackButton, IonButtons, IonBadge, ToastController, AlertController, IonSegment, IonSegmentButton } from '@ionic/angular';
+import { 
+  IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, 
+  IonLabel, IonButton, IonIcon, IonBackButton, IonButtons, IonBadge, 
+  ToastController, AlertController, IonSegment, IonSegmentButton 
+} from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { checkmarkCircleOutline, trashOutline, closeCircleOutline } from 'ionicons/icons';
+// Added documentTextOutline to fix the missing icon error
+import { checkmarkCircleOutline, trashOutline, closeCircleOutline, documentTextOutline } from 'ionicons/icons';
 import { AdminService } from '../../services/admin.service';
 
 @Component({
   selector: 'app-admin-appeals',
   templateUrl: './admin-appeals.page.html',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonIcon, IonBackButton, IonButtons, IonBadge, IonSegment, IonSegmentButton],
+  imports: [
+    CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, 
+    IonList, IonItem, IonLabel, IonButton, IonIcon, IonBackButton, IonButtons, 
+    IonBadge, IonSegment, IonSegmentButton
+  ],
 })
 export class AdminAppealsPage implements OnInit {
   private adminService = inject(AdminService);
@@ -21,7 +30,8 @@ export class AdminAppealsPage implements OnInit {
   activeTab = signal<string>('pending');
 
   constructor() {
-    addIcons({ checkmarkCircleOutline, trashOutline, closeCircleOutline });
+    // Registered the new icon here
+    addIcons({ checkmarkCircleOutline, trashOutline, closeCircleOutline, documentTextOutline });
   }
 
   ngOnInit() {
@@ -32,7 +42,6 @@ export class AdminAppealsPage implements OnInit {
     this.adminService.getAppeals().subscribe(res => this.appeals.set(res));
   }
 
-  // 🔥 BAGONG FUNCTION PARA SA TAB CHANGE
   onTabChange(event: any) {
     const val = event.detail.value;
     if (typeof val === 'string') {

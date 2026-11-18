@@ -1,9 +1,13 @@
-/* BACKGROUND */
+/* ============================================
+   BACKGROUND
+   ============================================ */
 .login-bg {
-  --background: #f8f9fa;
+  --background: #F8F9FA; /* Crisp Off-White */
 }
 
-/* CONTAINER */
+/* ============================================
+   CONTAINER
+   ============================================ */
 .auth-container {
   max-width: 420px;
   margin: 0 auto;
@@ -14,7 +18,9 @@
   min-height: 100%;
 }
 
-/* BRAND HEADER */
+/* ============================================
+   BRAND HEADER
+   ============================================ */
 .brand {
   text-align: center;
   margin-bottom: 32px;
@@ -22,7 +28,7 @@
   .logo-circle {
     width: 72px;
     height: 72px;
-    background: #eef2ff;
+    background: #F3EFFF; /* Soft violet tint */
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -31,7 +37,7 @@
 
     ion-icon {
       font-size: 2.5rem;
-      color: #2563eb;
+      color: #5835F5; /* Vibrant Royal Blue */
     }
   }
 
@@ -39,27 +45,31 @@
     margin: 0;
     font-size: 2.2rem;
     font-weight: 800;
-    color: #111827;
+    color: #1A1A1A; /* Dark Charcoal */
     letter-spacing: -0.5px;
   }
 
   p {
     margin: 8px 0 0;
-    color: #6b7280;
+    color: #8E8E93; /* Muted Gray */
     font-size: 0.95rem;
   }
 }
 
-/* AUTH CARD */
+/* ============================================
+   AUTH CARD
+   ============================================ */
 .auth-card {
-  background: #ffffff;
-  border-radius: 20px;
+  background: #FFFFFF;
+  border-radius: 24px;
   padding: 32px 24px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-  border: 1px solid rgba(0,0,0,0.02);
+  box-shadow: 0 8px 30px rgba(88, 53, 245, 0.08); /* Soft blue shadow */
+  border: 1px solid #F1F5F9;
 }
 
-/* INPUT GROUPS */
+/* ============================================
+   INPUT GROUPS
+   ============================================ */
 .input-group {
   display: flex;
   flex-direction: column;
@@ -68,27 +78,35 @@
   label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #374151;
+    color: #333333; /* Dark Body Text */
     margin-bottom: 6px;
     margin-left: 4px;
   }
 }
 
 .custom-input {
-  --background: #f9fafb;
+  --background: #F9FAFB;
   --border-radius: 12px;
   --padding-start: 14px;
   --padding-end: 14px;
   --padding-top: 14px;
   --padding-bottom: 14px;
-  --border-color: #e5e7eb;
+  --border-color: #E5E7EB;
+  --color: #1A1A1A;
   font-size: 0.95rem;
+  transition: --border-color 0.2s ease;
+
+  &.ion-focused {
+    --border-color: #5835F5; /* Vibrant Royal Blue focus border */
+  }
 }
 
-/* ERROR */
+/* ============================================
+   ERROR BOX
+   ============================================ */
 .error-box {
   display: block;
-  background: #fef2f2;
+  background: #FEF2F2;
   padding: 12px;
   border-radius: 10px;
   margin-top: 8px;
@@ -98,21 +116,89 @@
     margin: 0;
     font-size: 0.85rem;
     font-weight: 500;
+    color: #EF4444;
   }
 }
 
-/* SUBMIT BUTTON */
+/* ============================================
+   DISABLED ACCOUNT BOX
+   ============================================ */
+.disabled-box {
+  margin-top: 20px;
+  padding: 16px;
+  background: #FEF2F2;
+  border-radius: 12px;
+  border-left: 4px solid #EF4444;
+}
+
+.disabled-title {
+  margin: 0 0 8px 0;
+  color: #EF4444;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+
+  ion-icon {
+    font-size: 1.2rem;
+  }
+}
+
+.disabled-reason {
+  font-size: 0.9rem;
+  color: #333333;
+  margin: 0 0 8px 0;
+
+  strong {
+    font-weight: 600;
+  }
+}
+
+.disabled-help {
+  font-size: 0.85rem;
+  color: #8E8E93;
+  margin: 0 0 12px 0;
+}
+
+.appeal-textarea {
+  --background: #FFFFFF;
+  --border-radius: 8px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  --border-color: #FCA5A5;
+  margin-bottom: 12px;
+}
+
+.appeal-btn {
+  --border-radius: 10px;
+  height: 44px;
+  font-weight: 600;
+  text-transform: none;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* ============================================
+   SUBMIT BUTTON
+   ============================================ */
 .submit-btn {
   --border-radius: 12px;
-  height: 50px;
+  height: 52px;
   font-weight: 700;
   text-transform: none;
   font-size: 1rem;
   margin-top: 24px;
-  --box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  --background: #5835F5;
+  --background-activated: #472bc4;
+  --box-shadow: 0 6px 20px rgba(88, 53, 245, 0.3); /* Vibrant shadow */
 }
 
-/* DIVIDER */
+/* ============================================
+   DIVIDER
+   ============================================ */
 .divider {
   display: flex;
   align-items: center;
@@ -122,27 +208,29 @@
   &::before, &::after {
     content: '';
     flex: 1;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #E5E7EB;
   }
 
   span {
     padding: 0 12px;
-    color: #9ca3af;
+    color: #8E8E93;
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 1px;
   }
 }
 
-/* SWITCH LINK */
+/* ============================================
+   SWITCH LINK
+   ============================================ */
 .switch {
   text-align: center;
   margin: 0;
   font-size: 0.9rem;
-  color: #6b7280;
+  color: #8E8E93;
 
   .signup-link {
-    color: #2563eb;
+    color: #5835F5;
     font-weight: 700;
     text-decoration: none;
     margin-left: 4px;

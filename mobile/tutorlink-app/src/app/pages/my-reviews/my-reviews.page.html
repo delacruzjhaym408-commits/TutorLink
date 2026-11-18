@@ -1,18 +1,19 @@
 <ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar color="primary" class="header-toolbar">
+  <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/profile" class="menu-btn"></ion-back-button>
+      <ion-back-button defaultHref="/profile" class="back-btn"></ion-back-button>
     </ion-buttons>
-    <ion-title class="app-title">My Reviews</ion-title>
+    <ion-title class="page-title">My Reviews</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="bg-content ion-padding">
+<ion-content class="page-content ion-padding">
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
-  <ion-refresher-content></ion-refresher-content>
+    <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
   
-  <div *ngIf="loading()" class="ion-text-center ion-padding loading-container">
+  <!-- LOADING STATE -->
+  <div *ngIf="loading()" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading reviews...</p>
   </div>
@@ -22,8 +23,7 @@
     <h2 class="summary-title">Overall Rating</h2>
     <div class="summary-stars">
       <ion-icon *ngFor="let star of [1,2,3,4,5]" 
-                [name]="star <= averageRating() ? 'star' : 'star-outline'" 
-                color="warning">
+                [name]="star <= averageRating() ? 'star' : 'star-outline'">
       </ion-icon>
     </div>
     <div class="average-score">
@@ -32,9 +32,11 @@
     <p class="total-reviews">Based on {{ reviews().length }} reviews</p>
   </div>
 
-  <!-- NO REVIEWS -->
-  <div *ngIf="!loading() && reviews().length === 0" class="ion-text-center empty-state">
-    <ion-icon name="chatbubble-outline" class="empty-icon"></ion-icon>
+  <!-- EMPTY STATE -->
+  <div *ngIf="!loading() && reviews().length === 0" class="empty-state">
+    <div class="icon-circle">
+      <ion-icon name="chatbubble-outline"></ion-icon>
+    </div>
     <h3>No reviews yet</h3>
     <p>Once students rate you, their reviews will appear here.</p>
   </div>
@@ -55,8 +57,7 @@
 
       <div class="review-stars">
         <ion-icon *ngFor="let s of [1,2,3,4,5]" 
-                  [name]="s <= review.rating ? 'star' : 'star-outline'" 
-                  color="warning">
+                  [name]="s <= review.rating ? 'star' : 'star-outline'">
         </ion-icon>
       </div>
 

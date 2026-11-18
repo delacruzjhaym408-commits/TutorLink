@@ -38,6 +38,9 @@ export class HomePage implements OnInit {
   loading = false;
   searchQuery = '';
   currentUserId: number | string | null = null;
+  
+  // 🔥 ADDED: Variable for user name in Hero Header
+  userName = '';
 
   selectedPostToReport: any = null;
   reportReason = '';
@@ -65,12 +68,14 @@ export class HomePage implements OnInit {
       try {
         const user = JSON.parse(userJson);
         this.currentUserId = user.id ?? null;
+        // 🔥 ADDED: Get the user's name for the greeting
+        this.userName = user.full_name || 'Student';
       } catch (e) {}
     }
     this.loadPosts();
   }
 
-  // 🔥 PULL TO REFRESH FUNCTION
+  // PULL TO REFRESH FUNCTION
   doRefresh(event: any) {
     this.tutorPostService.getAllPosts(this.searchQuery).subscribe({
       next: (posts) => {
@@ -108,16 +113,14 @@ export class HomePage implements OnInit {
     await this.menuController.open();
   }
 
-  // 🔥 INAYOS: Papunta na ito sa Bagong Post Details Page
   goToTutorDetails(post: TutorPost) {
     if (post && post.id) {
       this.router.navigate(['/post-details', post.id]);
     } else {
-      console.error('Walang ID ang post na ito:', post);
+      console.error('Post has no ID:', post);
     }
   }
 
-  // 🔥 ITO ANG NAWALA KANINA
   goToCreatePost() {
     this.router.navigate(['/create-post']);
   }
@@ -214,7 +217,7 @@ export class HomePage implements OnInit {
     }
   }
 
-  // 🔥 ACTIVE STATUS LOGIC
+  // ACTIVE STATUS LOGIC
   isTutorActive(post: any): boolean {
     if (!post) return false;
     

@@ -1,17 +1,167 @@
-ion-card {
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  text-align: center;
-  padding: 16px 0;
+/* ============================================
+   GLOBAL
+   ============================================ */
+.page-content {
+  --background: #F8F9FA;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.modern-header {
+  box-shadow: 0 1px 0 #E5E7EB;
+}
+
+.header-toolbar {
+  --background: #FFFFFF;
+  --color: #1A1A1A;
+  --border-width: 0;
+}
+
+.page-title {
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: #1A1A1A;
+}
+
+.logout-btn {
+  --color: #5835F5;
+}
+
+/* ============================================
+   WELCOME SECTION
+   ============================================ */
+.welcome-section {
+  padding: 24px 20px 10px 20px;
+}
+
+.welcome-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1A1A1A;
+  margin: 0 0 4px 0;
+}
+
+.welcome-sub {
+  font-size: 0.95rem;
+  color: #8E8E93;
   margin: 0;
-  
-  h1 {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin: 8px 0 0 0;
+}
+
+/* ============================================
+   DASHBOARD GRID
+   ============================================ */
+.dashboard-grid {
+  padding: 0 12px;
+}
+
+/* ============================================
+   ADMIN CARD
+   ============================================ */
+.admin-card {
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  padding: 20px 16px;
+  margin: 8px 0;
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
   }
-  p {
-    color: #666;
-    margin: 0;
+
+  ion-card-header {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
   }
+
+  ion-icon {
+    font-size: 2.8rem;
+  }
+
+  ion-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #333333;
+  }
+
+  ion-card-content {
+    padding: 12px 0 0 0;
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin: 0;
+      color: #1A1A1A;
+      line-height: 1;
+    }
+
+    p {
+      color: #8E8E93;
+      margin: 4px 0 0 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+  }
+}
+
+/* ============================================
+   CARD COLOR VARIANTS
+   ============================================ */
+.card-users {
+  background: #F3EFFF;
+  ion-icon { color: #5835F5; }
+}
+
+.card-posts {
+  background: #ECFDF5;
+  ion-icon { color: #10B981; }
+}
+
+.card-reports {
+  background: #FEF2F2;
+  ion-icon { color: #EF4444; }
+}
+
+.card-appeals {
+  background: #FFFBEB;
+  ion-icon { color: #F59E0B; }
+}
+
+/* ============================================
+   PENDING BADGE
+   ============================================ */
+.pending-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* ============================================
+   ACTION SECTION
+   ============================================ */
+.action-section {
+  padding: 16px 20px 32px 20px;
+}
+
+.auto-disable-btn {
+  --border-radius: 12px;
+  --background: #F59E0B;
+  --background-activated: #D97706;
+  --box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+  font-weight: 700;
+  text-transform: none;
+  height: 52px;
+  font-size: 0.95rem;
 }

@@ -6,7 +6,7 @@ import { AuthUser, RegisterData, TokenResponse } from '../models/user.model';
 
 const TOKEN_KEY = 'access_token';
 
-const API_BASE_URL = 'http://localhost:8000'; 
+const API_BASE_URL = 'https://tutorlink-api-9lcu.onrender.com'; 
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {

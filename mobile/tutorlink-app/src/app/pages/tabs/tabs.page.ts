@@ -11,7 +11,6 @@ import { homeOutline, chatbubbleOutline, personOutline } from 'ionicons/icons';
 })
 export class TabsPage {
   constructor() {
-    // 🔥 TINANGGAL ANG settingsOutline
     addIcons({ homeOutline, chatbubbleOutline, personOutline });
   }
 }

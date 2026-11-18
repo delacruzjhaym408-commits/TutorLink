@@ -1,104 +1,116 @@
-<ion-header>
-  <ion-toolbar color="dark">
+<ion-header class="modern-header">
+  <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/admin/dashboard"></ion-back-button>
+      <ion-back-button defaultHref="/admin/dashboard" class="back-btn"></ion-back-button>
     </ion-buttons>
-    <ion-title>Manage Posts</ion-title>
+    <ion-title class="page-title">Manage Posts</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content class="page-content">
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
   
-  <div *ngIf="loading()" class="ion-text-center ion-padding"><ion-spinner></ion-spinner></div>
-
-  <div *ngIf="!loading() && posts().length === 0" class="ion-text-center ion-padding">
-    <p>No posts yet.</p>
+  <!-- LOADING STATE -->
+  <div *ngIf="loading()" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
   </div>
 
-  <div class="cards-container" *ngIf="!loading() && posts().length > 0">
-    <ion-card *ngFor="let post of posts()" class="modern-card" style="padding: 0; overflow: hidden; border-radius: 12px; margin-bottom: 16px;" [style.opacity]="post.status === 'disabled' ? '0.7' : '1'">
+  <!-- EMPTY STATE -->
+  <div *ngIf="!loading() && posts().length === 0" class="empty-state">
+    <div class="icon-circle">
+      <ion-icon name="document-text-outline"></ion-icon>
+    </div>
+    <h3>No posts found</h3>
+    <p>There are no posts to manage right now.</p>
+  </div>
+
+  <!-- POSTS LIST -->
+  <div class="posts-list" *ngIf="!loading() && posts().length > 0">
+    <ion-card 
+      *ngFor="let post of posts()" 
+      class="admin-post-card" 
+      [class.post-disabled]="post.status === 'disabled'">
       
-      <!-- MALAKING IMAGE SA TAAS -->
-      <div *ngIf="post.post_pictures" style="width: 100%; height: 220px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-        <img [src]="parseImages(post.post_pictures)[0]" alt="Course Cover" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+      <!-- IMAGE -->
+      <div *ngIf="post.post_pictures" class="post-image-wrapper">
+        <img [src]="parseImages(post.post_pictures)[0]" alt="Course Cover" class="post-image" />
       </div>
 
-      <div style="padding: 16px;">
-        <!-- SUBJECT AT STATUS -->
-        <h2 class="subject-title" style="font-size: 1.4rem; font-weight: 800; color: #1a1a1a; margin: 0 0 8px 0; line-height: 1.2;">
-          {{ post.subject }} 
-          <ion-badge color="danger" *ngIf="post.status === 'disabled'">DISABLED</ion-badge>
-          <ion-badge color="warning" *ngIf="post.status === 'pending'">PENDING</ion-badge>
-        </h2>
+      <div class="post-body">
+        <!-- SUBJECT + STATUS -->
+        <div class="post-header">
+          <h2 class="subject-title">{{ post.subject }}</h2>
+          
+          <ion-badge color="danger" *ngIf="post.status === 'disabled'" class="status-badge">
+            DISABLED
+          </ion-badge>
+          <ion-badge color="warning" *ngIf="post.status === 'pending'" class="status-badge">
+            PENDING
+          </ion-badge>
+        </div>
         
-        <p class="tutor-subtitle" style="color: #6b7280; font-size: 0.95rem; margin-bottom: 12px;">
+        <p class="tutor-subtitle">
           Tutor: <strong>{{ post.tutor_name || 'Unknown' }}</strong>
         </p>
 
-        <p *ngIf="post.description" class="description" style="color: #4b5563; font-size: 0.9rem; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+        <p *ngIf="post.description" class="post-description">
           {{ post.description }}
         </p>
 
-        <p *ngIf="post.status === 'disabled'" style="color: #eb445a; font-size: 0.8rem; margin-bottom: 12px;">
-          Reason: {{ post.disabled_reason }}
+        <p *ngIf="post.status === 'disabled'" class="disabled-reason">
+          <strong>Reason:</strong> {{ post.disabled_reason }}
         </p>
 
         <!-- STATS -->
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-          <div class="stats-row" style="display: flex; gap: 12px; align-items: center;">
-            <div class="rating" style="display: flex; align-items: center; gap: 4px; color: #f59e0b; font-weight: bold;">
-              <ion-icon name="star"></ion-icon>
-              <span>{{ post.rating }} ({{ post.total_reviews || 0 }})</span>
-            </div>
-            <div class="learners" style="display: flex; align-items: center; gap: 4px; color: #6b7280; font-size: 0.85rem;">
-              <ion-icon name="people-outline"></ion-icon>
-              <span>{{ post.learners_count || 0 }} learners</span>
-            </div>
+        <div class="stats-row">
+          <div class="rating">
+            <ion-icon name="star"></ion-icon>
+            <span>{{ post.rating }} ({{ post.total_reviews || 0 }})</span>
+          </div>
+          <div class="learners">
+            <ion-icon name="people-outline"></ion-icon>
+            <span>{{ post.learners_count || 0 }} learners</span>
           </div>
         </div>
 
-        <!-- RATE -->
-        <div class="rate-display" style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px;">
-          <h3 class="rate-text" style="font-size: 1.3rem; font-weight: 800; color: #2563eb; margin: 0;">
-            ₱{{ post.hourly_rate }} <span style="font-size: 0.9rem; font-weight: 500; color: #6b7280;">/ hour</span>
+        <!-- PRICE -->
+        <div class="price-row">
+          <h3 class="rate-text">
+            ₱{{ post.hourly_rate }} <span class="rate-unit">/ hour</span>
           </h3>
-          <span class="session-rate" *ngIf="post.session_rate" style="font-size: 0.85rem; color: #9ca3af;">
+          <span class="session-rate" *ngIf="post.session_rate">
             ₱{{ post.session_rate }} / session
           </span>
         </div>
 
         <!-- DATE -->
-        <p style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 16px;">
+        <p class="date-text">
           Posted: {{ post.created_at | date:'mediumDate' }} at {{ post.created_at | date:'shortTime' }}
         </p>
 
-        <!-- PENDING ACTIONS (APPROVE / REJECT) -->
-        <div style="display: flex; gap: 8px; margin-bottom: 12px;" *ngIf="post.status === 'pending'">
-          <ion-button expand="block" fill="solid" color="success" (click)="approvePost(post.id)" style="flex: 1; margin: 0;">
+        <!-- PENDING ACTIONS -->
+        <div class="action-row pending-actions" *ngIf="post.status === 'pending'">
+          <ion-button expand="block" fill="solid" class="action-btn approve-btn" (click)="approvePost(post.id)">
             Approve
           </ion-button>
-          <ion-button expand="block" fill="solid" color="danger" (click)="rejectPost(post.id)" style="flex: 1; margin: 0;">
+          <ion-button expand="block" fill="solid" class="action-btn reject-btn" (click)="rejectPost(post.id)">
             Reject
           </ion-button>
         </div>
 
-        <!-- OTHER ACTIONS (DISABLE / ENABLE / DELETE) -->
-        <div style="display: flex; gap: 8px; margin-top: 16px;">
-          <!-- Disable Button -->
-          <ion-button expand="block" fill="solid" color="warning" *ngIf="post.status === 'published'" (click)="confirmDisable(post)" style="flex: 1;">
+        <!-- OTHER ACTIONS -->
+        <div class="action-row main-actions">
+          <ion-button expand="block" fill="solid" class="action-btn disable-btn" *ngIf="post.status === 'published'" (click)="confirmDisable(post)">
             <ion-icon name="ban-outline" slot="start"></ion-icon> Disable
           </ion-button>
           
-          <!-- Enable Button -->
-          <ion-button expand="block" fill="solid" color="success" *ngIf="post.status === 'disabled'" (click)="confirmEnable(post)" style="flex: 1;">
+          <ion-button expand="block" fill="solid" class="action-btn enable-btn" *ngIf="post.status === 'disabled'" (click)="confirmEnable(post)">
             <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon> Enable
           </ion-button>
 
-          <!-- Delete Button -->
-          <ion-button expand="block" fill="solid" color="danger" (click)="confirmDelete(post)" style="flex: 1;">
+          <ion-button expand="block" fill="solid" class="action-btn delete-btn" (click)="confirmDelete(post)">
             <ion-icon name="trash-outline" slot="start"></ion-icon> Delete
           </ion-button>
         </div>

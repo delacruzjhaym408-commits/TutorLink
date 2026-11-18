@@ -48,15 +48,16 @@
           </ion-text>
         }
 
-        <!-- 🔥 DISABLED ACCOUNT NOTIFICATION + APPEAL BOX -->
-        <div *ngIf="isDisabled()" style="margin-top: 20px; padding: 16px; background: #ffebee; border-radius: 8px; border-left: 4px solid #c62828;">
-          <h4 style="margin-top: 0; color: #c62828; display: flex; align-items: center; gap: 8px;">
-            <span>⛔ Account Disabled</span>
+        <!-- DISABLED ACCOUNT NOTIFICATION + APPEAL BOX -->
+        <div *ngIf="isDisabled()" class="disabled-box">
+          <h4 class="disabled-title">
+            <ion-icon name="warning-outline"></ion-icon>
+            <span>Account Disabled</span>
           </h4>
-          <p style="font-size: 0.9rem; color: #333; margin-bottom: 8px;">
+          <p class="disabled-reason">
             <strong>Reason:</strong> {{ disabledReason() }}
           </p>
-          <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">
+          <p class="disabled-help">
             If you believe this is a mistake, you can send an appeal to the Admin.
           </p>
           <ion-textarea 
@@ -64,9 +65,15 @@
             [ngModelOptions]="{standalone: true}" 
             placeholder="Explain why your account should be re-enabled..." 
             fill="outline" 
-            rows="3">
+            rows="3"
+            class="appeal-textarea">
           </ion-textarea>
-          <ion-button expand="block" color="danger" style="margin-top: 12px;" (click)="sendAppeal()" [disabled]="!appealReason.trim() || submitting()">
+          <ion-button 
+            expand="block" 
+            color="danger" 
+            class="appeal-btn" 
+            (click)="sendAppeal()" 
+            [disabled]="!appealReason.trim() || submitting()">
             <ion-spinner *ngIf="submitting()" name="crescent" slot="start"></ion-spinner>
             {{ submitting() ? 'Sending...' : 'Send Appeal to Admin' }}
           </ion-button>

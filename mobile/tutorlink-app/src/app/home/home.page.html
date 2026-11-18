@@ -1,116 +1,122 @@
-<ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar color="primary" class="header-toolbar">
-    <ion-title class="app-title">TutorLink</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="openMenu()" class="menu-btn">
-        <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-  <ion-toolbar class="search-toolbar">
-    <ion-searchbar
-      placeholder="Search tutors or subjects..."
-      (ionInput)="onSearchChange($event)"
-      [debounce]="500"
-      class="modern-search"
-    ></ion-searchbar>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true" class="bg-content">
-  <!-- 🔥 PULL TO REFRESH (Tama na ang lagay) -->
+  
+  <!-- PULL TO REFRESH -->
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <div *ngIf="loading" class="ion-text-center ion-padding loading-container">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Finding best tutors...</p>
+  <!-- HERO HEADER SECTION -->
+  <div class="hero-section">
+    <div class="hero-top">
+      <div class="greeting-text">
+        <p class="welcome-sub">Welcome back,</p>
+        <h1 class="welcome-name">{{ userName || 'Student' }}! 👋</h1>
+      </div>
+      <div class="profile-avatar" (click)="openMenu()">
+        <ion-icon name="person-outline"></ion-icon>
+      </div>
+    </div>
+
+    <!-- FLOATING SEARCH BAR -->
+    <div class="search-wrapper">
+      <ion-searchbar
+        placeholder="Search tutors or subjects..."
+        (ionInput)="onSearchChange($event)"
+        [debounce]="500"
+        class="modern-search"
+      ></ion-searchbar>
+    </div>
   </div>
 
-  <div *ngIf="!loading && posts.length === 0" class="ion-text-center ion-padding empty-state">
-    <ion-icon name="people-outline" class="empty-icon"></ion-icon>
-    <h3>No tutors found</h3>
-    <p>Try searching for a different subject.</p>
-    <ion-button (click)="goToCreatePost()" fill="solid" color="primary">
-      <ion-icon name="add-outline" slot="start"></ion-icon>
-      Create First Post
-    </ion-button>
-  </div>
-
-<div class="cards-container" *ngIf="!loading && posts.length > 0">
-  <ion-card *ngFor="let post of posts" class="modern-card" style="padding: 0; overflow: hidden; border-radius: 12px; margin-bottom: 16px;">
+  <!-- CONTENT AREA -->
+  <div class="content-area">
     
-    <!-- 🔥 INAYOS ANG IMAGE TAG -->
-    <div *ngIf="post.post_pictures" style="width: 100%; height: 220px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-      <img 
-        [src]="parseImages(post.post_pictures)[0]" 
-        alt="Course Cover" 
-        style="max-width: 100%; max-height: 100%; object-fit: contain;" 
-      />
+    <!-- LOADING STATE -->
+    <div *ngIf="loading" class="ion-text-center ion-padding loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Finding best tutors...</p>
     </div>
 
-    <div style="padding: 16px;">
-      <!-- 🔥 ACTIVE STATUS + SUBJECT TITLE -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-        <h2 class="subject-title" style="font-size: 1.4rem; font-weight: 800; color: #1a1a1a; margin: 0; line-height: 1.2;">
-          {{ post.subject }}
-        </h2>
-        <!-- ACTIVE DOT -->
-        <div style="display: flex; align-items: center; gap: 4px;">
-          <span 
-            [style.background-color]="isTutorActive(post) ? '#2dd36f' : '#9ca3af'"
-            style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 0 4px rgba(0,0,0,0.2);">
-          </span>
-          <span style="font-size: 0.75rem; color: #6b7280; font-weight: 600;">
-            {{ isTutorActive(post) ? 'Active' : 'Offline' }}
-          </span>
-        </div>
+    <!-- EMPTY STATE -->
+    <div *ngIf="!loading && posts.length === 0" class="ion-text-center empty-state">
+      <div class="icon-circle">
+        <ion-icon name="school-outline"></ion-icon>
       </div>
-      
-      <p class="tutor-subtitle" style="color: #6b7280; font-size: 0.95rem; margin-bottom: 12px;">
-        Tutor: <strong>{{ post.tutor_name || 'Unknown' }}</strong>
-      </p>
-
-      <p *ngIf="post.description" class="description" style="color: #4b5563; font-size: 0.9rem; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-        {{ post.description }}
-      </p>
-
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-        <div class="stats-row" style="display: flex; gap: 12px; align-items: center;">
-          <div class="rating" style="display: flex; align-items: center; gap: 4px; color: #f59e0b; font-weight: bold;">
-            <ion-icon name="star"></ion-icon>
-            <span>{{ post.rating }} ({{ post.total_reviews || 0 }})</span>
-          </div>
-          <div class="learners" style="display: flex; align-items: center; gap: 4px; color: #6b7280; font-size: 0.85rem;">
-            <ion-icon name="people-outline"></ion-icon>
-            <span>{{ post.learners_count || 0 }} learners</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="rate-display" style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px;">
-        <h3 class="rate-text" style="font-size: 1.3rem; font-weight: 800; color: #2563eb; margin: 0;">
-          ₱{{ post.hourly_rate }} <span style="font-size: 0.9rem; font-weight: 500; color: #6b7280;">/ hour</span>
-        </h3>
-        <span class="session-rate" *ngIf="post.session_rate" style="font-size: 0.85rem; color: #9ca3af;">
-          ₱{{ post.session_rate }} / session
-        </span>
-      </div>
-
-      <div class="card-actions" style="display: flex; gap: 8px;">
-        <!-- 🔥 PINALITAN ANG "Learn More" NG "More Details" -->
-        <ion-button expand="block" fill="solid" color="primary" class="learn-btn" style="flex: 1; margin: 0;" (click)="goToTutorDetails(post)">
-          More Details
-        </ion-button>
-        <ion-button expand="block" fill="clear" color="danger" class="report-btn" style="margin: 0; width: 50px;" (click)="openReportModal(post)">
-          <ion-icon name="flag-outline" slot="icon-only"></ion-icon>
-        </ion-button>
-      </div>
+      <h3>No tutors found</h3>
+      <p>Please wait for the Admin to add or approve tutors.</p>
+      <ion-button (click)="goToCreatePost()" fill="clear" color="primary" class="create-post-link">
+        Create a Post
+      </ion-button>
     </div>
-  </ion-card>
-</div>
 
+    <!-- CARDS CONTAINER -->
+    <div class="cards-container" *ngIf="!loading && posts.length > 0">
+      <ion-card *ngFor="let post of posts" class="modern-card">
+        
+        <!-- IMAGE -->
+        <div *ngIf="post.post_pictures" class="card-image-wrapper">
+          <img 
+            [src]="parseImages(post.post_pictures)[0]" 
+            alt="Course Cover" 
+            class="card-image"
+          />
+        </div>
+
+        <div class="card-body">
+          <!-- TITLE + STATUS -->
+          <div class="title-row">
+            <h2 class="subject-title">{{ post.subject }}</h2>
+            <div class="status-badge" [class.active]="isTutorActive(post)" [class.offline]="!isTutorActive(post)">
+              <span class="status-dot" [style.background-color]="isTutorActive(post) ? '#059669' : '#9CA3AF'"></span>
+              <span class="status-text">{{ isTutorActive(post) ? 'Active' : 'Offline' }}</span>
+            </div>
+          </div>
+
+          <p class="tutor-subtitle">
+            Tutor: <strong>{{ post.tutor_name || 'Unknown' }}</strong>
+          </p>
+
+          <p *ngIf="post.description" class="description">
+            {{ post.description }}
+          </p>
+
+          <!-- STATS -->
+          <div class="stats-row">
+            <div class="rating">
+              <ion-icon name="star"></ion-icon>
+              <span>{{ post.rating }} ({{ post.total_reviews || 0 }})</span>
+            </div>
+            <div class="learners">
+              <ion-icon name="people-outline"></ion-icon>
+              <span>{{ post.learners_count || 0 }} learners</span>
+            </div>
+          </div>
+
+          <!-- PRICE -->
+          <div class="rate-display">
+            <h3 class="rate-text">
+              ₱{{ post.hourly_rate }} <span class="rate-unit">/ hour</span>
+            </h3>
+            <span class="session-rate" *ngIf="post.session_rate">
+              ₱{{ post.session_rate }} / session
+            </span>
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="card-actions">
+            <ion-button expand="block" fill="solid" color="primary" class="learn-btn" (click)="goToTutorDetails(post)">
+              More Details
+            </ion-button>
+            <ion-button expand="block" fill="clear" color="danger" class="report-btn" (click)="openReportModal(post)">
+              <ion-icon name="flag-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      </ion-card>
+    </div>
+  </div>
+
+  <!-- FLOATING ACTION BUTTON -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="modern-fab">
     <ion-fab-button (click)="goToCreatePost()" color="primary">
       <ion-icon name="add-outline"></ion-icon>
@@ -118,6 +124,7 @@
   </ion-fab>
 </ion-content>
 
+<!-- REPORT MODAL -->
 <ion-modal #reportModal>
   <ng-template>
     <ion-header>

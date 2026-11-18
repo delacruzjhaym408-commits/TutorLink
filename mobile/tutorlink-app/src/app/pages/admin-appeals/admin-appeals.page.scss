@@ -1,0 +1,221 @@
+/* ============================================
+   GLOBAL
+   ============================================ */
+.page-content {
+  --background: #F8F9FA;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.modern-header {
+  box-shadow: 0 1px 0 #E5E7EB;
+}
+
+.header-toolbar {
+  --background: #FFFFFF;
+  --color: #1A1A1A;
+  --border-width: 0;
+}
+
+.back-btn {
+  --color: #5835F5;
+}
+
+.page-title {
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: #1A1A1A;
+}
+
+.segment-toolbar {
+  --background: #FFFFFF;
+  --border-width: 0 0 1px 0;
+  --border-color: #E5E7EB;
+  padding: 0 16px 12px 16px;
+}
+
+.modern-segment {
+  --background: #F1F5F9;
+  border-radius: 12px;
+  padding: 4px;
+
+  ion-segment-button {
+    --color: #8E8E93;
+    --color-checked: #FFFFFF;
+    --indicator-color: #5835F5;
+    --border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: none;
+    min-height: 36px;
+    letter-spacing: 0;
+  }
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+  margin-top: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px;
+  
+  .icon-circle {
+    width: 88px;
+    height: 88px;
+    background: #FFFFFF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(88, 53, 245, 0.08);
+    margin-bottom: 20px;
+    
+    ion-icon {
+      font-size: 44px;
+      color: #5835F5;
+    }
+  }
+
+  h3 {
+    color: #1A1A1A;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    color: #8E8E93;
+    font-size: 0.95rem;
+    margin: 0;
+    text-align: center;
+  }
+}
+
+/* ============================================
+   APPEALS LIST
+   ============================================ */
+.appeals-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ============================================
+   APPEAL CARD
+   ============================================ */
+.appeal-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid #F1F5F9;
+}
+
+.appeal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.appeal-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+
+  &.status-pending {
+    background: #FEF3C7;
+    color: #B45309;
+  }
+  &.status-approved {
+    background: #D1FAE5;
+    color: #065F46;
+  }
+  &.status-rejected {
+    background: #FEE2E2;
+    color: #991B1B;
+  }
+}
+
+.appeal-email {
+  color: #8E8E93;
+  font-size: 0.85rem;
+  margin: 0 0 12px 0;
+}
+
+.appeal-reason-box {
+  background: #F8F9FA;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-left: 3px solid #5835F5;
+}
+
+.appeal-reason {
+  color: #333333;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.appeal-date {
+  font-size: 0.75rem;
+  color: #8E8E93;
+  margin: 0 0 12px 0;
+}
+
+/* ============================================
+   ACTION BUTTONS
+   ============================================ */
+.appeal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.action-btn {
+  width: 40px;
+  height: 40px;
+  --border-radius: 50%;
+  --padding-start: 0;
+  --padding-end: 0;
+  margin: 0;
+
+  ion-icon {
+    font-size: 1.3rem;
+  }
+}
+
+.success-btn {
+  --background: #D1FAE5;
+  --color: #065F46;
+  &:active { --background: #A7F3D0; }
+}
+
+.danger-btn {
+  --background: #FEE2E2;
+  --color: #991B1B;
+  &:active { --background: #FECACA; }
+}
+
+.neutral-btn {
+  --background: #F1F5F9;
+  --color: #64748B;
+  &:active { --background: #E2E8F0; }
+}

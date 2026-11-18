@@ -153,6 +153,17 @@ def apply_1v1_session(
     end_time = data.get("end_time")
     session_date = data.get("session_date")
 
+    # 🔥 1. DUPLICATE GCASH REFERENCE CHECK
+    if reference:
+        existing_ref = db.query(Enrollment).filter(
+            Enrollment.payment_reference == reference.strip()
+        ).first()
+        if existing_ref:
+            raise HTTPException(
+                status_code=400, 
+                detail="This GCash reference number has already been used."
+            )
+
     post = db.query(TutorPost).filter(TutorPost.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -269,6 +280,17 @@ def get_my_enrollments(
 
 @router.post("/enrollments/apply-payment", response_model=EnrollmentOut)
 def apply_with_payment(data: EnrollmentApplyRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    
+    # 🔥 2. DUPLICATE GCASH REFERENCE CHECK
+    existing_ref = db.query(Enrollment).filter(
+        Enrollment.payment_reference == data.reference_number.strip()
+    ).first()
+    if existing_ref:
+        raise HTTPException(
+            status_code=400, 
+            detail="This GCash reference number has already been used."
+        )
+
     existing = db.query(Enrollment).filter(Enrollment.student_id == current_user.id, Enrollment.lesson_id == data.lesson_id).first()
     if existing:
         if existing.status == "rejected":

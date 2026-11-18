@@ -1,28 +1,31 @@
-<ion-header>
-  <ion-toolbar color="dark">
-    <ion-title>Admin Dashboard</ion-title>
+<ion-header class="modern-header">
+  <ion-toolbar class="header-toolbar">
+    <ion-title class="page-title">Admin Dashboard</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="logout()">
+      <ion-button (click)="logout()" class="logout-btn">
         <ion-icon name="log-out-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content class="page-content">
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
-  <ion-refresher-content></ion-refresher-content>
+    <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
-  <h2>Welcome, Admin</h2>
-  <p>Overview of the TutorLink System</p>
 
-  <ion-grid>
+  <div class="welcome-section">
+    <h2 class="welcome-title">Welcome, Admin</h2>
+    <p class="welcome-sub">Overview of the TutorLink System</p>
+  </div>
+
+  <ion-grid class="dashboard-grid">
     <ion-row>
       <!-- MANAGE USERS -->
       <ion-col size="12" size-md="4">
-        <ion-card (click)="goToUsers()" style="cursor: pointer; background: #e3f2fd;">
+        <ion-card (click)="goToUsers()" class="admin-card card-users">
           <ion-card-header>
-            <ion-icon name="people-outline" size="large" color="primary"></ion-icon>
+            <ion-icon name="people-outline" size="large"></ion-icon>
             <ion-card-title>Manage Users</ion-card-title>
           </ion-card-header>
           <ion-card-content>
@@ -34,13 +37,12 @@
 
       <!-- MANAGE POSTS -->
       <ion-col size="12" size-md="4">
-        <ion-card (click)="goToPosts()" style="cursor: pointer; background: #e8f5e9; position: relative;">
-          <!-- 🔥 BADGE PARA SA PENDING POSTS -->
-          <ion-badge color="danger" *ngIf="pendingPostsCount() > 0" style="position: absolute; top: 12px; right: 12px; font-size: 0.9rem; padding: 6px 10px;">
+        <ion-card (click)="goToPosts()" class="admin-card card-posts">
+          <ion-badge color="danger" *ngIf="pendingPostsCount() > 0" class="pending-badge">
             {{ pendingPostsCount() }} Pending
           </ion-badge>
           <ion-card-header>
-            <ion-icon name="document-text-outline" size="large" color="success"></ion-icon>
+            <ion-icon name="document-text-outline" size="large"></ion-icon>
             <ion-card-title>Manage Posts</ion-card-title>
           </ion-card-header>
           <ion-card-content>
@@ -52,13 +54,12 @@
 
       <!-- REPORTS -->
       <ion-col size="12" size-md="4">
-        <ion-card (click)="goToReports()" style="cursor: pointer; background: #ffebee; position: relative;">
-          <!-- 🔥 BADGE PARA SA PENDING REPORTS -->
-          <ion-badge color="danger" *ngIf="pendingReportsCount() > 0" style="position: absolute; top: 12px; right: 12px; font-size: 0.9rem; padding: 6px 10px;">
+        <ion-card (click)="goToReports()" class="admin-card card-reports">
+          <ion-badge color="danger" *ngIf="pendingReportsCount() > 0" class="pending-badge">
             {{ pendingReportsCount() }} New
           </ion-badge>
           <ion-card-header>
-            <ion-icon name="warning-outline" size="large" color="danger"></ion-icon>
+            <ion-icon name="warning-outline" size="large"></ion-icon>
             <ion-card-title>Reports</ion-card-title>
           </ion-card-header>
           <ion-card-content>
@@ -70,13 +71,12 @@
 
       <!-- APPEALS -->
       <ion-col size="12" size-md="4">
-        <ion-card (click)="goToAppeals()" style="cursor: pointer; background: #fff8e1; position: relative;">
-          <!-- 🔥 BADGE PARA SA PENDING APPEALS -->
-          <ion-badge color="danger" *ngIf="pendingAppealsCount() > 0" style="position: absolute; top: 12px; right: 12px; font-size: 0.9rem; padding: 6px 10px;">
+        <ion-card (click)="goToAppeals()" class="admin-card card-appeals">
+          <ion-badge color="danger" *ngIf="pendingAppealsCount() > 0" class="pending-badge">
             {{ pendingAppealsCount() }} Pending
           </ion-badge>
           <ion-card-header>
-            <ion-icon name="mail-outline" size="large" color="warning"></ion-icon>
+            <ion-icon name="mail-outline" size="large"></ion-icon>
             <ion-card-title>Appeals</ion-card-title>
           </ion-card-header>
           <ion-card-content>
@@ -88,8 +88,10 @@
   </ion-grid>
 
   <!-- AUTO DISABLE BUTTON -->
-  <ion-button expand="block" color="warning" style="margin-top: 20px;" (click)="runAutoDisable()">
-    <ion-icon name="warning-outline" slot="start"></ion-icon>
-    Run Automatic Disable Check
-  </ion-button>
+  <div class="action-section">
+    <ion-button expand="block" class="auto-disable-btn" (click)="runAutoDisable()">
+      <ion-icon name="warning-outline" slot="start"></ion-icon>
+      Run Automatic Disable Check
+    </ion-button>
+  </div>
 </ion-content>

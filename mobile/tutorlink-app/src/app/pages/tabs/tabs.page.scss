@@ -1,26 +1,29 @@
-/* MODERN TAB BAR */
+/* ============================================
+   MODERN TAB BAR
+   ============================================ */
 .modern-tab-bar {
-  --background: #ffffff;
+  --background: #FFFFFF;
   --border: none;
   height: 64px;
-  box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
-  border-top: 1px solid #f3f4f6;
+  box-shadow: 0 -1px 0 #E5E7EB;
+  border-top: 1px solid #E5E7EB;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* TAB BUTTONS */
+/* ============================================
+   TAB BUTTONS
+   ============================================ */
 .tab-btn {
-  --color: #9ca3af;
-  --color-selected: #ffffff; /* Gusto natin puti ang text pag active */
+  --color: #8E8E93;
+  --color-selected: #5835F5;
   --padding-top: 8px;
   --padding-bottom: 8px;
   --ripple-color: transparent;
-  transition: all 0.2s ease;
-  border-radius: 12px; /* Para bilugan ang background */
-  margin: 4px 8px; /* Para may space sa gilid */
+  transition: color 0.2s ease;
+  position: relative;
 
   ion-icon {
-    font-size: 24px;
+    font-size: 23px;
     margin-bottom: 2px;
     transition: transform 0.2s ease;
   }
@@ -31,14 +34,26 @@
     letter-spacing: 0.2px;
   }
 
-  /* 🔥 ACTIVE STATE: Kapag naka-select, magkakaroon ng asul na background */
+  /* ACTIVE STATE (Minimalist + Dot Indicator) */
   &.active-tab {
-    --color: #ffffff;
-    --color-selected: #ffffff;
-    --background: #2563eb; /* Primary Blue */
+    --color: #5835F5;
+    --color-selected: #5835F5;
 
     ion-icon {
       transform: translateY(-2px);
+    }
+
+    /* Small dot indicator below the icon */
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #5835F5;
     }
   }
 }

@@ -1,21 +1,60 @@
-<ion-menu id="main-menu" contentId="main-content" side="end">
-  <ion-header><ion-toolbar color="primary"><ion-title>Menu</ion-title></ion-toolbar></ion-header>
-  <ion-content>
-    <ion-list>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToHome()" button><ion-icon name="home-outline" slot="start"></ion-icon><ion-label>Home</ion-label></ion-item></ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToProfile()" button><ion-icon name="person-outline" slot="start"></ion-icon><ion-label>Profile</ion-label></ion-item></ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToMessagesPage()" button><ion-icon name="chatbubble-outline" slot="start"></ion-icon><ion-label>Messages</ion-label></ion-item></ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToMyLesson()" button><ion-icon name="book-outline" slot="start"></ion-icon><ion-label>My Lesson</ion-label></ion-item></ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="goToSettings()" button><ion-icon name="settings-outline" slot="start"></ion-icon><ion-label>Settings</ion-label></ion-item></ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false"><ion-item (click)="logout()" button color="danger"><ion-icon name="log-out-outline" slot="start"></ion-icon><ion-label>Log Out</ion-label></ion-item></ion-menu-toggle>
+<!-- SIDE MENU -->
+<ion-menu id="main-menu" contentId="main-content" side="end" class="modern-menu">
+  <ion-header class="menu-header">
+    <ion-toolbar class="menu-toolbar">
+      <ion-title class="menu-title">Menu</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content class="menu-content">
+    <ion-list lines="none" class="menu-list">
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToHome()" button class="menu-item">
+          <ion-icon name="home-outline" slot="start"></ion-icon>
+          <ion-label>Home</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToProfile()" button class="menu-item">
+          <ion-icon name="person-outline" slot="start"></ion-icon>
+          <ion-label>Profile</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToMessagesPage()" button class="menu-item">
+          <ion-icon name="chatbubble-outline" slot="start"></ion-icon>
+          <ion-label>Messages</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToMyLesson()" button class="menu-item">
+          <ion-icon name="book-outline" slot="start"></ion-icon>
+          <ion-label>My Lesson</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToSettings()" button class="menu-item">
+          <ion-icon name="settings-outline" slot="start"></ion-icon>
+          <ion-label>Settings</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <div class="menu-divider"></div>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="logout()" button class="menu-item logout-item">
+          <ion-icon name="log-out-outline" slot="start" color="danger"></ion-icon>
+          <ion-label color="danger">Log Out</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
     </ion-list>
   </ion-content>
 </ion-menu>
 
+<!-- HEADER -->
 <ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar color="primary" class="header-toolbar">
-    <ion-buttons slot="start"><ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button></ion-buttons>
-    <ion-title class="app-title">Tutor Details</ion-title>
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" class="back-btn"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="page-title">Tutor Details</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="menuController.toggle('main-menu')" class="menu-btn">
         <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
@@ -24,60 +63,62 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="bg-content ion-padding">
-  <div *ngIf="loading()" class="ion-text-center ion-padding">
+<ion-content class="page-content ion-padding">
+  
+  <!-- LOADING STATE -->
+  <div *ngIf="loading()" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading...</p>
   </div>
 
+  <!-- CONTENT -->
   <div *ngIf="!loading() && post()">
-    <!-- 1. TUTOR PROFILE CARD (SA TAAS) -->
-    <ion-card class="profile-card" style="text-align: center; border-radius: 16px;">
+    
+    <!-- TUTOR PROFILE CARD -->
+    <ion-card class="profile-card">
       <ion-card-content>
-        <ion-avatar style="width: 100px; height: 100px; margin: 0 auto 16px;">
-          <img [src]="getImageUrl(post()?.tutor_picture)" />
-        </ion-avatar>
-        <h2 style="font-weight: 800; font-size: 1.5rem; margin: 0;">{{ post()?.tutor_name || 'Tutor' }}</h2>
-        
-        <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px;">
-          <ion-icon name="star" color="warning"></ion-icon>
-          <span style="font-weight: bold; font-size: 1.1rem;">{{ post()?.rating }} / 5.0</span>
-          <span style="color: #666; font-size: 0.9rem;">({{ post()?.total_reviews }} reviews)</span>
-        </div>
+        <div class="profile-top">
+          <ion-avatar class="profile-avatar">
+            <img [src]="getImageUrl(post()?.tutor_picture)" />
+          </ion-avatar>
+          <h2 class="profile-name">{{ post()?.tutor_name || 'Tutor' }}</h2>
+          
+          <div class="rating-row">
+            <ion-icon name="star" class="star-icon"></ion-icon>
+            <span class="rating-value">{{ post()?.rating }} / 5.0</span>
+            <span class="review-count">({{ post()?.total_reviews }} reviews)</span>
+          </div>
 
-        <p style="color: #555; margin-top: 12px; font-size: 0.95rem;">
-          {{ post()?.tutor_description || 'No description provided.' }}
-        </p>
+          <p class="profile-description">
+            {{ post()?.tutor_description || 'No description provided.' }}
+          </p>
 
-        <div style="display: flex; gap: 8px; margin-top: 20px;">
-          <ion-button expand="block" fill="outline" color="primary" style="flex: 1;" (click)="goToMessages()">
-            <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Message
-          </ion-button>
-          <!-- 🔥 Dito walang applyNow, para normal profile view lang -->
-          <ion-button expand="block" fill="solid" color="primary" style="flex: 1;" (click)="goToTutorDetails(post()!.id)">
-            <ion-icon name="person-outline" slot="start"></ion-icon> Full Profile
-          </ion-button>
+          <div class="profile-actions">
+            <ion-button expand="block" fill="outline" class="message-btn" (click)="goToMessages()">
+              <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Message
+            </ion-button>
+            <ion-button expand="block" fill="solid" class="profile-btn" (click)="goToTutorDetails(post()!.id)">
+              <ion-icon name="person-outline" slot="start"></ion-icon> Full Profile
+            </ion-button>
+          </div>
         </div>
       </ion-card-content>
     </ion-card>
 
-    <!-- 2. SUBJECT LIST (SA BABA) -->
-    <h3 style="font-weight: 700; color: #333; margin-top: 24px; margin-bottom: 12px;">
-      Subjects Offered
-    </h3>
+    <!-- SUBJECT LIST -->
+    <h3 class="section-title">Subjects Offered</h3>
 
-    <ion-list lines="none">
-      <!-- 🔥 INAYOS: May 'true' parameter na para dumiretso sa Apply Modal -->
-      <ion-item *ngFor="let p of tutorPosts()" button (click)="goToTutorDetails(p.id, true)" style="--background: #fff; margin-bottom: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        <ion-avatar slot="start" style="background: #e0e7ff; display: flex; align-items: center; justify-content: center;">
-          <ion-icon name="document-text-outline" color="primary" style="font-size: 1.5rem;"></ion-icon>
-        </ion-avatar>
-        <ion-label>
-          <h2 style="font-weight: 700; color: #111827;">{{ p.subject }}</h2>
-          <p style="color: #6b7280;">₱{{ p.hourly_rate }} / hour</p>
-        </ion-label>
-        <ion-icon name="chevron-forward-outline" slot="end" color="medium"></ion-icon>
-      </ion-item>
-    </ion-list>
+    <div class="subject-list">
+      <div class="subject-card" *ngFor="let p of tutorPosts()" (click)="goToTutorDetails(p.id, true)">
+        <div class="subject-icon-wrapper">
+          <ion-icon name="document-text-outline"></ion-icon>
+        </div>
+        <div class="subject-info">
+          <h2 class="subject-name">{{ p.subject }}</h2>
+          <p class="subject-price">₱{{ p.hourly_rate }} / hour</p>
+        </div>
+        <ion-icon name="chevron-forward-outline" class="chevron-icon"></ion-icon>
+      </div>
+    </div>
   </div>
 </ion-content>

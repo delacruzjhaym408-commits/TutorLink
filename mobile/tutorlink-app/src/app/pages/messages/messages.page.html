@@ -1,7 +1,9 @@
 <ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar color="primary" class="header-toolbar">
-    <ion-buttons slot="start"><ion-back-button defaultHref="/home" class="menu-btn"></ion-back-button></ion-buttons>
-    <ion-title class="app-title">Messages</ion-title>
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" class="back-btn"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="page-title">Messages</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="menuController.toggle()" class="menu-btn">
         <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
@@ -10,36 +12,43 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content id="main-content" class="bg-content ion-padding">
+<ion-content id="main-content" class="page-content ion-padding">
   
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <div *ngIf="loading()" class="ion-text-center ion-padding loading-container">
+  <!-- LOADING -->
+  <div *ngIf="loading()" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading messages...</p>
   </div>
 
-  <div *ngIf="!loading() && conversations().length === 0" class="ion-text-center ion-padding empty-state">
-    <ion-icon name="chatbubbles-outline" class="empty-icon"></ion-icon>
+  <!-- EMPTY STATE -->
+  <div *ngIf="!loading() && conversations().length === 0" class="empty-state">
+    <div class="icon-circle">
+      <ion-icon name="chatbubbles-outline"></ion-icon>
+    </div>
     <h3>No conversations yet</h3>
     <p>Start messaging a tutor from the Home Page!</p>
   </div>
 
+  <!-- MESSAGES LIST -->
   <div class="messages-list" *ngIf="!loading() && conversations().length > 0">
     <div *ngFor="let conv of conversations()" class="message-card" (click)="openChat(conv)">
       
-      <!-- 🔥 GREEN DOT SA MESSAGES LIST -->
-      <ion-avatar class="msg-avatar" style="position: relative;">
-        <img [src]="getImageUrl(conv.other_user_picture)" />
-        <span *ngIf="conv.other_user_is_online" style="position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; background-color: #10b981; border-radius: 50%; border: 2px solid #fff;"></span>
-      </ion-avatar>
+      <!-- AVATAR + ONLINE DOT -->
+      <div class="msg-avatar-wrapper">
+        <ion-avatar class="msg-avatar">
+          <img [src]="getImageUrl(conv.other_user_picture)" />
+        </ion-avatar>
+        <span *ngIf="conv.other_user_is_online" class="online-dot"></span>
+      </div>
 
       <div class="msg-content">
-        <div class="msg-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="msg-header">
           <h2>{{ conv.other_user_name }}</h2>
-          <span style="font-size: 0.7rem; color: #9ca3af;">{{ conv.updated_at | date:'medium' }}</span>
+          <span class="date-text">{{ conv.updated_at | date:'medium' }}</span>
         </div>
         
         <p class="msg-preview" *ngIf="conv.lastMessage.startsWith('[IMAGE]'); else textMessage">
@@ -51,10 +60,10 @@
       </div>
 
       <div class="msg-end">
-        <ion-badge *ngIf="conv.unread_count > 0" color="danger" class="unread-badge">
+        <ion-badge *ngIf="conv.unread_count > 0" class="unread-badge">
           {{ conv.unread_count }}
         </ion-badge>
-        <ion-button fill="clear" color="danger" class="delete-btn" (click)="confirmDelete(conv, $event)">
+        <ion-button fill="clear" class="delete-btn" (click)="confirmDelete(conv, $event)">
           <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
         </ion-button>
       </div>
