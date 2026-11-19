@@ -235,7 +235,7 @@ class Review(Base):
     rating = Column(Integer, nullable=False)
     comment = Column(String(500), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-
+    is_read = Column(Boolean, nullable=False, default=False)
     tutor = relationship("User", foreign_keys=[tutor_id])
     reviewer = relationship("User", foreign_keys=[reviewer_id])
 
@@ -268,8 +268,8 @@ class TutorAvailability(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     tutor_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    day_of_week = Column(String(20), nullable=True) # 🔥 Ginawa nating nullable
-    specific_date = Column(String(20), nullable=True) # 🔥 BAGONG DAGDAG PARA SA PETSA
+    day_of_week = Column(String(20), nullable=True)
+    specific_date = Column(String(50), nullable=False)
     start_time = Column(String(10), nullable=False)
     end_time = Column(String(10), nullable=False)
     notes = Column(String(255), nullable=True)

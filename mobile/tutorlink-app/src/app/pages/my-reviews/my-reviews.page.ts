@@ -32,6 +32,9 @@ export class MyReviewsPage implements OnInit {
 
   ngOnInit() {
     this.loadReviews();
+    
+    // 🔥 I-MARK AS READ ANG REVIEWS KAPAG PINASOK ANG PAGE
+    this.tutorPostService.markReviewsAsRead().subscribe();
   }
 
   doRefresh(event: any) {

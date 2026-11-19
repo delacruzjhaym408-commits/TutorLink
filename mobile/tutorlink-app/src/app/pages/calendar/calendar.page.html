@@ -18,13 +18,14 @@
   <div *ngIf="!loading()" class="calendar-container">
     
     <!-- CALENDAR VIEW -->
-    <div class="calendar-wrapper">
+    <div class="calendar-wrapper" style="background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
       <ion-datetime 
         presentation="date" 
         [value]="selectedDate()" 
         (ionChange)="onDateChange($event)"
         [highlightedDates]="highlightedDates()"
         color="primary"
+        style="width: 100%; --ion-color-primary: #3880ff; font-size: 1.1rem;"
         class="modern-datetime">
       </ion-datetime>
     </div>
@@ -47,51 +48,64 @@
         <div style="background-color: #ef4444; width: 12px; height: 12px; border-radius: 50%;"></div>
         <span style="font-size: 0.8rem;">Full (Max 3)</span>
       </div>
+      <div class="legend-item" style="display: flex; align-items: center; gap: 5px;">
+        <div style="background-color: #e5e7eb; width: 12px; height: 12px; border-radius: 50%;"></div>
+        <span style="font-size: 0.8rem;">No Schedule</span>
+      </div>
     </div>
 
     <!-- SELECTED DAY SCHEDULE -->
-    <div class="schedule-section">
-      <h3 class="section-title">
-        Schedule for <span class="highlight-date">{{ selectedDateFormatted() }}</span>
+    <div class="schedule-section" style="background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+      <h3 class="section-title" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 12px;">
+        Schedule for <span style="color: #3880ff;">{{ selectedDateFormatted() }}</span>
       </h3>
 
-      <!-- 🔥 BOOKED SESSIONS LIST -->
+      <!-- 🔥 NOTIFICATION INDICATOR KUNG MAY BOOKING SA ARAW NA ITO -->
+      <div *ngIf="getBookedForSelectedDay().length > 0" style="background: #fef3c7; color: #92400e; padding: 10px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 600;">
+        <span style="font-size: 1.2rem;">🔔</span> You have {{ getBookedForSelectedDay().length }} tutoring session(s) on this date.
+      </div>
+
+      <!-- BOOKED SESSIONS LIST -->
+      <div *ngIf="getBookedForSelectedDay().length > 0" style="margin-bottom: 16px;">
+        <h4 style="color: #ef4444; margin-bottom: 8px; font-size: 0.9rem; font-weight: bold;">Booked Sessions:</h4>
+        <div *ngFor="let b of getBookedForSelectedDay()" class="time-card" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 8px; margin-bottom: 8px;">
+          <div class="time-info" style="display: flex; flex-direction: column; align-items: flex-start;">
+            <h2 class="time-text" style="margin: 0; font-size: 1rem; color: #b91c1c; font-weight: bold;">{{ b.time }}</h2>
+            <p style="margin: 0; font-size: 0.8rem; color: #666;">Student: {{ b.student_name }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AVAILABLE SLOTS LIST -->
+      <div *ngIf="getAvailabilitiesForSelectedDay().length > 0">
+        <h4 style="color: #10b981; margin-bottom: 8px; font-size: 0.9rem; font-weight: bold;">Available Slots:</h4>
         <div *ngFor="let a of getAvailabilitiesForSelectedDay()" class="time-card" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 8px; margin-bottom: 8px;">
           <div class="time-info" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <ion-icon name="time-outline" class="time-icon" style="color: #10b981;"></ion-icon>
               <h2 class="time-text" style="margin: 0; font-size: 1rem; color: #047857;">{{ a.start_time }} - {{ a.end_time }}</h2>
             </div>
-            <!-- 🔥 IPAKITA ANG NOTES -->
             <p *ngIf="a.notes" style="margin: 0; font-size: 0.8rem; color: #666; font-style: italic;">
               📝 {{ a.notes }}
             </p>
           </div>
-          <!-- Delete Button -->
+          
+          <!-- TUTOR-ONLY: Edit at Delete Buttons -->
+          <div *ngIf="role() === 'tutor'" style="display: flex; gap: 4px;">
+            <ion-button fill="clear" color="primary" (click)="editSchedule(a)">
+              <ion-icon name="create-outline"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" color="danger" (click)="deleteAvailability(a.id)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </ion-button>
+          </div>
         </div>
-      
-      <!-- AVAILABLE SLOTS LIST -->
-      <h4 *ngIf="getAvailabilitiesForSelectedDay().length > 0" style="color: #10b981; margin-bottom: 10px; font-size: 0.9rem; font-weight: bold;">Available Slots:</h4>
+      </div>
       
       <!-- EMPTY SCHEDULE -->
-      <div *ngIf="getAvailabilitiesForSelectedDay().length === 0 && getBookedForSelectedDay().length === 0" class="no-schedule">
-        <ion-icon name="calendar-outline"></ion-icon>
+      <div *ngIf="getAvailabilitiesForSelectedDay().length === 0 && getBookedForSelectedDay().length === 0" class="no-schedule" style="text-align: center; padding: 20px; color: #9ca3af;">
+        <ion-icon name="calendar-outline" style="font-size: 40px; margin-bottom: 8px; opacity: 0.5;"></ion-icon>
         <p>No available time or booking for this date.</p>
-      </div>
-
-      <!-- SCHEDULE LIST -->
-      <div class="time-list" *ngIf="getAvailabilitiesForSelectedDay().length > 0">
-        <div *ngFor="let a of getAvailabilitiesForSelectedDay()" class="time-card" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 8px; margin-bottom: 8px;">
-          <div class="time-info" style="display: flex; align-items: center; gap: 8px;">
-            <ion-icon name="time-outline" class="time-icon" style="color: #10b981;"></ion-icon>
-            <h2 class="time-text" style="margin: 0; font-size: 1rem; color: #047857;">{{ a.start_time }} - {{ a.end_time }}</h2>
-          </div>
-          
-          <!-- TUTOR-ONLY: Delete Button -->
-          <ion-button *ngIf="role() === 'tutor'" fill="clear" color="danger" class="delete-btn" (click)="deleteAvailability(a.id)">
-            <ion-icon name="trash-outline"></ion-icon>
-          </ion-button>
-        </div>
       </div>
 
       <!-- TUTOR-ONLY: Add Time Button -->
@@ -113,7 +127,7 @@
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
-      <ion-content class="modal-content">
+      <ion-content class="modal-content ion-padding">
         <p class="modal-subtext">Date: <strong>{{ selectedDateFormatted() }}</strong></p>
         
         <div class="input-group">
@@ -126,11 +140,7 @@
           <ion-input type="time" [(ngModel)]="endTime" class="custom-input"></ion-input>
         </div>
 
-        <div class="input-group">
-          <label>Notes (Optional)</label>
-          <ion-input type="text" [(ngModel)]="notes" placeholder="e.g., Bring calculator" class="custom-input"></ion-input>
-        </div>
-        
+        <!-- 🔥 TINANGGAL ANG DUPLICATE NA NOTES DITO -->
         <div class="input-group">
           <label>Notes (Optional)</label>
           <ion-input type="text" [(ngModel)]="notes" placeholder="e.g., Bring calculator" class="custom-input"></ion-input>

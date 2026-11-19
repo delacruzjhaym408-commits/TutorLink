@@ -3,7 +3,6 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../config';
 
-// 🔥 INTERFACE PARA SA TUTOR POST
 export interface TutorPost {
   id: number;
   user_id: number;
@@ -33,7 +32,6 @@ export interface TutorPost {
   last_seen_at?: string | null;
 }
 
-// 🔥 INTERFACE PARA SA CREATE POST
 export interface TutorPostCreate {
   subject: string;
   hourly_rate: number;
@@ -49,7 +47,6 @@ export interface TutorPostCreate {
   location?: string | null;
 }
 
-// 🔥 INTERFACE PARA SA UPDATE POST
 export interface TutorPostUpdate {
   subject?: string;
   hourly_rate?: number;
@@ -110,7 +107,6 @@ export class TutorPostService {
     });
   }
 
-  //  `/uploads`
   uploadPostImage(file: File): Observable<{ url: string }> {
     const formData = new FormData();
     formData.append('file', file);
@@ -142,6 +138,19 @@ export class TutorPostService {
 
   getMyReviews(): Observable<any[]> {
     return this.http.get<any[]>(`${API_BASE_URL}/reviews/my-reviews`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  // 🔥 BAGONG METHODS PARA SA NOTIFICATIONS
+  getUnreadReviewsCount(): Observable<{ unread_reviews: number }> {
+    return this.http.get<{ unread_reviews: number }>(`${API_BASE_URL}/reviews/unread-count`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  markReviewsAsRead(): Observable<any> {
+    return this.http.put(`${API_BASE_URL}/reviews/mark-as-read`, {}, {
       headers: this.getAuthHeaders()
     });
   }

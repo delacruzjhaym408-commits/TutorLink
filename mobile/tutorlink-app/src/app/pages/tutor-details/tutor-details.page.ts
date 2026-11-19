@@ -15,7 +15,7 @@ import {
   personOutline, homeOutline, chatbubbleOutline, bookOutline,
   settingsOutline, logOutOutline, menuOutline, flagOutline,
   cameraOutline, cashOutline, checkmarkCircle, copyOutline,
-  send, sendOutline, chatbubblesOutline
+  send, sendOutline, chatbubblesOutline, closeCircleOutline
 } from 'ionicons/icons';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -58,6 +58,7 @@ export class TutorDetailsPage implements OnInit {
   private calendarService = inject(CalendarService);
   
   currentUserId: number | null = null;
+  todayDate: string = new Date().toISOString(); // 🔥 MIN DATE PARA SA CALENDAR
 
   tutorAvailabilities = signal<TutorAvailability[]>([]);
   highlightedDates = signal<any[]>([]);
@@ -67,7 +68,7 @@ export class TutorDetailsPage implements OnInit {
   selectedStartTime = '';
   selectedEndTime = '';
   bookingSubject = '';
-  bookingAmount = signal<number>(0); // 🔥 ITO NA ANG TOTAL AMOUNT
+  bookingAmount = signal<number>(0); 
   bookingRef = '';
   bookingReceipt = signal<string | null>(null); 
 
@@ -112,7 +113,7 @@ export class TutorDetailsPage implements OnInit {
       personOutline, homeOutline, chatbubbleOutline, bookOutline,
       settingsOutline, logOutOutline, menuOutline, flagOutline,
       cameraOutline, cashOutline, checkmarkCircle, copyOutline,
-      send, sendOutline, chatbubblesOutline
+      send, sendOutline, chatbubblesOutline, closeCircleOutline
     });
   }
 
@@ -245,6 +246,7 @@ export class TutorDetailsPage implements OnInit {
     this.paymentModal.present();
   }
 
+  // 🔥 BAGONG LOGIC PARA SA CALENDAR MARKINGS
   generateStudentCalendarMarkings(avails: TutorAvailability[], booked: any[]) {
     const dates: any[] = [];
     
@@ -288,6 +290,7 @@ export class TutorDetailsPage implements OnInit {
 
             const hasColor = dates.some(d => d.date === dateStr);
             if (!hasColor) {
+                // 🔥 GRAY BACKGROUND PARA SA WALANG SCHEDULE
                 dates.push({
                     date: dateStr,
                     backgroundColor: '#e5e7eb', 
@@ -300,7 +303,6 @@ export class TutorDetailsPage implements OnInit {
     this.highlightedDates.set(dates);
   }
 
-  // 🔥 INAYOS: Kinukuha ang Total Amount, hindi ang 50%
   computeBookingAmount() {
     const currentPost = this.post();
     if (!currentPost || !this.selectedStartTime || !this.selectedEndTime) {
@@ -317,7 +319,7 @@ export class TutorDetailsPage implements OnInit {
     } else {
       if (diffHours < 1) diffHours = 1;
       const total = currentPost.hourly_rate * diffHours;
-      this.bookingAmount.set(total); // 🔥 TOTAL ITO
+      this.bookingAmount.set(total); 
     }
   }
 
@@ -348,6 +350,34 @@ export class TutorDetailsPage implements OnInit {
     if (!this.selectedDate() || !this.selectedStartTime || !this.selectedEndTime) {
       this.showToast('Please select date, start time, and end time.'); return;
     }
+
+    // Check past date
+    const selectedDateOnly = new Date(this.selectedDate()).setHours(0,0,0,0);
+    const today = new Date().setHours(0,0,0,0);
+    if (selectedDateOnly < today) {
+      this.showToast('🚫 Cannot book a past date.'); return;
+    }
+
+    // Check time duration
+    const start = new Date(`1970-01-01T${this.selectedStartTime}:00`);
+    const end = new Date(`1970-01-01T${this.selectedEndTime}:00`);
+    let diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    
+    if (diffHours < 1) {
+      this.showToast('🚫 Session must be at least 1 hour.'); return;
+    }
+
+    // Check availability
+    const dateStr = this.selectedDate().split('T')[0];
+    const availableDay = this.tutorAvailabilities().find(a => a.specific_date === dateStr);
+    if (!availableDay) {
+      this.showToast('🚫 Tutor is not available for this day.'); return;
+    }
+
+    if (this.selectedStartTime < availableDay.start_time || this.selectedEndTime > availableDay.end_time) {
+      this.showToast(`🚫 Tutor is only available from ${availableDay.start_time} to ${availableDay.end_time}.`); return;
+    }
+
     if (!this.bookingAmount() || this.bookingAmount() <= 0) {
       this.showToast('Please select a valid time to compute the amount.'); return;
     }
@@ -355,9 +385,7 @@ export class TutorDetailsPage implements OnInit {
       this.showToast('Please enter reference number and upload receipt.'); return;
     }
 
-    const dateStr = this.selectedDate().split('T')[0];
     const bookedInfo = this.currentBookedDates().find(b => b.date === dateStr);
-
     if (bookedInfo) {
       const hasConflict = bookedInfo.times.some((bookedTime: string) => {
         if (!bookedTime || !bookedTime.includes(' - ')) return false;
@@ -366,17 +394,16 @@ export class TutorDetailsPage implements OnInit {
       });
 
       if (hasConflict) {
-        this.showToast('Sorry, your chosen time conflicts with an existing booking.');
+        this.showToast('🚫 Sorry, your chosen time conflicts with an existing booking.');
         return;
       }
     }
 
-    // 🔥 IPAPASA NA ANG TOTAL AMOUNT
     this.lessonService.apply1v1Session({
       post_id: currentPost.id,
       reference: this.bookingRef.trim(),
       receipt: this.bookingReceipt(),
-      amount: this.bookingAmount(), 
+      amount: this.bookingAmount() * 0.5, 
       session_date: this.selectedDate().split('T')[0],
       start_time: this.selectedStartTime,
       end_time: this.selectedEndTime
@@ -398,14 +425,15 @@ export class TutorDetailsPage implements OnInit {
       const hasAvail = this.tutorAvailabilities().some(a => a.specific_date === dateStr);
       const bookedInfo = this.currentBookedDates().find(b => b.date === dateStr);
 
+      // 🔥 ITONG MENSAHE ANG LALABAS KAPAG GRAY/NO SCHEDULE
       if (!hasAvail && !bookedInfo) {
-        this.showToast('No available schedule for this date.');
+        this.showToast('🚫 Tutor is not available for this day.');
         this.selectedDate.set(new Date().toISOString());
         return;
       }
 
       if (bookedInfo && bookedInfo.count >= 3) {
-        this.showToast('Sorry, this date is already full (Max 3 students).');
+        this.showToast('🚫 Sorry, this date is already full (Max 3 students).');
         this.selectedDate.set(new Date().toISOString());
         return;
       }

@@ -309,6 +309,7 @@ class ReviewOut(BaseModel):
     comment: Optional[str] = None
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+    is_read: Optional[bool] = False
 
 class AdminMessageCreate(BaseModel):
     user_id: int
@@ -338,7 +339,7 @@ class AppealOut(BaseModel):
 # --- Tutor Availability Schemas ---
 class TutorAvailabilityBase(BaseModel):
     day_of_week: Optional[str] = Field(default=None, example="Saturday")
-    specific_date: Optional[str] = Field(default=None, example="2026-11-17") # 🔥 BAGONG DAGDAG
+    specific_date: str = Field(..., example="2026-11-25")
     start_time: str = Field(..., example="14:00")
     end_time: str = Field(..., example="16:00")
     notes: Optional[str] = Field(default=None, max_length=255)

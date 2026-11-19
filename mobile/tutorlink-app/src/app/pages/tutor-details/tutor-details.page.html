@@ -17,7 +17,7 @@
         <ion-icon name="chatbubble-outline" slot="start"></ion-icon><ion-label>Messages</ion-label>
       </ion-item>
       <ion-item routerLink="/my-lesson" button (click)="menuController.close()" class="menu-item">
-        <ion-icon name="book-outline" slot="start"></ion-icon><ion-label>My Lesson</ion-label>
+        <ion-icon name="book-outline" slot="start"></ion-icon><ion-label>Tutor Dashboard</ion-label>
       </ion-item>
       <div class="menu-divider"></div>
       <ion-item (click)="logout()" button class="menu-item logout-item">
@@ -179,7 +179,7 @@
   </ng-template>
 </ion-modal>
 
-<!-- 🔥 PAYMENT MODAL -->
+<!-- 🔥 PAYMENT MODAL (1v1 Booking) -->
 <ion-modal #paymentModal class="modern-modal">
   <ng-template>
     <ion-header class="modern-header">
@@ -212,7 +212,7 @@
         </div>
         <div class="legend-item" style="display: flex; align-items: center; gap: 5px;">
           <div style="background-color: #e5e7eb; width: 12px; height: 12px; border-radius: 50%;"></div>
-          <span style="font-size: 0.8rem;">No Schedule</span>
+          <span style="font-size: 0.8rem;">🚫 No Schedule</span>
         </div>
       </div>
       
@@ -222,6 +222,7 @@
         [(ngModel)]="selectedDate" 
         (ionChange)="onBookingDateChange($event)" 
         [firstDayOfWeek]="1" 
+        [min]="todayDate"
         [highlightedDates]="highlightedDates()"
         class="booking-datetime">
       </ion-datetime>
@@ -248,7 +249,7 @@
       </div>
 
       <div *ngIf="post()?.delivery_mode === 'online' || post()?.delivery_mode === 'both'" class="input-group">
-        <label>Meeting Link</label>
+        <label>Online Tutoring Link (GMeet, Zoom, etc.)</label>
         <ion-input fill="outline" [value]="post()?.meeting_link || 'Not provided'" readonly="true" class="custom-input readonly-input"></ion-input>
       </div>
 
@@ -272,7 +273,7 @@
         <img [src]="getQrImageSrc(post()?.gcash_qr_code)" style="max-width: 200px; border-radius: 8px; border: 1px solid #ccc;" />
       </div>
 
-      <!-- 🔥 BAGONG PAYMENT BREAKDOWN -->
+      <!-- 🔥 PAYMENT BREAKDOWN -->
       <div class="input-group" style="margin-top: 16px;">
         <label>Total Amount (Rate × Hours)</label>
         <ion-input fill="outline" type="number" [value]="bookingAmount()" readonly="true" class="custom-input" style="font-weight: bold; color: #2563eb;"></ion-input>

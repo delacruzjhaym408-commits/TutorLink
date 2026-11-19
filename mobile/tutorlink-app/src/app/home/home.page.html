@@ -27,15 +27,15 @@
 
 
   <!-- 🔥 TRENDING SUBJECTS CHIPS -->
-<div *ngIf="trendingSubjects.length > 0" class="trending-section">
-  <p class="trending-label">Trending Subjects:</p>
-  <div class="trending-chips">
-    <ion-chip *ngFor="let item of trendingSubjects" (click)="filterBySubject(item.subject)" color="primary" outline="true">
-      <ion-icon name="trending-up-outline" slot="start"></ion-icon>
-      <ion-label>{{ item.subject }}</ion-label>
-    </ion-chip>
+  <div *ngIf="trendingSubjects.length > 0" class="trending-section">
+    <p class="trending-label"></p>
+    <div class="trending-chips">
+      <ion-chip *ngFor="let item of trendingSubjects" (click)="filterBySubject(item.subject)" color="primary" outline="true">
+        <ion-icon name="trending-up-outline" slot="start"></ion-icon>
+        <ion-label>{{ item.subject }}</ion-label>
+      </ion-chip>
+    </div>
   </div>
-</div>
 
   <div class="content-area">
     

@@ -9,12 +9,16 @@ import {
 import { addIcons } from 'ionicons';
 import {
   homeOutline, chatbubbleOutline, personOutline, settingsOutline,
-  bookOutline, logOutOutline, personCircleOutline, calendarOutline
+  bookOutline, logOutOutline, personCircleOutline, calendarOutline,
+  shieldCheckmarkOutline
 } from 'ionicons/icons';
 import { Subscription } from 'rxjs';
 import { SessionService } from './services/session.service';
 import { MessageService } from './services/message.service';
 import { LessonService } from './services/lesson.service';
+import { TutorPostService } from './services/tutor-post.service';
+import { AdminService } from './services/admin.service';
+import { CalendarService } from './services/calendar.service';
 import { WebSocketService } from './services/websocket.service';
 import { AppStateService } from './services/app-state.service';
 
@@ -36,6 +40,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private session = inject(SessionService);
   private messageService = inject(MessageService);
   private lessonService = inject(LessonService);
+  private tutorPostService = inject(TutorPostService);
+  private adminService = inject(AdminService);
+  private calendarService = inject(CalendarService);
   private wsService = inject(WebSocketService);
   private appState = inject(AppStateService);
   private toastCtrl = inject(ToastController);
@@ -43,9 +50,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
   userName = signal('');
   showLayout = signal(true);
+  hasApprovedPost = signal(false);
   
   totalUnreadMessages = signal(0);
   totalUnreadLessons = signal(0);
+  unreadReviews = signal(0);
+  hasScheduleToday = signal(false);
+  hasSystemMessage = signal(false);
 
   private wsSubscription!: Subscription;
   private appStateSubscription!: Subscription;
@@ -53,14 +64,14 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor() {
     addIcons({
       homeOutline, chatbubbleOutline, personOutline, settingsOutline,
-      bookOutline, logOutOutline, personCircleOutline, calendarOutline
+      bookOutline, logOutOutline, personCircleOutline, calendarOutline,
+      shieldCheckmarkOutline
     });
 
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         const url = event.urlAfterRedirects;
         
-        // 🔥 HIDE TABS WHEN INSIDE A CHAT
         const isChatPage = url.includes('/chat/') || url.includes('/lesson-chat/');
         const isAuthPage = url.includes('/login') || url.includes('/register');
         const isAdminPage = url.startsWith('/admin');
@@ -69,9 +80,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
         if (this.isAuthenticated()) {
           if (url.includes('/lesson-chat/')) {
-            setTimeout(() => this.fetchUnreadCounts(), 500);
+            setTimeout(() => this.fetchAllBadges(), 500);
           } else {
-            this.fetchUnreadCounts();
+            this.fetchAllBadges();
           }
         }
       }
@@ -80,19 +91,20 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     if (this.isAuthenticated()) {
+      this.checkApprovedPosts();
       this.wsService.connect();
 
       this.wsSubscription = this.wsService.messages$.subscribe((data) => {
         this.zone.run(() => {
           if (data.type === 'new_message') {
-            this.fetchUnreadCounts();
+            this.fetchAllBadges();
             const currentUrl = this.router.url;
             if (!currentUrl.includes(`/chat/${data.conversation_id}`)) {
               this.showNewMessageToast(data.message.sender_name);
             }
           } 
           else if (data.type === 'new_lesson_message') {
-            this.fetchUnreadCounts();
+            this.fetchAllBadges();
             const currentUrl = this.router.url;
             if (!currentUrl.includes(`/lesson-chat/${data.lesson_id}`)) {
               this.showNewLessonToast(data.message.sender_name);
@@ -102,10 +114,24 @@ export class AppComponent implements OnInit, OnDestroy {
       });
 
       this.appStateSubscription = this.appState.refreshBadges$.subscribe(() => {
-        if (this.isAuthenticated()) this.fetchUnreadCounts();
+        if (this.isAuthenticated()) this.fetchAllBadges();
       });
 
-      this.fetchUnreadCounts();
+      this.fetchAllBadges();
+    }
+  }
+
+  private checkApprovedPosts() {
+    const userJson = localStorage.getItem('user');
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      if (user.role === 'tutor') {
+        this.tutorPostService.getMyPosts().subscribe({
+          next: (posts) => {
+            this.hasApprovedPost.set(posts.some(p => p.status === 'published'));
+          }
+        });
+      }
     }
   }
 
@@ -115,31 +141,56 @@ export class AppComponent implements OnInit, OnDestroy {
     return !!token && !!user;
   }
 
-  fetchUnreadCounts() {
+  fetchAllBadges() {
     if (!this.isAuthenticated()) return;
+    const userJson = localStorage.getItem('user');
+    if (!userJson) return;
+    const user = JSON.parse(userJson);
 
+    // 1. Messages
     this.messageService.getMyConversations().subscribe({
       next: (convs) => {
         this.zone.run(() => {
           const total = convs.reduce((sum, c) => sum + (c.unread_count || 0), 0);
           this.totalUnreadMessages.set(total);
         });
-      },
-      error: (err) => {
-        if (err?.status === 401) this.handleUnauthorized();
-      },
+      }
     });
 
+    // 2. Lessons (1v1)
     this.lessonService.getMyEnrollments().subscribe({
       next: (enrollments) => {
         this.zone.run(() => {
           const total = enrollments.reduce((sum, e) => sum + (e.unread_count || 0), 0);
           this.totalUnreadLessons.set(total);
         });
+      }
+    });
+
+    // 3. Reviews (Yellow Dot) & Schedule Today (Red Dot)
+    if (user.role === 'tutor') {
+      // Yellow Dot
+      this.tutorPostService.getUnreadReviewsCount().subscribe({
+        next: (res) => this.unreadReviews.set(res.unread_reviews),
+        error: () => {}
+      });
+
+      // Red Dot (Schedule Today)
+      this.calendarService.getTutorBookedDates(user.id).subscribe({
+        next: (booked) => {
+          const todayStr = new Date().toISOString().split('T')[0];
+          this.hasScheduleToday.set(booked.some((b: any) => b.date === todayStr));
+        },
+        error: () => {}
+      });
+    }
+
+    // 4. System Messages (Admin Chat) - 🔥 INAYOS ANG TYPES
+    this.adminService.getMyAdminMessages().subscribe({
+      next: (msgs: any[]) => {
+        this.hasSystemMessage.set(msgs.some((m: any) => !m.is_read));
       },
-      error: (err) => {
-        if (err?.status === 401) this.handleUnauthorized();
-      },
+      error: () => {}
     });
   }
 

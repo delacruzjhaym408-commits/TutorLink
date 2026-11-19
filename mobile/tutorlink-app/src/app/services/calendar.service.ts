@@ -6,8 +6,7 @@ import { API_BASE_URL } from '../config'; // Change this if your config path is 
 export interface TutorAvailability {
   id?: number;
   tutor_id?: number;
-  day_of_week: string | null;
-  specific_date?: string | null; 
+  specific_date: string;
   start_time: string;
   end_time: string;
   is_active?: boolean;

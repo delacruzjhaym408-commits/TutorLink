@@ -240,3 +240,20 @@ def get_tutor_gallery(user_id: int, db: Session = Depends(get_db)):
                 pass
                 
     return {"images": all_images}
+
+@router.get("/trending-subjects")
+def get_trending_subjects(db: Session = Depends(get_db)):
+    # Kunin ang top 5 pinaka-maraming posts na subject
+    from sqlalchemy import func
+    trending = db.query(
+        TutorPost.subject, 
+        func.count(TutorPost.id).label('count')
+    ).filter(
+        TutorPost.status == "published"
+    ).group_by(
+        TutorPost.subject
+    ).order_by(
+        func.count(TutorPost.id).desc()
+    ).limit(5).all()
+
+    return [{"subject": t.subject, "count": t.count} for t in trending]

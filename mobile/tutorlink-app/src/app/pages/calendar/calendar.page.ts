@@ -7,7 +7,7 @@ import {
   IonLabel, IonButton, IonIcon, IonSpinner, IonModal, IonInput, 
   AlertController, ToastController, IonButtons, IonBackButton, IonDatetime 
 } from '@ionic/angular';
-import { addOutline, trashOutline, timeOutline } from 'ionicons/icons';
+import { addOutline, trashOutline, timeOutline, createOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { API_BASE_URL } from '../../config';
 import { SessionService } from '../../services/session.service';
@@ -44,10 +44,11 @@ export class CalendarPage implements OnInit {
   selectedDateFormatted = signal<string>(''); 
   startTime = '09:00';
   endTime = '17:00';
-  notes = ''; // 🔥 IDINAGDAG NA VARIABLE PARA SA NOTES
+  notes = '';
+  editingId = signal<number | null>(null); // 🔥 PARA SA EDIT
 
   constructor() {
-    addIcons({ addOutline, trashOutline, timeOutline });
+    addIcons({ addOutline, trashOutline, timeOutline, createOutline });
   }
 
   ngOnInit() {
@@ -184,40 +185,9 @@ export class CalendarPage implements OnInit {
           });
         }
       } 
-      else if (a.day_of_week) {
-        const dayMap: any = { 
-          'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 
-          'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 
-        };
-        const targetDay = dayMap[a.day_of_week];
-        
-        for (let m = 0; m < 3; m++) {
-          const cursor = new Date(today.getFullYear(), today.getMonth() + m, 1);
-          const maxDay = new Date(today.getFullYear(), today.getMonth() + m + 1, 0).getDate();
-          
-          for (let day = 1; day <= maxDay; day++) {
-            cursor.setDate(day);
-            if (cursor.getDay() === targetDay) {
-              const y = cursor.getFullYear();
-              const mo = String(cursor.getMonth() + 1).padStart(2, '0');
-              const da = String(cursor.getDate()).padStart(2, '0');
-              const dateStr = `${y}-${mo}-${da}`;
-              
-              const isBooked = booked.some(b => b.date === dateStr);
-              if (!isBooked) {
-                dates.push({ 
-                  date: dateStr, 
-                  backgroundColor: '#10b981', 
-                  textColor: '#ffffff' 
-                });
-              }
-            }
-          }
-        }
-      }
     }
 
-    // 3. GREY BACKGROUND
+    // 3. GREY BACKGROUND (No Schedule)
     for (let m = 0; m < 3; m++) {
         const year = today.getFullYear();
         const month = today.getMonth() + m;
@@ -243,6 +213,15 @@ export class CalendarPage implements OnInit {
     this.highlightedDates.set(dates);
   }
 
+  // 🔥 BAGONG METHOD PARA SA EDIT
+  editSchedule(item: any) {
+    this.editingId.set(item.id);
+    this.startTime = item.start_time;
+    this.endTime = item.end_time;
+    this.notes = item.notes || '';
+    this.addModal.present();
+  }
+
   async addAvailability() {
     if (this.role() !== 'tutor') return;
     
@@ -256,23 +235,46 @@ export class CalendarPage implements OnInit {
       return;
     }
 
-    this.http.post(`${API_BASE_URL}/calendar/availability`, {
-      specific_date: this.selectedDateFormatted(),
-      start_time: this.startTime, 
-      end_time: this.endTime,
-      notes: this.notes // 🔥 IPAPASA NA ANG NOTES
-    }, { headers: this.getHeaders() }).subscribe({
-      next: () => { 
-        this.addModal.dismiss();
-        this.notes = ''; // 🔥 I-RESET ANG NOTES
-        this.loadAvailability(); 
-        this.showToast(`Schedule added!`);
-      },
-      error: (err) => { 
-        console.error(err);
-        this.showToast('Error adding schedule.');
-      }
-    });
+    // Kung may editingId, i-update natin
+    if (this.editingId()) {
+      this.http.put(`${API_BASE_URL}/calendar/availability/${this.editingId()}`, {
+        specific_date: this.selectedDateFormatted(),
+        start_time: this.startTime, 
+        end_time: this.endTime,
+        notes: this.notes 
+      }, { headers: this.getHeaders() }).subscribe({
+        next: () => { 
+          this.addModal.dismiss();
+          this.editingId.set(null);
+          this.notes = '';
+          this.loadAvailability(); 
+          this.showToast(`Schedule updated!`);
+        },
+        error: (err) => { 
+          console.error(err);
+          this.showToast('Error updating schedule.');
+        }
+      });
+    } else {
+      // Bagong schedule
+      this.http.post(`${API_BASE_URL}/calendar/availability`, {
+        specific_date: this.selectedDateFormatted(),
+        start_time: this.startTime, 
+        end_time: this.endTime,
+        notes: this.notes
+      }, { headers: this.getHeaders() }).subscribe({
+        next: () => { 
+          this.addModal.dismiss();
+          this.notes = ''; 
+          this.loadAvailability(); 
+          this.showToast(`Schedule added!`);
+        },
+        error: (err) => { 
+          console.error(err);
+          this.showToast('Error adding schedule.');
+        }
+      });
+    }
   }
 
   async deleteAvailability(id: number) {

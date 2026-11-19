@@ -174,3 +174,26 @@ def get_my_reviews(current_user: User = Depends(get_current_user), db: Session =
             "created_at": r.created_at
         })
     return result
+
+@router.get("/unread-count")
+def get_unread_reviews_count(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    count = db.query(Review).filter(
+        Review.tutor_id == current_user.id,
+        Review.is_read == False
+    ).count()
+    return {"unread_reviews": count}
+
+@router.put("/mark-as-read")
+def mark_reviews_as_read(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    db.query(Review).filter(
+        Review.tutor_id == current_user.id,
+        Review.is_read == False
+    ).update({"is_read": True})
+    db.commit()
+    return {"status": "success"}

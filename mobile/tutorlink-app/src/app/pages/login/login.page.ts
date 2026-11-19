@@ -83,7 +83,6 @@ export class LoginPage implements OnInit {
       }
       
     } catch (error: any) {
-      // 🔥 CHECK IF ACCOUNT IS DISABLED
       if (error?.error?.detail?.code === 'account_disabled') {
         this.disabledEmail = this.form.getRawValue().email;
         this.disabledReason.set(error.error.detail.reason || 'Your account has been disabled by the Admin.');

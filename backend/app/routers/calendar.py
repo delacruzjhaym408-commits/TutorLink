@@ -10,7 +10,7 @@ from app.schemas import TutorAvailabilityCreate, TutorAvailabilityResponse
 router = APIRouter(prefix="/calendar", tags=["Calendar"])
 
 
-# 🔥 1. TUTOR: Kunin ang sariling availability (Para sa Calendar Page)
+# 🔥 1. TUTOR: Kunin ang sariling availability
 @router.get("/availability", response_model=List[TutorAvailabilityResponse])
 def get_my_availability(
     current_user: User = Depends(get_current_user),
@@ -22,7 +22,7 @@ def get_my_availability(
     ).all()
 
 
-# 🔥 2. STUDENT: Kunin ang availability ng specific tutor (Para sa Booking Modal)
+# 🔥 2. STUDENT: Kunin ang availability ng specific tutor
 @router.get("/availability/{tutor_id}", response_model=List[TutorAvailabilityResponse])
 def get_tutor_availability(
     tutor_id: int,
@@ -42,21 +42,18 @@ def add_availability(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # AUTO-FILL DAY_OF_WEEK: Kung specific_date ang nilagay pero walang day_of_week,
-    # awtomatikong i-convert ang petsa sa araw (e.g., "2026-11-27" -> "Friday")
-    # para hindi mag-error ang MySQL na "day_of_week cannot be null".
     day_of_week = data.day_of_week
     if not day_of_week and data.specific_date:
         try:
             dt = datetime.strptime(data.specific_date, "%Y-%m-%d")
-            day_of_week = dt.strftime("%A") # Returns "Monday", "Tuesday", etc.
+            day_of_week = dt.strftime("%A")
         except ValueError:
-            pass # Kung mali ang format, hayaan na lang (baka mag-error sa DB pero valid ang date)
+            pass
 
     new_avail = TutorAvailability(
         tutor_id=current_user.id,
         specific_date=data.specific_date,
-        day_of_week=day_of_week, # 🔥 IPAPASA NA NATIN PARA HINDI MAG-NULL
+        day_of_week=day_of_week,
         start_time=data.start_time,
         end_time=data.end_time,
         notes=data.notes
@@ -67,7 +64,33 @@ def add_availability(
     return new_avail
 
 
-# 🔥 4. TUTOR: Mag-delete ng schedule
+# 🔥 4. TUTOR: I-update ang schedule (Para gumana ang Edit button)
+@router.put("/availability/{id}", response_model=TutorAvailabilityResponse)
+def update_availability(
+    id: int,
+    data: TutorAvailabilityCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    avail = db.query(TutorAvailability).filter(
+        TutorAvailability.id == id,
+        TutorAvailability.tutor_id == current_user.id
+    ).first()
+    
+    if not avail:
+        raise HTTPException(status_code=404, detail="Availability not found")
+        
+    avail.specific_date = data.specific_date
+    avail.start_time = data.start_time
+    avail.end_time = data.end_time
+    avail.notes = data.notes
+    
+    db.commit()
+    db.refresh(avail)
+    return avail
+
+
+# 🔥 5. TUTOR: Mag-delete ng schedule
 @router.delete("/availability/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_availability(
     id: int,
@@ -86,7 +109,7 @@ def delete_availability(
     db.commit()
     return None
 
-# 🔥 5. Kunin ang mga BOOKED dates at COUNT (Para sa Traffic Lights)
+# 🔥 6. Kunin ang mga BOOKED dates at COUNT
 @router.get("/booked-dates/{tutor_id}")
 def get_tutor_booked_dates(
     tutor_id: int,
@@ -109,12 +132,11 @@ def get_tutor_booked_dates(
                 "date": date,
                 "count": 0,
                 "times": [],
-                "details": [] # 🔥 BAGONG LISTAHAN PARA SA PANGALAN AT ORAS
+                "details": []
             }
         
         grouped_bookings[date]["count"] += 1
         
-        # Kunin ang pangalan ng estudyante
         enrollment = db.query(Enrollment).filter(
             Enrollment.lesson_id == lesson.id,
             Enrollment.status == "enrolled"

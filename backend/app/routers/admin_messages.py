@@ -21,16 +21,14 @@ def send_admin_message(data: AdminMessageCreate, current_user: User = Depends(re
     db.refresh(msg)
     return msg
 
-# KUNIN NG USER ANG MGA MENSAHE NIYA (READ-ONLY)
-@router.get("/my-messages", response_model=list[AdminMessageOut])
-def get_my_admin_messages(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    messages = db.query(AdminMessage).filter(AdminMessage.user_id == current_user.id).order_by(AdminMessage.created_at.desc()).all()
-    
-    # Markahan na read lahat ng messages pag binuksan
-    for m in messages:
-        m.is_read = True
-    db.commit()
-    
+@router.get("/my-messages")
+def get_my_admin_messages(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    messages = db.query(AdminMessage).filter(
+        AdminMessage.user_id == current_user.id
+    ).order_by(AdminMessage.created_at.desc()).all()
     return messages
 
 @router.post("/appeal", response_model=AppealOut, status_code=201)

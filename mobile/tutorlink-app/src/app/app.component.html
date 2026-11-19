@@ -27,9 +27,11 @@
           <ion-label>Home</ion-label>
         </ion-item>
 
+        <!-- 🔥 YELLOW DOT PARA SA REVIEWS -->
         <ion-item button routerLink="/profile" routerLinkActive="active-menu-item" (click)="navigate('/profile')" class="menu-item">
           <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
           <ion-label>Profile</ion-label>
+          <div *ngIf="unreadReviews() > 0" style="width: 10px; height: 10px; background-color: #eab308; border-radius: 50%; margin-left: auto; margin-right: 16px;"></div>
         </ion-item>
 
         <ion-item button routerLink="/messages" routerLinkActive="active-menu-item" (click)="navigate('/messages')" class="menu-item">
@@ -40,17 +42,26 @@
           </ion-badge>
         </ion-item>
 
-        <ion-item button routerLink="/my-lesson" routerLinkActive="active-menu-item" (click)="navigate('/my-lesson')" class="menu-item">
+        <ion-item *ngIf="hasApprovedPost()" button routerLink="/my-lesson" routerLinkActive="active-menu-item" (click)="navigate('/my-lesson')" class="menu-item">
           <ion-icon name="book-outline" slot="start" color="primary"></ion-icon>
-          <ion-label>My Lesson</ion-label>
+          <ion-label>Tutor Dashboard</ion-label>
           <ion-badge *ngIf="totalUnreadLessons() > 0" color="danger" slot="end" class="menu-badge">
             {{ totalUnreadLessons() }}
           </ion-badge>
         </ion-item>
 
+        <!-- 🔥 RED DOT PARA SA SCHEDULE TODAY -->
         <ion-item button routerLink="/calendar" routerLinkActive="active-menu-item" (click)="navigate('/calendar')" class="menu-item">
           <ion-icon name="calendar-outline" slot="start" color="primary"></ion-icon>
           <ion-label>My Schedule</ion-label>
+          <div *ngIf="hasScheduleToday()" style="width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; margin-left: auto; margin-right: 16px;"></div>
+        </ion-item>
+
+        <!-- 🔥 SYSTEM MESSAGES (KUNG MAY BAGO) -->
+        <ion-item *ngIf="hasSystemMessage()" button routerLink="/admin-chat" routerLinkActive="active-menu-item" class="menu-item">
+          <ion-icon name="shield-checkmark-outline" slot="start" color="danger"></ion-icon>
+          <ion-label color="danger">System Messages</ion-label>
+          <ion-badge color="danger" slot="end" class="menu-badge">New</ion-badge>
         </ion-item>
 
         <ion-item button routerLink="/settings" routerLinkActive="active-menu-item" (click)="navigate('/settings')" class="menu-item">
@@ -90,23 +101,31 @@
       <ion-label>Messages</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button (click)="goTo('/my-lesson')" class="tab-btn" [class.active-tab]="router.url === '/my-lesson'">
+    <ion-tab-button *ngIf="hasApprovedPost()" (click)="goTo('/my-lesson')" class="tab-btn" [class.active-tab]="router.url === '/my-lesson'">
       <div class="icon-wrapper">
         <ion-icon name="book-outline"></ion-icon>
         <ion-badge *ngIf="totalUnreadLessons() > 0" color="danger" class="tab-badge">
           {{ totalUnreadLessons() }}
         </ion-badge>
       </div>
-      <ion-label>My Lesson</ion-label>
+      <ion-label>Tutor Dashboard</ion-label>
     </ion-tab-button>
 
+    <!-- 🔥 RED DOT SA SCHEDULE TAB -->
     <ion-tab-button (click)="goTo('/calendar')" class="tab-btn" [class.active-tab]="router.url === '/calendar'">
-      <ion-icon name="calendar-outline"></ion-icon>
+      <div class="icon-wrapper">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <div *ngIf="hasScheduleToday()" style="position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%;"></div>
+      </div>
       <ion-label>Schedule</ion-label>
     </ion-tab-button>
 
+    <!-- 🔥 YELLOW DOT SA PROFILE TAB -->
     <ion-tab-button (click)="goTo('/profile')" class="tab-btn" [class.active-tab]="router.url === '/profile'">
-      <ion-icon name="person-outline"></ion-icon>
+      <div class="icon-wrapper">
+        <ion-icon name="person-outline"></ion-icon>
+        <div *ngIf="unreadReviews() > 0" style="position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background-color: #eab308; border-radius: 50%;"></div>
+      </div>
       <ion-label>Profile</ion-label>
     </ion-tab-button>
 

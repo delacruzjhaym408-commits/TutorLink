@@ -41,7 +41,7 @@ export class AdminService {
     return this.http.delete(`${this.apiUrl}/admin/posts/${postId}`, { headers: this.getHeaders() });
   }
 
-    // Posts Disable/Enable
+  // Posts Disable/Enable
   disablePost(postId: number, reason: string): Observable<any> {
     return this.http.put(`${this.apiUrl}/admin/posts/${postId}/disable`, { reason }, { headers: this.getHeaders() });
   }
@@ -72,8 +72,13 @@ export class AdminService {
     return this.http.put(`${this.apiUrl}/reports/${reportId}/resolve`, {}, { headers: this.getHeaders() });
   }
 
+  // 🔥 AYOS NA ADMIN MESSAGES
   sendAdminMessage(userId: number, message: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/admin-messages`, { user_id: userId, message }, { headers: this.getHeaders() });
+  }
+
+  getMyAdminMessages(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/admin-messages/my-messages`, { headers: this.getHeaders() });
   }
 
   submitAppeal(email: string, reason: string): Observable<any> {

@@ -65,15 +65,23 @@
           <ion-icon name="checkmark-circle-outline"></ion-icon>
         </ion-button>
 
-        <!-- DISABLE BUTTON -->
-        <ion-button fill="solid" class="action-btn disable-btn" *ngIf="user.is_active" (click)="confirmDisable(user)" title="Disable User">
-          <ion-icon name="ban-outline"></ion-icon>
-        </ion-button>
+<!-- Disable Button -->
+<ion-button 
+  *ngIf="user.role !== 'admin'"
+  color="warning" 
+  fill="clear" 
+  (click)="confirmDisable(user)">
+  <ion-icon name="ban-outline" slot="icon-only"></ion-icon>
+</ion-button>
 
-        <!-- DELETE BUTTON -->
-        <ion-button fill="solid" class="action-btn delete-btn" (click)="confirmDelete(user)" title="Delete User">
-          <ion-icon name="trash-outline"></ion-icon>
-        </ion-button>
+<!-- Delete Button -->
+<ion-button 
+  *ngIf="user.role !== 'admin'"
+  color="danger" 
+  fill="clear" 
+  (click)="confirmDelete(user)">
+  <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+</ion-button>
       </div>
 
     </div>
