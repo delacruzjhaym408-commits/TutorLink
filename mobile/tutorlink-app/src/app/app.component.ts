@@ -80,9 +80,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
         if (this.isAuthenticated()) {
           if (url.includes('/lesson-chat/')) {
-            setTimeout(() => this.fetchAllBadges(), 500);
+            setTimeout(() => {
+              this.fetchAllBadges();
+              this.checkApprovedPosts(); // 🔥 IDINAGDAG
+            }, 500);
           } else {
             this.fetchAllBadges();
+            this.checkApprovedPosts(); // 🔥 IDINAGDAG
           }
         }
       }
@@ -114,7 +118,10 @@ export class AppComponent implements OnInit, OnDestroy {
       });
 
       this.appStateSubscription = this.appState.refreshBadges$.subscribe(() => {
-        if (this.isAuthenticated()) this.fetchAllBadges();
+        if (this.isAuthenticated()) {
+          this.fetchAllBadges();
+          this.checkApprovedPosts(); // 🔥 IDINAGDAG
+        }
       });
 
       this.fetchAllBadges();
@@ -128,10 +135,19 @@ export class AppComponent implements OnInit, OnDestroy {
       if (user.role === 'tutor') {
         this.tutorPostService.getMyPosts().subscribe({
           next: (posts) => {
-            this.hasApprovedPost.set(posts.some(p => p.status === 'published'));
+            // 🔥 MAS MATIBAY NA CHECK
+            const approved = posts.some(p => p.status === 'published' || p.status === 'approved');
+            this.hasApprovedPost.set(approved);
+          },
+          error: () => {
+            this.hasApprovedPost.set(false);
           }
         });
+      } else {
+        this.hasApprovedPost.set(false);
       }
+    } else {
+       this.hasApprovedPost.set(false);
     }
   }
 
@@ -147,7 +163,6 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!userJson) return;
     const user = JSON.parse(userJson);
 
-    // 1. Messages
     this.messageService.getMyConversations().subscribe({
       next: (convs) => {
         this.zone.run(() => {
@@ -157,7 +172,6 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
 
-    // 2. Lessons (1v1)
     this.lessonService.getMyEnrollments().subscribe({
       next: (enrollments) => {
         this.zone.run(() => {
@@ -167,15 +181,12 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
 
-    // 3. Reviews (Yellow Dot) & Schedule Today (Red Dot)
     if (user.role === 'tutor') {
-      // Yellow Dot
       this.tutorPostService.getUnreadReviewsCount().subscribe({
         next: (res) => this.unreadReviews.set(res.unread_reviews),
         error: () => {}
       });
 
-      // Red Dot (Schedule Today)
       this.calendarService.getTutorBookedDates(user.id).subscribe({
         next: (booked) => {
           const todayStr = new Date().toISOString().split('T')[0];
@@ -185,7 +196,6 @@ export class AppComponent implements OnInit, OnDestroy {
       });
     }
 
-    // 4. System Messages (Admin Chat) - 🔥 INAYOS ANG TYPES
     this.adminService.getMyAdminMessages().subscribe({
       next: (msgs: any[]) => {
         this.hasSystemMessage.set(msgs.some((m: any) => !m.is_read));
