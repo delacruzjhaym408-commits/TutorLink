@@ -39,8 +39,9 @@ export class SessionService {
     } catch {}
   }
 
+  // 🔥 MAS MATIBAY NA CHECK PARA SA "STAY LOGGED IN"
   isLoggedIn(): boolean {
-    return this.currentUser() !== null;
+    return this.currentUser() !== null || this.getToken() !== null;
   }
 
   async login(email: string, password: string): Promise<void> {
@@ -67,6 +68,7 @@ export class SessionService {
   }
 
   async restore(): Promise<void> {
+    // Kung may current user na sa memory, o walang token, wag nang mag-restore
     if (this.currentUser() !== null || this.getToken() === null) {
       return;
     }
@@ -77,8 +79,10 @@ export class SessionService {
       this.currentUser.set(user);
       localStorage.setItem('user', JSON.stringify(user));
     } catch (error) {
-      if (error instanceof HttpErrorResponse && error.status === 401) {
+      // 🔥 KUNG EXPIRED O INVALID ANG TOKEN, I-LOGOUT
+      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
         this.removeToken();
+        this.currentUser.set(null);
       }
     }
   }

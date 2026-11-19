@@ -82,18 +82,31 @@ export class AppComponent implements OnInit, OnDestroy {
           if (url.includes('/lesson-chat/')) {
             setTimeout(() => {
               this.fetchAllBadges();
-              this.checkApprovedPosts(); // 🔥 IDINAGDAG
+              this.checkApprovedPosts(); 
             }, 500);
           } else {
             this.fetchAllBadges();
-            this.checkApprovedPosts(); // 🔥 IDINAGDAG
+            this.checkApprovedPosts(); 
           }
         }
       }
     });
   }
 
-  ngOnInit() {
+  // 🔥 GINAWANG ASYNC PARA MA-AWAIT ANG RESTORE
+  async ngOnInit() {
+    // I-reset muna ang lahat ng signals
+    this.hasApprovedPost.set(false);
+    this.hasSystemMessage.set(false);
+    this.totalUnreadMessages.set(0);
+    this.totalUnreadLessons.set(0);
+    this.hasScheduleToday.set(false);
+    this.unreadReviews.set(0);
+    this.userName.set('');
+
+    // 🔥 I-RESTORE ANG SESSION BAGO MAG-CHECK
+    await this.session.restore();
+
     if (this.isAuthenticated()) {
       this.checkApprovedPosts();
       this.wsService.connect();
@@ -114,13 +127,17 @@ export class AppComponent implements OnInit, OnDestroy {
               this.showNewLessonToast(data.message.sender_name);
             }
           }
+          else if (data.type === 'post_approved') {
+            this.checkApprovedPosts();
+            this.showPostApprovedToast(); 
+          }
         });
       });
 
       this.appStateSubscription = this.appState.refreshBadges$.subscribe(() => {
         if (this.isAuthenticated()) {
           this.fetchAllBadges();
-          this.checkApprovedPosts(); // 🔥 IDINAGDAG
+          this.checkApprovedPosts(); 
         }
       });
 
@@ -135,7 +152,6 @@ export class AppComponent implements OnInit, OnDestroy {
       if (user.role === 'tutor') {
         this.tutorPostService.getMyPosts().subscribe({
           next: (posts) => {
-            // 🔥 MAS MATIBAY NA CHECK
             const approved = posts.some(p => p.status === 'published' || p.status === 'approved');
             this.hasApprovedPost.set(approved);
           },
@@ -233,6 +249,16 @@ export class AppComponent implements OnInit, OnDestroy {
     await toast.present();
   }
 
+  async showPostApprovedToast() {
+    const toast = await this.toastCtrl.create({
+      message: '🎉 Your tutor post has been approved! You now have access to Tutor Dashboard.',
+      duration: 4000,
+      position: 'top',
+      color: 'success'
+    });
+    await toast.present();
+  }
+
   ngOnDestroy() {
     if (this.wsSubscription) this.wsSubscription.unsubscribe();
     if (this.appStateSubscription) this.appStateSubscription.unsubscribe();
@@ -261,6 +287,15 @@ export class AppComponent implements OnInit, OnDestroy {
     await this.menuController.close();
     this.wsService.disconnect();
     this.session.logout();
+    
+    this.hasApprovedPost.set(false);
+    this.hasSystemMessage.set(false);
+    this.totalUnreadMessages.set(0);
+    this.totalUnreadLessons.set(0);
+    this.hasScheduleToday.set(false);
+    this.unreadReviews.set(0);
+    this.userName.set('');
+
     this.router.navigate(['/login']).then(() => {
       window.location.reload();
     });

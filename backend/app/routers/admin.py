@@ -2,9 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from sqlalchemy import or_
-from datetime import datetime
-from pydantic import BaseModel
 from datetime import datetime, timedelta
+from pydantic import BaseModel
 from app.models import Report, UserRole
 from app.database import get_db
 from app.dependencies import require_admin
@@ -13,6 +12,7 @@ from app.models import (
     Enrollment, Review, AdminMessage, Lesson, LessonMessage, UserAppeal)
 from sqlalchemy import func
 from app.schemas import UserOut, TutorPostOut, ReportOut, user_to_out
+from app.websocket import manager  # 🔥 IDINAGDAG PARA SA WEBSOCKET
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -336,8 +336,9 @@ def trigger_automatic_disable(current_user: User = Depends(require_admin), db: S
 
 
 # 🔥 FIXED: MAGIGING TUTOR ANG USER PAG NA-APPROVE ANG POST
+# 🔥 IDINAGDAG: WEBSOCKET NOTIFICATION PARA SA TUTOR DASHBOARD
 @router.put("/posts/{post_id}/approve", response_model=TutorPostOut)
-def approve_post(post_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+async def approve_post(post_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     post = db.query(TutorPost).filter(TutorPost.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -352,6 +353,13 @@ def approve_post(post_id: int, current_user: User = Depends(require_admin), db: 
         
     db.commit()
     db.refresh(post)
+
+    # 🔥 3. I-SEND ANG WEBSOCKET NOTIFICATION SA TUTOR
+    await manager.send_to_user(post.user_id, {
+        "type": "post_approved",
+        "post_id": post.id
+    })
+
     return post
 
 @router.put("/posts/{post_id}/reject", response_model=TutorPostOut)
