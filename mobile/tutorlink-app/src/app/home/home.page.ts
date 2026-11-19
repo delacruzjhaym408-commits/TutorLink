@@ -7,13 +7,14 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonSearchbar, IonButton,
   IonIcon, IonCard, IonSpinner, IonButtons, IonFab,
   IonFabButton, MenuController, AlertController, ToastController,
-  IonModal, IonTextarea, IonRefresher, IonRefresherContent
+  IonModal, IonTextarea, IonRefresher, IonRefresherContent,
+  IonChip, IonLabel // 🔥 IDINAGDAG PARA SA TRENDING CHIPS
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
   menuOutline, starOutline, star, chatbubbleEllipsesOutline, addOutline,
-  flagOutline, peopleOutline,
-  schoolOutline, chatbubblesOutline
+  flagOutline, peopleOutline, schoolOutline, chatbubblesOutline,
+  trendingUpOutline // 🔥 IDINAGDAG
 } from 'ionicons/icons';
 import { MessageService } from '../services/message.service';
 import { TutorPost, TutorPostService } from '../services/tutor-post.service';
@@ -28,7 +29,8 @@ import { API_BASE_URL } from '../config';
     CommonModule, FormsModule,
     IonHeader, IonToolbar, IonTitle, IonContent, IonSearchbar, IonButton,
     IonIcon, IonCard, IonSpinner, IonButtons, IonFab,
-    IonFabButton, IonModal, IonTextarea, IonRefresher, IonRefresherContent
+    IonFabButton, IonModal, IonTextarea, IonRefresher, IonRefresherContent,
+    IonChip, IonLabel // 🔥 IDINAGDAG
   ],
 })
 export class HomePage implements OnInit {
@@ -38,9 +40,10 @@ export class HomePage implements OnInit {
   loading = false;
   searchQuery = '';
   currentUserId: number | string | null = null;
-  
-  // 🔥 ADDED: Variable for user name in Hero Header
   userName = '';
+  
+  // 🔥 TRENDING SUBJECTS
+  trendingSubjects: any[] = [];
 
   selectedPostToReport: any = null;
   reportReason = '';
@@ -57,29 +60,66 @@ export class HomePage implements OnInit {
   constructor() {
     addIcons({ 
       menuOutline, starOutline, star, chatbubbleEllipsesOutline, addOutline,
-      flagOutline, peopleOutline,
-      schoolOutline, chatbubblesOutline,
+      flagOutline, peopleOutline, schoolOutline, chatbubblesOutline,
+      trendingUpOutline // 🔥 IDINAGDAG
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     const userJson = localStorage.getItem('user');
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
         this.currentUserId = user.id ?? null;
-        // 🔥 ADDED: Get the user's name for the greeting
         this.userName = user.full_name || 'Student';
       } catch (e) {}
     }
+    await this.loadPosts();
+    await this.loadTrendingSubjects();
+  }
+
+  // 🔥 LOAD TRENDING SUBJECTS
+async loadTrendingSubjects() {
+  try {
+    const data = await this.http.get<any[]>(`${API_BASE_URL}/tutor-posts/trending-subjects`).toPromise();
+    
+    if (data && data.length > 0) {
+      this.trendingSubjects = data;
+    } else {
+      // 🔥 FALLBACK: Default subjects kung wala pang data
+      this.trendingSubjects = [
+        { subject: 'Math', count: 0 },
+        { subject: 'English', count: 0 },
+        { subject: 'Science', count: 0 },
+        { subject: 'Programming', count: 0 },
+        { subject: 'Filipino', count: 0 }
+      ];
+    }
+    this.cdr.detectChanges();
+  } catch (err) {
+    console.error('Failed to load trending subjects', err);
+    // 🔥 FALLBACK KAPAG MAY ERROR
+    this.trendingSubjects = [
+      { subject: 'Math', count: 0 },
+      { subject: 'English', count: 0 },
+      { subject: 'Science', count: 0 },
+      { subject: 'Programming', count: 0 },
+      { subject: 'Filipino', count: 0 }
+    ];
+  }
+}
+
+  // 🔥 FILTER BY SUBJECT
+  filterBySubject(subject: string) {
+    this.searchQuery = subject;
     this.loadPosts();
   }
 
-  // PULL TO REFRESH FUNCTION
   doRefresh(event: any) {
     this.tutorPostService.getAllPosts(this.searchQuery).subscribe({
       next: (posts) => {
         this.posts = posts;
+        this.loadTrendingSubjects(); // 🔥 I-REFRESH DIN ANG TRENDING
         event.target.complete();
       },
       error: () => {
@@ -217,7 +257,6 @@ export class HomePage implements OnInit {
     }
   }
 
-  // ACTIVE STATUS LOGIC
   isTutorActive(post: any): boolean {
     if (!post) return false;
     

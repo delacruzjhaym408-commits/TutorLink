@@ -410,4 +410,36 @@
       font-size: 1.8rem;
     }
   }
+
+  .trending-section {
+  margin-top: 60px;
+  padding: 0 20px;
+  position: relative;
+  z-index: 10;
+}
+
+.trending-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+}
+
+.trending-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  
+  ion-chip {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    height: 32px;
+    margin: 0;
+    --background: #F8FAFC;
+    --color: #5835F5;
+    --border-color: #5835F5;
+    border: 1px solid #5835F5;
+  }
+}
 }

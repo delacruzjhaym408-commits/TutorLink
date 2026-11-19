@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from sqlalchemy import or_, and_
 from datetime import datetime
 from app.database import get_db
@@ -168,11 +168,19 @@ def apply_1v1_session(
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
+    # 🔥 2. DOWNPAYMENT COMPUTATION
+    total_amount = float(amount)
+    downpayment = total_amount * 0.50
+    remaining = total_amount - downpayment
+
     new_session = Lesson(
         tutor_id=post.user_id,
         gc_name=f"{post.subject} 1v1 Session",
         description=f"1v1 Session with {current_user.full_name}",
-        monthly_rate=amount,
+        monthly_rate=total_amount,
+        total_amount=total_amount,
+        downpayment_amount=downpayment,
+        remaining_balance=remaining,
         gcash_number=post.gcash_number,
         next_meeting_date=session_date,
         next_meeting_time=f"{start_time} - {end_time}",
@@ -557,6 +565,81 @@ def kick_member(
     db.commit()
     return None
 
+# ============================================================
+# 🔥 MARK AS DONE & CANCEL WITH REASON (FIXED)
+# ============================================================
+
+from pydantic import BaseModel
+
+class CancelRequest(BaseModel):
+    reason: str
+    refund_proof: Optional[str] = None
+
+@router.put("/enrollments/{enrollment_id}/complete")
+async def mark_as_completed(
+    enrollment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Hinahanap natin gamit ang ID ng mismong enrollment
+    enrollment = db.query(Enrollment).filter(Enrollment.id == enrollment_id).first()
+    if not enrollment:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+
+    lesson = db.query(Lesson).filter(Lesson.id == enrollment.lesson_id).first()
+    
+    # Siguraduhin na Student o Tutor ka sa lesson na 'to
+    if enrollment.student_id != current_user.id and lesson.tutor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this session.")
+
+    if enrollment.status == "completed":
+        raise HTTPException(status_code=400, detail="Session already marked as done.")
+
+    enrollment.status = "completed"
+    db.commit()
+    
+    if lesson:
+        await manager.send_to_user(lesson.tutor_id, {
+            "type": "session_completed",
+            "lesson_id": lesson.id
+        })
+
+    return {"status": "completed", "message": "Session marked as done."}
+
+
+@router.put("/enrollments/{enrollment_id}/cancel")
+async def cancel_with_reason(
+    enrollment_id: int,
+    data: CancelRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    enrollment = db.query(Enrollment).filter(Enrollment.id == enrollment_id).first()
+    if not enrollment:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+
+    lesson = db.query(Lesson).filter(Lesson.id == enrollment.lesson_id).first()
+    
+    if enrollment.student_id != current_user.id and lesson.tutor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to cancel this session.")
+
+    if enrollment.status == "cancelled":
+        raise HTTPException(status_code=400, detail="Session already cancelled.")
+
+    enrollment.status = "cancelled"
+    enrollment.cancel_reason = data.reason
+    if data.refund_proof:
+        enrollment.refund_proof = data.refund_proof
+    db.commit()
+    
+    if lesson:
+        await manager.send_to_user(lesson.tutor_id, {
+            "type": "session_cancelled",
+            "lesson_id": lesson.id,
+            "reason": data.reason
+        })
+
+    return {"status": "cancelled", "message": "Session cancelled with reason."}
 
 # ============================================================
 # LESSON MESSAGES

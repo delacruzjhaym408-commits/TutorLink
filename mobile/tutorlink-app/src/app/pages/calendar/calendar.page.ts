@@ -11,6 +11,7 @@ import { addOutline, trashOutline, timeOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { API_BASE_URL } from '../../config';
 import { SessionService } from '../../services/session.service';
+import { CalendarService } from '../../services/calendar.service';
 
 @Component({
   selector: 'app-calendar',
@@ -30,42 +31,51 @@ export class CalendarPage implements OnInit {
   private alertCtrl = inject(AlertController);
   private toastCtrl = inject(ToastController);
   private session = inject(SessionService);
+  private calendarService = inject(CalendarService);
 
   role = signal<'student' | 'tutor' | 'admin' | null>(null);
   availabilities = signal<any[]>([]);
   highlightedDates = signal<any[]>([]);
+  bookedDatesData = signal<any[]>([]); 
+  
   loading = signal(true);
   
   selectedDate = signal<string>('');
   selectedDateFormatted = signal<string>(''); 
   startTime = '09:00';
   endTime = '17:00';
+  notes = ''; // 🔥 IDINAGDAG NA VARIABLE PARA SA NOTES
 
   constructor() {
     addIcons({ addOutline, trashOutline, timeOutline });
   }
 
-ngOnInit() {
-  // 🔥 DIRECT READ FROM LOCALSTORAGE (Hindi na aasa sa SessionService)
-  const userJson = localStorage.getItem('user');
-  if (userJson) {
-    try {
-      const user = JSON.parse(userJson);
-      this.role.set(user.role || null);
-      console.log('🔥 Current Role:', user.role); // Para makita mo sa console
-    } catch (e) {
-      console.error('Error parsing user:', e);
+  ngOnInit() {
+    const userJson = localStorage.getItem('user');
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        this.role.set(user.role || null);
+      } catch (e) {
+        this.role.set(null);
+      }
+    } else {
       this.role.set(null);
     }
-  } else {
-    console.warn('⚠️ No user found in localStorage');
-    this.role.set(null);
-  }
-  this.selectedDate.set(new Date().toISOString());
+    this.selectedDate.set(new Date().toISOString());
 
-  this.loadAvailability();
-  this.updateSelectedDate();
-}
+    this.loadAvailability();
+    this.updateSelectedDate();
+
+    window.addEventListener('refreshCalendar', () => {
+      this.loadAvailability();
+    });
+  }
+
+  ionViewWillEnter() {
+    this.loadAvailability();
+    this.updateSelectedDate();
+  }
 
   getHeaders() {
     return new HttpHeaders({ Authorization: `Bearer ${localStorage.getItem('access_token')}` });
@@ -77,9 +87,34 @@ ngOnInit() {
       next: (data) => { 
         this.availabilities.set(data || []); 
         this.loading.set(false); 
-        this.generateHighlightedDates(); 
+        this.loadBookedDates(); 
       },
       error: () => this.loading.set(false)
+    });
+  }
+
+  loadBookedDates() {
+    const userJson = localStorage.getItem('user');
+    if (!userJson) {
+      this.generateHighlightedDates([]);
+      return;
+    }
+    
+    const user = JSON.parse(userJson);
+    if (user.role !== 'tutor') {
+      this.generateHighlightedDates([]);
+      return;
+    }
+
+    this.calendarService.getTutorBookedDates(user.id).subscribe({
+      next: (booked) => {
+        this.bookedDatesData.set(booked); 
+        this.generateHighlightedDates(booked);
+      },
+      error: () => {
+        this.bookedDatesData.set([]);
+        this.generateHighlightedDates([]); 
+      }
     });
   }
 
@@ -92,7 +127,7 @@ ngOnInit() {
   updateSelectedDate() {
     const raw = this.selectedDate();
     if (!raw) return;
-    const formatted = raw.split('T')[0]; // Safe string-based date (no timezone shift)
+    const formatted = raw.split('T')[0]; 
     this.selectedDateFormatted.set(formatted);
   }
 
@@ -100,34 +135,55 @@ ngOnInit() {
     const selected = this.selectedDateFormatted();
     if (!selected) return [];
 
-    // Parse selected date to get day of week (Sunday = 0, Monday = 1, etc.)
     const d = new Date(selected + 'T00:00:00');
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const selectedDayName = dayNames[d.getDay()];
 
     return this.availabilities().filter(a => {
-      // Case 1: Exact date match
       if (a.specific_date) return a.specific_date === selected;
-      // Case 2: Recurring day match
       if (a.day_of_week) return a.day_of_week === selectedDayName;
       return false;
     });
   }
 
-  generateHighlightedDates() {
+  getBookedForSelectedDay() {
+    const selected = this.selectedDateFormatted();
+    if (!selected) return [];
+
+    const bookedDay = this.bookedDatesData().find(b => b.date === selected);
+    return bookedDay ? bookedDay.details : [];
+  }
+
+  generateHighlightedDates(booked: any[] = []) {
     const dates: any[] = [];
     const today = new Date();
     
+    // 1. BOOKED (Yellow, Orange, Red)
+    for (const b of booked) {
+      let color = '';
+      if (b.count === 1) color = '#eab308'; 
+      else if (b.count === 2) color = '#f97316'; 
+      else if (b.count >= 3) color = '#ef4444'; 
+
+      dates.push({ 
+        date: b.date, 
+        backgroundColor: color, 
+        textColor: '#ffffff' 
+      });
+    }
+
+    // 2. AVAILABLE (Green)
     for (const a of this.availabilities()) {
-      // Case 1: Exact date
       if (a.specific_date) {
-        dates.push({ 
-          date: a.specific_date, 
-          backgroundColor: '#10b981', 
-          textColor: '#ffffff' 
-        });
+        const isBooked = booked.some(b => b.date === a.specific_date);
+        if (!isBooked) {
+          dates.push({ 
+            date: a.specific_date, 
+            backgroundColor: '#10b981', 
+            textColor: '#ffffff' 
+          });
+        }
       } 
-      // Case 2: Recurring day_of_week
       else if (a.day_of_week) {
         const dayMap: any = { 
           'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 
@@ -135,7 +191,6 @@ ngOnInit() {
         };
         const targetDay = dayMap[a.day_of_week];
         
-        // Generate dates for 3 months
         for (let m = 0; m < 3; m++) {
           const cursor = new Date(today.getFullYear(), today.getMonth() + m, 1);
           const maxDay = new Date(today.getFullYear(), today.getMonth() + m + 1, 0).getDate();
@@ -146,15 +201,43 @@ ngOnInit() {
               const y = cursor.getFullYear();
               const mo = String(cursor.getMonth() + 1).padStart(2, '0');
               const da = String(cursor.getDate()).padStart(2, '0');
-              dates.push({ 
-                date: `${y}-${mo}-${da}`, 
-                backgroundColor: '#10b981', 
-                textColor: '#ffffff' 
-              });
+              const dateStr = `${y}-${mo}-${da}`;
+              
+              const isBooked = booked.some(b => b.date === dateStr);
+              if (!isBooked) {
+                dates.push({ 
+                  date: dateStr, 
+                  backgroundColor: '#10b981', 
+                  textColor: '#ffffff' 
+                });
+              }
             }
           }
         }
       }
+    }
+
+    // 3. GREY BACKGROUND
+    for (let m = 0; m < 3; m++) {
+        const year = today.getFullYear();
+        const month = today.getMonth() + m;
+        const maxDay = new Date(year, month + 1, 0).getDate();
+
+        for (let day = 1; day <= maxDay; day++) {
+            const y = new Date(year, month, day).getFullYear();
+            const mo = String(new Date(year, month, day).getMonth() + 1).padStart(2, '0');
+            const da = String(day).padStart(2, '0');
+            const dateStr = `${y}-${mo}-${da}`;
+
+            const hasColor = dates.some(d => d.date === dateStr);
+            if (!hasColor) {
+                dates.push({
+                    date: dateStr,
+                    backgroundColor: '#e5e7eb', 
+                    textColor: '#9ca3af' 
+                });
+            }
+        }
     }
     
     this.highlightedDates.set(dates);
@@ -176,10 +259,12 @@ ngOnInit() {
     this.http.post(`${API_BASE_URL}/calendar/availability`, {
       specific_date: this.selectedDateFormatted(),
       start_time: this.startTime, 
-      end_time: this.endTime
+      end_time: this.endTime,
+      notes: this.notes // 🔥 IPAPASA NA ANG NOTES
     }, { headers: this.getHeaders() }).subscribe({
       next: () => { 
         this.addModal.dismiss();
+        this.notes = ''; // 🔥 I-RESET ANG NOTES
         this.loadAvailability(); 
         this.showToast(`Schedule added!`);
       },

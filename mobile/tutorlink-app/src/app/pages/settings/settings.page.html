@@ -126,6 +126,24 @@
         <p class="toggle-hint">Hide 1- and 2-star reviews from the public (but the overall score will not change).</p>
       </div>
 
+      <!-- GCASH NUMBER -->
+<div class="section-divider"><h3>GCash Information</h3></div>
+<div class="input-group">
+  <label>GCash Number</label>
+  <ion-input 
+    fill="outline" 
+    type="tel" 
+    inputmode="numeric"
+    maxlength="11"
+    formControlName="gcash_number" 
+    placeholder="e.g. 09123456789"
+    class="custom-input"
+    (ionInput)="onGcashInput($event)">
+    <ion-icon name="cash-outline" slot="start"></ion-icon>
+  </ion-input>
+  @if (showError('gcash_number')) { <ion-text color="danger"><small>Must be exactly 11 digits.</small></ion-text> }
+</div>
+
       <!-- CHANGE PASSWORD -->
       <div class="section-divider"><h3>Change Password (Optional)</h3></div>
 

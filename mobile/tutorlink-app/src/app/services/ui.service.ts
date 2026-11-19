@@ -2,6 +2,6 @@ import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class UiService {
-  // Default nating nakikita ang tab bar
+  // We see the tab bar by default.
   showTabBar = signal(true);
 }

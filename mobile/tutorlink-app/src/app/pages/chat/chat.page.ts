@@ -201,4 +201,20 @@ export class ChatPage implements OnInit, OnDestroy {
   isMine(msg: Message): boolean {
     return Number(msg.sender_id) === Number(this.currentUser?.id);
   }
+
+goToTutorDetails() {
+  console.log('🔥 goToTutorDetails clicked');
+  const postMsg = this.messages().find(m => m.post_id);
+  
+  if (postMsg && postMsg.post_id) {
+    this.router.navigate(['/tutor-details', postMsg.post_id]);
+  } else {
+    this.showToast('Tutor profile is not linked to this chat.');
+  }
+}
+
+async showToast(msg: string) {
+  const toast = await this.toastCtrl.create({ message: msg, duration: 2000, color: 'primary' });
+  await toast.present();
+}
 }

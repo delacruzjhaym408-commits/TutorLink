@@ -1,12 +1,11 @@
 <ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar class="header-toolbar">
+  <ion-toolbar class="header-toolbar" color="primary">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/messages" class="back-btn"></ion-back-button>
     </ion-buttons>
     
     <ion-title class="chat-title">
       <div class="chat-user-info">
-        <!-- ONLINE STATUS DOT -->
         <ion-avatar class="header-avatar">
           <img [src]="otherUserPicture() || 'https://ionicframework.com/docs/img/demos/avatar.svg'" />
           <span *ngIf="otherUserIsOnline()" class="online-dot"></span>
@@ -15,15 +14,21 @@
       </div>
     </ion-title>
 
-    <ion-buttons slot="end" *ngIf="currentUser?.role === 'student'">
-      <ion-button (click)="bookSession()" fill="solid" class="book-btn">
+    <!-- 🔥 TINANGGAL ANG *ngIf PARA LAGING LUMALABAS -->
+    <ion-buttons slot="end">
+      <!-- 🔥 PERSON ICON (Laging lumalabas) -->
+      <ion-button fill="clear" (click)="goToTutorDetails()" style="color: white;">
+        <ion-icon name="person-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      
+      <!-- 🔥 BOOK BUTTON (Student lang) -->
+      <ion-button *ngIf="currentUser?.role === 'student'" (click)="bookSession()" fill="solid" color="light" class="book-btn" style="margin-left: 4px;">
         <ion-icon name="calendar-outline" slot="start"></ion-icon>
         Book
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
-
 <ion-content class="page-content" #content>
   
   <!-- LOADING STATE -->

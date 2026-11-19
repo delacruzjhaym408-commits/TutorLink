@@ -36,7 +36,8 @@
     </ion-buttons>
     <ion-title class="page-title">Tutor Details</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="reportModal.present()" fill="clear" class="icon-btn">
+      <!-- 🔥 HIDE FLAG KUNG SARILING POST -->
+      <ion-button *ngIf="post()?.user_id !== currentUserId" (click)="reportModal.present()" fill="clear" class="icon-btn">
         <ion-icon name="flag-outline" slot="icon-only"></ion-icon>
       </ion-button>
       <ion-button (click)="menuController.toggle('main-menu')" fill="clear" class="icon-btn">
@@ -188,7 +189,7 @@
   </ng-template>
 </ion-modal>
 
-<!-- PAYMENT MODAL -->
+<!-- 🔥 PAYMENT MODAL -->
 <ion-modal #paymentModal class="modern-modal">
   <ng-template>
     <ion-header class="modern-header">
@@ -202,16 +203,30 @@
 
     <ion-content class="modal-content ion-padding">
       
-      <!-- LEGEND -->
-      <div class="legend-row">
-        <div class="legend-item">
-          <div class="legend-dot available"></div><span>Available</span>
+      <!-- 🔥 UPDATED LEGEND (Traffic Lights) -->
+      <div class="legend-row" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px;">
+        <div class="legend-item" style="display: flex; align-items: center; gap: 5px;">
+          <div style="background-color: #10b981; width: 12px; height: 12px; border-radius: 50%;"></div>
+          <span style="font-size: 0.8rem;">Available</span>
         </div>
-        <div class="legend-item">
-          <div class="legend-dot booked"></div><span>Booked</span>
+        <div class="legend-item" style="display: flex; align-items: center; gap: 5px;">
+          <div style="background-color: #eab308; width: 12px; height: 12px; border-radius: 50%;"></div>
+          <span style="font-size: 0.8rem;">1 Booked</span>
+        </div>
+        <div class="legend-item" style="display: flex; align-items: center; gap: 5px;">
+          <div style="background-color: #f97316; width: 12px; height: 12px; border-radius: 50%;"></div>
+          <span style="font-size: 0.8rem;">2 Booked</span>
+        </div>
+        <div class="legend-item" style="display: flex; align-items: center; gap: 5px;">
+          <div style="background-color: #ef4444; width: 12px; height: 12px; border-radius: 50%;"></div>
+          <span style="font-size: 0.8rem;">Full (Max 3)</span>
+        </div>
+        <div class="legend-item" style="display: flex; align-items: center; gap: 5px;">
+          <div style="background-color: #e5e7eb; width: 12px; height: 12px; border-radius: 50%;"></div>
+          <span style="font-size: 0.8rem;">No Schedule</span>
         </div>
       </div>
-
+      
       <h3 class="section-title">Select Date</h3>
       <ion-datetime 
         presentation="date" 
@@ -238,6 +253,23 @@
         <ion-input fill="outline" [value]="post()?.subject" readonly="true" class="custom-input readonly-input"></ion-input>
       </div>
 
+      <div class="input-group">
+        <label>Mode of Tutoring</label>
+        <ion-input fill="outline" [value]="post()?.delivery_mode === 'online' ? 'Online' : post()?.delivery_mode === 'face_to_face' ? 'Face to Face' : 'Both (Online & F2F)'" readonly="true" class="custom-input readonly-input"></ion-input>
+      </div>
+
+      <!-- 🔥 MEETING LINK -->
+      <div *ngIf="post()?.delivery_mode === 'online' || post()?.delivery_mode === 'both'" class="input-group">
+        <label>Meeting Link</label>
+        <ion-input fill="outline" [value]="post()?.meeting_link || 'Not provided'" readonly="true" class="custom-input readonly-input"></ion-input>
+      </div>
+
+      <!-- 🔥 LOCATION -->
+      <div *ngIf="post()?.delivery_mode === 'face_to_face' || post()?.delivery_mode === 'both'" class="input-group">
+        <label>Location</label>
+        <ion-input fill="outline" [value]="post()?.location || 'Not provided'" readonly="true" class="custom-input readonly-input"></ion-input>
+      </div>
+
       <!-- PAYMENT DETAILS -->
       <div class="payment-box">
         <h3 class="payment-title">Payment Details</h3>
@@ -249,15 +281,24 @@
         <p><strong>Rate:</strong> ₱{{ post()?.hourly_rate }} / hour</p>
       </div>
 
-      <!-- QR CODE -->
-      <div *ngIf="post()?.tutor_gcash" class="qr-section">
-         <p class="qr-text">Scan to Pay via GCash:</p>
-         <img [src]="getImageUrl(post()?.tutor_gcash)" class="qr-image" />
+<!-- 🔥 QR CODE (NAAYOS NA) -->
+<div *ngIf="post()?.gcash_qr_code" style="text-align: center; margin-top: 16px;">
+  <p style="font-size: 0.9rem; color: #666; margin-bottom: 4px;">Scan to Pay via GCash:</p>
+  <img [src]="getQrImageSrc(post()?.gcash_qr_code)" style="max-width: 200px; border-radius: 8px; border: 1px solid #ccc;" />
+</div>
+
+      <!-- 🔥 DOWNPAYMENT -->
+      <div class="input-group" style="margin-top: 16px;">
+        <label>Downpayment Amount (50%)</label>
+        <ion-input fill="outline" type="number" [value]="bookingAmount()" readonly="true" class="custom-input amount-input"></ion-input>
+        <small style="color: #666; font-size: 0.75rem; margin-top: 4px; display: block;">
+          Remaining 50% will be paid after the session.
+        </small>
       </div>
 
       <div class="input-group">
-        <label>Total Amount to Pay (₱)</label>
-        <ion-input fill="outline" type="number" [value]="bookingAmount()" readonly="true" class="custom-input amount-input"></ion-input>
+        <label>Remaining Balance (50%)</label>
+        <ion-input fill="outline" type="number" [value]="bookingAmount()" readonly="true" class="custom-input"></ion-input>
       </div>
 
       <div class="input-group">

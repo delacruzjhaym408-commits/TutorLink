@@ -57,8 +57,11 @@ export class TutorDetailsPage implements OnInit {
   private http = inject(HttpClient);
   private calendarService = inject(CalendarService);
   
+  currentUserId: number | null = null;
+
   tutorAvailabilities = signal<TutorAvailability[]>([]);
   highlightedDates = signal<any[]>([]);
+  currentBookedDates = signal<any[]>([]);
   
   selectedDate = signal<string>(new Date().toISOString());
   selectedStartTime = '';
@@ -116,6 +119,13 @@ export class TutorDetailsPage implements OnInit {
   }
 
   ngOnInit() {
+    const userJson = localStorage.getItem('user');
+    if (userJson) {
+      try {
+        this.currentUserId = JSON.parse(userJson).id || null;
+      } catch (e) {}
+    }
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadPost(Number(id));
@@ -212,10 +222,20 @@ export class TutorDetailsPage implements OnInit {
     this.calendarService.getTutorAvailability(currentPost.user_id).subscribe({
       next: (avails) => {
         this.tutorAvailabilities.set(avails);
-        this.generateStudentCalendarMarkings(avails);
+        
+        this.calendarService.getTutorBookedDates(currentPost.user_id).subscribe({
+          next: (booked) => {
+            this.currentBookedDates.set(booked); 
+            this.generateStudentCalendarMarkings(avails, booked);
+          },
+          error: () => {
+            this.currentBookedDates.set([]);
+            this.generateStudentCalendarMarkings(avails, []);
+          }
+        });
       }
     });
-
+    
     this.selectedDate.set(new Date().toISOString());
     this.selectedStartTime = '';
     this.selectedEndTime = '';
@@ -227,18 +247,57 @@ export class TutorDetailsPage implements OnInit {
     this.paymentModal.present();
   }
 
-  // 🔥 FIXED: SPECIFIC DATES LANG ANG GINAWANG GREEN
-  generateStudentCalendarMarkings(avails: TutorAvailability[]) {
+  generateStudentCalendarMarkings(avails: TutorAvailability[], booked: any[]) {
     const dates: any[] = [];
+    
+    for (const b of booked) {
+      let color = '';
+      if (b.count === 1) color = '#eab308'; 
+      else if (b.count === 2) color = '#f97316'; 
+      else if (b.count >= 3) color = '#ef4444'; 
+      
+      dates.push({ 
+        date: b.date, 
+        backgroundColor: color,
+        textColor: '#ffffff' 
+      });
+    }
 
     for (const a of avails) {
       if (a.specific_date) {
-        dates.push({ 
-          date: a.specific_date, 
-          backgroundColor: '#10b981', // GREEN
-          textColor: '#ffffff' 
-        });
+        const bookedData = booked.find(b => b.date === a.specific_date);
+        if (!bookedData) {
+          dates.push({ 
+            date: a.specific_date, 
+            backgroundColor: '#10b981', 
+            textColor: '#ffffff' 
+          });
+        }
       }
+    }
+
+    // 🔥 GREY BACKGROUND
+    const today = new Date();
+    for (let m = 0; m < 3; m++) {
+        const year = today.getFullYear();
+        const month = today.getMonth() + m;
+        const maxDay = new Date(year, month + 1, 0).getDate();
+
+        for (let day = 1; day <= maxDay; day++) {
+            const y = new Date(year, month, day).getFullYear();
+            const mo = String(new Date(year, month, day).getMonth() + 1).padStart(2, '0');
+            const da = String(day).padStart(2, '0');
+            const dateStr = `${y}-${mo}-${da}`;
+
+            const hasColor = dates.some(d => d.date === dateStr);
+            if (!hasColor) {
+                dates.push({
+                    date: dateStr,
+                    backgroundColor: '#e5e7eb', 
+                    textColor: '#9ca3af' 
+                });
+            }
+        }
     }
     
     this.highlightedDates.set(dates);
@@ -256,11 +315,12 @@ export class TutorDetailsPage implements OnInit {
     let diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
     if (diffHours <= 0) {
-      this.bookingAmount.set(0); 
+      this.bookingAmount.set(0);
     } else {
       if (diffHours < 1) diffHours = 1;
-      const computed = currentPost.hourly_rate * diffHours;
-      this.bookingAmount.set(computed); 
+      const total = currentPost.hourly_rate * diffHours;
+      const downpayment = total * 0.50;
+      this.bookingAmount.set(downpayment);
     }
   }
 
@@ -284,6 +344,7 @@ export class TutorDetailsPage implements OnInit {
     } catch (e) { this.showToast('Failed to pick image.'); }
   }
 
+  // 🔥 IDINAGDAG ANG TIME CONFLICT CHECK DITO
   book1v1Session() {
     const currentPost = this.post();
     if (!currentPost) return;
@@ -298,11 +359,30 @@ export class TutorDetailsPage implements OnInit {
       this.showToast('Please enter reference number and upload receipt.'); return;
     }
 
+    // 🔥 CHECK TIME CONFLICT
+    const dateStr = this.selectedDate().split('T')[0];
+    const bookedInfo = this.currentBookedDates().find(b => b.date === dateStr);
+
+    if (bookedInfo) {
+      const hasConflict = bookedInfo.times.some((bookedTime: string) => {
+        if (!bookedTime || !bookedTime.includes(' - ')) return false;
+        const [bStart, bEnd] = bookedTime.split(' - ');
+        return (this.selectedStartTime < bEnd && this.selectedEndTime > bStart);
+      });
+
+      if (hasConflict) {
+        this.showToast('Sorry, your chosen time conflicts with an existing booking.');
+        return;
+      }
+    }
+
+    const totalAmount = this.bookingAmount() * 2;
+
     this.lessonService.apply1v1Session({
       post_id: currentPost.id,
       reference: this.bookingRef.trim(),
       receipt: this.bookingReceipt(),
-      amount: this.bookingAmount(),
+      amount: totalAmount,
       session_date: this.selectedDate().split('T')[0],
       start_time: this.selectedStartTime,
       end_time: this.selectedEndTime
@@ -316,9 +396,28 @@ export class TutorDetailsPage implements OnInit {
     });
   }
 
-  onBookingDateChange(event: any) {
+  // 🔥 IN-UPDATE NA LOGIC (WALA NANG ALERT SA YELLOW/ORANGE)
+  async onBookingDateChange(event: any) {
     const val = event.detail.value;
     if (typeof val === 'string') {
+      const dateStr = val.split('T')[0];
+      
+      // Check kung grey (walang schedule at walang booking)
+      const hasAvail = this.tutorAvailabilities().some(a => a.specific_date === dateStr);
+      const bookedInfo = this.currentBookedDates().find(b => b.date === dateStr);
+
+      if (!hasAvail && !bookedInfo) {
+        this.showToast('No available schedule for this date.');
+        this.selectedDate.set(new Date().toISOString());
+        return;
+      }
+
+      if (bookedInfo && bookedInfo.count >= 3) {
+        this.showToast('Sorry, this date is already full (Max 3 students).');
+        this.selectedDate.set(new Date().toISOString());
+        return;
+      }
+
       this.selectedDate.set(val);
       this.computeBookingAmount(); 
     }
@@ -392,6 +491,25 @@ export class TutorDetailsPage implements OnInit {
         await toast.present();
       }
     });
+  }
+
+  getQrImageSrc(qrData: string | null | undefined): string {
+    if (!qrData) return '';
+    
+    if (qrData.startsWith('<img')) {
+      const match = qrData.match(/src="([^"]+)"/);
+      if (match && match[1]) return match[1];
+    }
+    
+    if (qrData.startsWith('data:image')) {
+      return qrData;
+    }
+
+    if (qrData.length > 100 && !qrData.includes('/')) {
+      return `data:image/jpeg;base64,${qrData}`;
+    }
+    
+    return this.getImageUrl(qrData);
   }
 
   async showToast(msg: string) {

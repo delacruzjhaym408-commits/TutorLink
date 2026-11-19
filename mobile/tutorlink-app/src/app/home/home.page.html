@@ -1,11 +1,9 @@
 <ion-content [fullscreen]="true" class="bg-content">
   
-  <!-- PULL TO REFRESH -->
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- HERO HEADER SECTION -->
   <div class="hero-section">
     <div class="hero-top">
       <div class="greeting-text">
@@ -17,7 +15,6 @@
       </div>
     </div>
 
-    <!-- FLOATING SEARCH BAR -->
     <div class="search-wrapper">
       <ion-searchbar
         placeholder="Search tutors or subjects..."
@@ -28,16 +25,25 @@
     </div>
   </div>
 
-  <!-- CONTENT AREA -->
+
+  <!-- 🔥 TRENDING SUBJECTS CHIPS -->
+<div *ngIf="trendingSubjects.length > 0" class="trending-section">
+  <p class="trending-label">Trending Subjects:</p>
+  <div class="trending-chips">
+    <ion-chip *ngFor="let item of trendingSubjects" (click)="filterBySubject(item.subject)" color="primary" outline="true">
+      <ion-icon name="trending-up-outline" slot="start"></ion-icon>
+      <ion-label>{{ item.subject }}</ion-label>
+    </ion-chip>
+  </div>
+</div>
+
   <div class="content-area">
     
-    <!-- LOADING STATE -->
     <div *ngIf="loading" class="ion-text-center ion-padding loading-container">
       <ion-spinner name="crescent"></ion-spinner>
       <p>Finding best tutors...</p>
     </div>
 
-    <!-- EMPTY STATE -->
     <div *ngIf="!loading && posts.length === 0" class="ion-text-center empty-state">
       <div class="icon-circle">
         <ion-icon name="school-outline"></ion-icon>
@@ -49,11 +55,9 @@
       </ion-button>
     </div>
 
-    <!-- CARDS CONTAINER -->
     <div class="cards-container" *ngIf="!loading && posts.length > 0">
       <ion-card *ngFor="let post of posts" class="modern-card">
         
-        <!-- IMAGE -->
         <div *ngIf="post.post_pictures" class="card-image-wrapper">
           <img 
             [src]="parseImages(post.post_pictures)[0]" 
@@ -63,7 +67,6 @@
         </div>
 
         <div class="card-body">
-          <!-- TITLE + STATUS -->
           <div class="title-row">
             <h2 class="subject-title">{{ post.subject }}</h2>
             <div class="status-badge" [class.active]="isTutorActive(post)" [class.offline]="!isTutorActive(post)">
@@ -80,7 +83,6 @@
             {{ post.description }}
           </p>
 
-          <!-- STATS -->
           <div class="stats-row">
             <div class="rating">
               <ion-icon name="star"></ion-icon>
@@ -92,7 +94,6 @@
             </div>
           </div>
 
-          <!-- PRICE -->
           <div class="rate-display">
             <h3 class="rate-text">
               ₱{{ post.hourly_rate }} <span class="rate-unit">/ hour</span>
@@ -102,12 +103,18 @@
             </span>
           </div>
 
-          <!-- ACTIONS -->
           <div class="card-actions">
             <ion-button expand="block" fill="solid" color="primary" class="learn-btn" (click)="goToTutorDetails(post)">
               More Details
             </ion-button>
-            <ion-button expand="block" fill="clear" color="danger" class="report-btn" (click)="openReportModal(post)">
+            <!-- 🔥 REPORT BUTTON (HIDE kung sariling post) -->
+            <ion-button 
+              *ngIf="currentUserId !== post.user_id"
+              expand="block" 
+              fill="clear" 
+              color="danger" 
+              class="report-btn" 
+              (click)="openReportModal(post)">
               <ion-icon name="flag-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </div>
@@ -116,7 +123,6 @@
     </div>
   </div>
 
-  <!-- FLOATING ACTION BUTTON -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="modern-fab">
     <ion-fab-button (click)="goToCreatePost()" color="primary">
       <ion-icon name="add-outline"></ion-icon>
@@ -124,7 +130,6 @@
   </ion-fab>
 </ion-content>
 
-<!-- REPORT MODAL -->
 <ion-modal #reportModal>
   <ng-template>
     <ion-header>

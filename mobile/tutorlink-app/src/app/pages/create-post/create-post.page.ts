@@ -7,7 +7,7 @@ import {
   IonTextarea, IonText, IonBackButton, IonButtons, IonSpinner, IonIcon,
   IonSelect, IonSelectOption
 } from '@ionic/angular';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'; // 🔥 IDINAGDAG
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { addIcons } from 'ionicons';
 import { cameraOutline, closeCircleOutline, close } from 'ionicons/icons';
 import { firstValueFrom } from 'rxjs';
@@ -39,14 +39,16 @@ export class CreatePostPage implements OnInit {
   errorMessage = signal('');
   
   uploadedImageUrls = signal<string[]>([]); 
-  qrImage = signal<string | null>(null); // 🔥 IDINAGDAG
+  qrImage = signal<string | null>(null);
 
   form = this.fb.nonNullable.group({
     subject: ['', [Validators.required, Validators.minLength(2)]],
     hourly_rate: [0, [Validators.required, Validators.min(1)]],
     education_level: ['', [Validators.required, Validators.minLength(2)]],
-    gcash_number: [''], 
+    gcash_number: ['', [Validators.pattern(/^\d{0,11}$/)]],
     delivery_mode: ['online'],
+    meeting_link: [''],   // 🔥 IDINAGDAG
+    location: [''],       // 🔥 IDINAGDAG
     description: ['']
   });
 
@@ -58,18 +60,22 @@ export class CreatePostPage implements OnInit {
     setTimeout(() => this.loading.set(false), 500);
   }
 
-  showError(name: 'subject' | 'hourly_rate' | 'education_level'): boolean {
+  showError(name: 'subject' | 'hourly_rate' | 'education_level' | 'gcash_number'): boolean {
     const control = this.form.controls[name];
     return control.invalid && (control.dirty || control.touched);
   }
 
+  onGcashInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let value = input.value.replace(/[^0-9]/g, '');
+    value = value.substring(0, 11);
+    input.value = value;
+    this.form.controls.gcash_number.setValue(value);
+  }
+
   async pickAndUploadImages() {
     try {
-      const images = await Camera.pickImages({
-        quality: 80,
-        limit: 5,
-      });
-
+      const images = await Camera.pickImages({ quality: 80, limit: 5 });
       if (images.photos.length === 0) return;
 
       this.uploadingImages.set(true);
@@ -80,14 +86,12 @@ export class CreatePostPage implements OnInit {
           const response = await fetch(img.webPath);
           const blob = await response.blob();
           const file = new File([blob], `image_${Date.now()}.jpeg`, { type: 'image/jpeg' });
-
           const res = await firstValueFrom(this.tutorPostService.uploadPostImage(file));
           
           let fullUrl = res.url;
           if (fullUrl.startsWith('/uploads/')) {
             fullUrl = `${API_BASE_URL}${fullUrl}`;
           }
-          
           currentUrls.push(fullUrl); 
         }
       }
@@ -106,7 +110,6 @@ export class CreatePostPage implements OnInit {
     this.uploadedImageUrls.set([...current]);
   }
 
-  // 🔥 BAGONG METHOD PARA SA QR
   async pickQrImage() {
     try {
       const image = await Camera.getPhoto({ quality: 90, allowEditing: true, resultType: CameraResultType.DataUrl, source: CameraSource.Photos });
@@ -129,7 +132,6 @@ export class CreatePostPage implements OnInit {
     this.errorMessage.set('');
     try {
       const value = this.form.getRawValue();
-      
       const imagesJson = this.uploadedImageUrls().length > 0 
         ? JSON.stringify(this.uploadedImageUrls()) 
         : null;
@@ -142,10 +144,12 @@ export class CreatePostPage implements OnInit {
             education_level: value.education_level.trim(),
             gcash_number: value.gcash_number?.trim() || null,
             delivery_mode: value.delivery_mode,
+            meeting_link: value.meeting_link?.trim() || null, // 🔥 IDINAGDAG
+            location: value.location?.trim() || null,         // 🔥 IDINAGDAG
             description: value.description?.trim() || null,
             post_pictures: imagesJson,
             tutor_picture: null,
-            gcash_qr_code: this.qrImage() // 🔥 IPAPASA ANG QR
+            gcash_qr_code: this.qrImage()
           })
           .subscribe({
             next: () => resolve(),

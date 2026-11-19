@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 import json
 
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models import TutorPost, User, Lesson, Enrollment, Review
+from app.models import TutorPost, User, Lesson, Enrollment, Review, SearchLog
 from app.schemas import TutorPostCreate, TutorPostOut, TutorPostUpdate
 
 router = APIRouter(prefix="/tutor-posts", tags=["Tutor Posts"])
@@ -27,7 +27,10 @@ def create_post(
         tutor_picture=data.tutor_picture,
         post_pictures=data.post_pictures,
         gcash_number=data.gcash_number, 
-        delivery_mode=data.delivery_mode, # 🔥 BAGONG DAGDAG
+        gcash_qr_code=data.gcash_qr_code,  # 🔥 IDINAGDAG NA LINE
+        delivery_mode=data.delivery_mode,
+        meeting_link=data.meeting_link, 
+        location=data.location, 
         status="pending",
     )
     db.add(post)
@@ -42,6 +45,22 @@ def create_post(
     post_dict['learners_count'] = 0
     post_dict['total_reviews'] = 0
     return post_dict
+
+
+@router.get("/trending-subjects")
+def get_trending_subjects(db: Session = Depends(get_db)):
+    results = db.query(
+        SearchLog.query, 
+        func.count(SearchLog.id).label('count')
+    ).filter(
+        func.length(SearchLog.query) >= 3
+    ).group_by(
+        SearchLog.query
+    ).order_by(
+        func.count(SearchLog.id).desc()
+    ).limit(5).all()
+    
+    return [{"subject": r[0], "count": r[1]} for r in results]
 
 
 @router.get("", response_model=list[TutorPostOut])
@@ -64,6 +83,10 @@ def list_published_posts(
                 TutorPost.hourly_rate == search if search.isdigit() else False
             )
         )
+        # 🔥 I-LOG ANG SEARCH
+        log = SearchLog(query=search.lower().strip())
+        db.add(log)
+        db.commit()
 
     posts = query.order_by(TutorPost.created_at.desc()).all()
     
@@ -74,8 +97,6 @@ def list_published_posts(
         post_dict['tutor_picture'] = post.owner.profile_picture or post.tutor_picture
         post_dict['tutor_description'] = post.owner.description
         post_dict['tutor_description_picture'] = post.owner.description_picture
-        
-        # 🔥 ITO ANG KULANG KANINA:
         post_dict['is_online'] = post.owner.is_online
         post_dict['last_seen_at'] = post.owner.last_seen_at
 
@@ -93,12 +114,12 @@ def list_published_posts(
         result.append(post_dict)
     return result
 
+
 @router.get("/me", response_model=list[TutorPostOut])
 def get_my_posts(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # 🔥 FILTER: Kunin lang ang published posts ng current user
     posts = db.query(TutorPost).filter(
         TutorPost.user_id == current_user.id,
         TutorPost.status == "published" 
@@ -114,7 +135,6 @@ def get_my_posts(
         post_dict['is_online'] = post.owner.is_online
         post_dict['last_seen_at'] = post.owner.last_seen_at
         
-        # Kunin ang stats
         lessons = db.query(Lesson).filter(Lesson.tutor_id == post.user_id).all()
         lesson_ids = [l.id for l in lessons]
         learners_count = db.query(Enrollment).filter(
@@ -128,6 +148,7 @@ def get_my_posts(
         result.append(post_dict)
         
     return result
+
 
 @router.get("/{post_id}", response_model=TutorPostOut)
 def get_post(post_id: int, db: Session = Depends(get_db)):
@@ -200,6 +221,7 @@ def delete_post(
     db.commit()
     return None
 
+
 @router.get("/user/{user_id}/gallery")
 def get_tutor_gallery(user_id: int, db: Session = Depends(get_db)):
     posts = db.query(TutorPost).filter(
@@ -218,23 +240,3 @@ def get_tutor_gallery(user_id: int, db: Session = Depends(get_db)):
                 pass
                 
     return {"images": all_images}
-
-@router.get("/me", response_model=list[TutorPostOut])
-def get_my_posts(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    # Kunin lang ang mga published na posts ng current user
-    posts = db.query(TutorPost).filter(
-        TutorPost.user_id == current_user.id,
-        TutorPost.status == "published" # 🔥 FILTER: Published lang
-    ).order_by(TutorPost.created_at.desc()).all()
-    
-    result = []
-    for post in posts:
-        post_dict = TutorPostOut.model_validate(post).model_dump()
-        post_dict['tutor_name'] = current_user.full_name
-        post_dict['tutor_picture'] = current_user.profile_picture or post.tutor_picture
-        # ... (same logic as your other endpoints)
-        result.append(post_dict)
-    return result

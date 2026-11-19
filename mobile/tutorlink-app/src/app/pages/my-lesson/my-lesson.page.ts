@@ -22,6 +22,7 @@ import { LessonService, Enrollment } from '../../services/lesson.service';
 import { SessionService } from '../../services/session.service';
 import { AppStateService } from '../../services/app-state.service';
 import { API_BASE_URL } from '../../config';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 @Component({
   selector: 'app-my-lesson',
@@ -49,7 +50,6 @@ export class MyLessonPage implements OnInit {
   activeTab = signal<string>('students'); 
   paymentTab = signal<string>('pending'); 
   
-  // 🔥 RECEIPT MODAL SIGNALS
   isReceiptModalOpen = signal(false);
   selectedReceiptImage = signal<string>('');
 
@@ -59,6 +59,12 @@ export class MyLessonPage implements OnInit {
   currentUser = this.session.user;
   
   isTutor = computed(() => this.currentUser()?.role === 'tutor' || this.tutorStudents().length > 0); 
+
+  // 🔥 CANCEL MODAL SIGNALS
+  isCancelModalOpen = signal(false);
+  cancelReason = '';
+  refundProofReceipt = signal<string | null>(null);
+  selectedSessionToCancel: any = null;
 
   constructor(public menuController: MenuController) {
     addIcons({ 
@@ -122,6 +128,74 @@ export class MyLessonPage implements OnInit {
     return pic;
   }
 
+  // 🔥 MARK AS DONE
+  async markAsDone(s: any) {
+    const alert = await this.alertCtrl.create({
+      header: 'Mark as Done',
+      message: `Mark session with ${s.full_name} as completed?`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { 
+          text: 'Yes, Done', 
+          handler: () => {
+            this.lessonService.markAsCompleted(s.enrollment_id).subscribe({
+              next: () => {
+                this.showToast('Session marked as completed!');
+                this.loadLessons();
+                this.loadStudents();
+                
+                // 🔥 I-TRIGGER ANG REFRESH SA CALENDAR
+                window.dispatchEvent(new CustomEvent('refreshCalendar'));
+              },
+              error: (err) => this.showToast(err.error?.detail || 'Failed to mark as done.')
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  // 🔥 CANCEL WITH REASON
+  openCancelModal(s: any) {
+    this.selectedSessionToCancel = s;
+    this.cancelReason = '';
+    this.refundProofReceipt.set(null);
+    this.isCancelModalOpen.set(true);
+  }
+
+  async pickRefundProof() {
+    try {
+      const image = await Camera.getPhoto({ 
+        quality: 30, allowEditing: false, resultType: CameraResultType.DataUrl, 
+        source: CameraSource.Photos, width: 800, height: 800, correctOrientation: true
+      });
+      if (image.dataUrl) this.refundProofReceipt.set(image.dataUrl);
+    } catch (e) { this.showToast('Failed to pick image.'); }
+  }
+
+  submitCancellation() {
+    if (!this.selectedSessionToCancel || !this.cancelReason.trim()) return;
+
+    this.lessonService.cancelSessionWithReason(
+      this.selectedSessionToCancel.enrollment_id,  
+      this.cancelReason.trim(), 
+      this.refundProofReceipt() || undefined
+    ).subscribe({
+      next: () => {
+        this.showToast('Session cancelled successfully.');
+        this.isCancelModalOpen.set(false);
+        this.loadLessons();
+        this.loadStudents();
+
+        // 🔥 I-TRIGGER ANG REFRESH SA CALENDAR
+        window.dispatchEvent(new CustomEvent('refreshCalendar'));
+      },
+      error: (err) => this.showToast(err.error?.detail || 'Failed to cancel session.')
+    });
+  }
+
+  // Old cancel (para sa Delete button)
   async cancelSession(s: any) {
     const alert = await this.alertCtrl.create({
       header: 'Cancel Session',
@@ -137,6 +211,7 @@ export class MyLessonPage implements OnInit {
                 this.showToast('Session Cancelled.');
                 this.loadLessons();
                 this.loadStudents();
+                window.dispatchEvent(new CustomEvent('refreshCalendar')); // 🔥 Idinagdag
               },
               error: () => this.showToast('Failed to cancel session.')
             });
@@ -154,6 +229,7 @@ export class MyLessonPage implements OnInit {
         this.loadStudents();
         this.loadLessons();
         this.appState.triggerRefreshBadges(); 
+        window.dispatchEvent(new CustomEvent('refreshCalendar')); // 🔥 Idinagdag
       },
       error: () => this.showToast('Error approving student.')
     });
@@ -180,6 +256,7 @@ export class MyLessonPage implements OnInit {
                 this.loadStudents();
                 this.loadLessons();
                 this.appState.triggerRefreshBadges(); 
+                window.dispatchEvent(new CustomEvent('refreshCalendar')); // 🔥 Idinagdag
               },
               error: () => this.showToast('Error rejecting student.')
             });
@@ -209,13 +286,11 @@ export class MyLessonPage implements OnInit {
     });
   }
 
-  // 🔥 PINAL NA FIX PARA SA RECEIPT
   openReceipt(base64Image: string) {
     if (!base64Image) return;
     
     let cleanImage = base64Image;
     
-    // 1. Kung naka-format bilang HTML tag, kunin ang src
     if (cleanImage.startsWith('<img')) {
       const match = cleanImage.match(/src="([^"]+)"/);
       if (match && match[1]) {
@@ -223,12 +298,10 @@ export class MyLessonPage implements OnInit {
       }
     }
     
-    // 2. Siguraduhing may "data:image" prefix
     if (!cleanImage.startsWith('data:image') && cleanImage.length > 100) {
       cleanImage = `data:image/jpeg;base64,${cleanImage}`;
     }
 
-    // 3. Buksan ang modal
     this.selectedReceiptImage.set(cleanImage);
     this.isReceiptModalOpen.set(true);
   }

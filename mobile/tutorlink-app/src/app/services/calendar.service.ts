@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { API_BASE_URL } from '../config'; // Palitan mo ito kung iba ang path ng config mo
+import { API_BASE_URL } from '../config'; // Change this if your config path is different.
 
 export interface TutorAvailability {
   id?: number;
@@ -36,33 +36,33 @@ export class CalendarService {
   private apiUrl = `${API_BASE_URL}/calendar`;
 
 private getHeaders() {
-  const token = localStorage.getItem('access_token'); // 🔥 FIX: Dapat access_token
+  const token = localStorage.getItem('access_token'); // 🔥 FIX:Must be access_token
   return new HttpHeaders({
     'Authorization': `Bearer ${token}`
   });
 }
 
-  // Tutor: Mag-set ng availability
+  // Tutor: Set availability
   setAvailability(data: TutorAvailability): Observable<TutorAvailability> {
     return this.http.post<TutorAvailability>(`${this.apiUrl}/availability`, data, { headers: this.getHeaders() });
   }
 
-  // Student: Makita ang availability ng tutor
+  // Student: View tutor availability
   getTutorAvailability(tutorId: number): Observable<TutorAvailability[]> {
     return this.http.get<TutorAvailability[]>(`${this.apiUrl}/availability/${tutorId}`, { headers: this.getHeaders() });
   }
 
-  // Student: Mag-book ng 1v1 session
+  // Student: Book a 1v1 session
   bookSession(data: SessionBooking): Observable<SessionBooking> {
     return this.http.post<SessionBooking>(`${this.apiUrl}/book`, data, { headers: this.getHeaders() });
   }
 
-  // Shared: Makita ang aking sessions (Tutor o Student)
+  // Shared: View my sessions (Tutor or Student)
   getMySessions(): Observable<SessionBooking[]> {
     return this.http.get<SessionBooking[]>(`${this.apiUrl}/my-sessions`, { headers: this.getHeaders() });
   }
 
-  // Shared: I-update ang status ng session
+  // Shared: Update the session status
   updateSessionStatus(sessionId: number, status: string, paymentStatus?: string): Observable<SessionBooking> {
     const body: any = { status };
     if (paymentStatus) body.payment_status = paymentStatus;
@@ -70,7 +70,12 @@ private getHeaders() {
     return this.http.patch<SessionBooking>(`${this.apiUrl}/session/${sessionId}/status`, body, { headers: this.getHeaders() });
   }
 
-    // Shared: Kunin ang sessions para sa tutor
+    // 🔥 Kunin ang mga booked dates
+  getTutorBookedDates(tutorId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/booked-dates/${tutorId}`, { headers: this.getHeaders() });
+  }
+
+    // Shared: Get the sessions for the tutor
   getTutorSessions(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/tutor-sessions`, { headers: this.getHeaders() });
   }

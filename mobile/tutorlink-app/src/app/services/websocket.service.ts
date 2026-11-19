@@ -56,14 +56,16 @@ export class WebSocketService {
     }, 3000);
   }
 
-  disconnect() {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
-    if (this.reconnectInterval) {
-      clearInterval(this.reconnectInterval);
-      this.reconnectInterval = null;
-    }
+disconnect() {
+  if (this.ws) {
+    console.log('🔌 Disconnecting WebSocket intentionally...');
+    this.ws.close(1000, 'User Logout'); // 🔥 Send close code
+    this.ws = null;
   }
+  if (this.reconnectInterval) {
+    clearInterval(this.reconnectInterval);
+    this.reconnectInterval = null;
+  }
+  this.isConnected.set(false);
+}
 }

@@ -110,7 +110,11 @@
             <ion-button fill="solid" class="chat-btn" (click)="goToChat(s.conversation_id)">
               <ion-icon name="chatbubble-outline"></ion-icon>
             </ion-button>
-            <ion-button fill="outline" class="cancel-btn" (click)="cancelSession(s)">
+            <!-- 🔥 IDINAGDAG NA MARK AS DONE (Tutor o Student pwede basta active) -->
+            <ion-button fill="outline" color="success" class="done-btn" (click)="markAsDone(s)">
+              Done
+            </ion-button>
+            <ion-button fill="outline" class="cancel-btn" (click)="openCancelModal(s)">
               Cancel
             </ion-button>
           </div>
@@ -218,6 +222,48 @@
 
   </div>
 </ion-content>
+
+<!-- 🔥 CANCEL SESSION MODAL -->
+<ion-modal [isOpen]="isCancelModalOpen()" (didDismiss)="isCancelModalOpen.set(false)" class="modern-modal">
+  <ng-template>
+    <ion-header class="modern-header">
+      <ion-toolbar class="header-toolbar">
+        <ion-title class="page-title">Cancel Session</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="isCancelModalOpen.set(false)" class="close-btn">Close</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="modal-content ion-padding">
+      <h3 class="modal-title">Why are you cancelling?</h3>
+      
+      <ion-textarea 
+        label="Reason for Cancellation" 
+        labelPlacement="stacked" 
+        fill="outline" 
+        [(ngModel)]="cancelReason" 
+        placeholder="e.g., Schedule conflict, Emergencies, etc." 
+        rows="3" 
+        class="custom-textarea">
+      </ion-textarea>
+
+      <div class="input-group" style="margin-top: 16px;">
+        <label>Upload Refund Proof (Optional)</label>
+        <ion-button expand="block" fill="outline" (click)="pickRefundProof()">
+          <ion-icon name="camera-outline" slot="start"></ion-icon>
+          {{ refundProofReceipt() ? 'Change Image' : 'Upload Image' }}
+        </ion-button>
+        <div *ngIf="refundProofReceipt()" style="text-align: center; margin-top: 10px;">
+          <img [src]="refundProofReceipt()" style="max-height: 100px; border-radius: 8px;" />
+        </div>
+      </div>
+
+      <ion-button expand="block" color="danger" class="report-submit-btn" (click)="submitCancellation()" [disabled]="!cancelReason.trim()" style="margin-top: 24px;">
+        Confirm Cancellation
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
 
 <!-- RECEIPT MODAL -->
 <ion-modal [isOpen]="isReceiptModalOpen()" (didDismiss)="isReceiptModalOpen.set(false)" class="modern-modal">

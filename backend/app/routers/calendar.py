@@ -58,7 +58,8 @@ def add_availability(
         specific_date=data.specific_date,
         day_of_week=day_of_week, # 🔥 IPAPASA NA NATIN PARA HINDI MAG-NULL
         start_time=data.start_time,
-        end_time=data.end_time
+        end_time=data.end_time,
+        notes=data.notes
     )
     db.add(new_avail)
     db.commit()
@@ -84,3 +85,51 @@ def delete_availability(
     db.delete(avail)
     db.commit()
     return None
+
+# 🔥 5. Kunin ang mga BOOKED dates at COUNT (Para sa Traffic Lights)
+@router.get("/booked-dates/{tutor_id}")
+def get_tutor_booked_dates(
+    tutor_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from app.models import Lesson, Enrollment, User
+    
+    booked_lessons = db.query(Lesson).join(Enrollment).filter(
+        Lesson.tutor_id == tutor_id,
+        Enrollment.status == "enrolled", 
+        Lesson.next_meeting_date.isnot(None)
+    ).all()
+
+    grouped_bookings = {}
+    for lesson in booked_lessons:
+        date = lesson.next_meeting_date
+        if date not in grouped_bookings:
+            grouped_bookings[date] = {
+                "date": date,
+                "count": 0,
+                "times": [],
+                "details": [] # 🔥 BAGONG LISTAHAN PARA SA PANGALAN AT ORAS
+            }
+        
+        grouped_bookings[date]["count"] += 1
+        
+        # Kunin ang pangalan ng estudyante
+        enrollment = db.query(Enrollment).filter(
+            Enrollment.lesson_id == lesson.id,
+            Enrollment.status == "enrolled"
+        ).first()
+        
+        student = db.query(User).filter(User.id == enrollment.student_id).first() if enrollment else None
+        student_name = student.full_name if student else "Unknown Student"
+
+        time_str = lesson.next_meeting_time or "TBA"
+        
+        grouped_bookings[date]["times"].append(time_str)
+        grouped_bookings[date]["details"].append({
+            "time": time_str,
+            "student_name": student_name,
+            "lesson_name": lesson.gc_name
+        })
+
+    return list(grouped_bookings.values())

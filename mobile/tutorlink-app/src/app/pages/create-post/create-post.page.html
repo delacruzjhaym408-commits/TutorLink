@@ -40,17 +40,27 @@
       <!-- GCASH NUMBER -->
       <div class="input-group">
         <label>GCash Number</label>
-        <ion-input fill="outline" type="text" placeholder="e.g. 09123456789" formControlName="gcash_number" class="custom-input"></ion-input>
+        <ion-input 
+          fill="outline" 
+          type="tel" 
+          inputmode="numeric"
+          maxlength="11"
+          placeholder="e.g. 09123456789" 
+          formControlName="gcash_number" 
+          class="custom-input"
+          (ionInput)="onGcashInput($event)">
+        </ion-input>
+        @if (showError('gcash_number')) { <ion-text color="danger"><small>Must be exactly 11 digits, numbers only.</small></ion-text> }
       </div>
 
       <!-- GCASH QR CODE -->
       <div class="input-group">
         <label>GCash QR Code (Optional)</label>
         <div class="upload-box" (click)="pickQrImage()">
-          <img *ngIf="qrImage()" [src]="qrImage()" class="qr-preview" />
-          <div *ngIf="!qrImage()" class="upload-placeholder">
-            <ion-icon name="camera-outline" class="upload-icon"></ion-icon>
-            <p>Tap to upload QR Code</p>
+          <img *ngIf="qrImage()" [src]="qrImage()" class="qr-preview" style="max-width: 150px; border-radius: 8px;" />
+          <div *ngIf="!qrImage()" class="upload-placeholder" style="padding: 16px; border: 2px dashed #ccc; border-radius: 8px; text-align: center;">
+            <ion-icon name="camera-outline" style="font-size: 24px; color: #666;"></ion-icon>
+            <p style="margin: 4px 0 0 0; color: #666;">Tap to upload QR</p>
           </div>
         </div>
       </div>
@@ -63,6 +73,18 @@
           <ion-select-option value="face_to_face">Face to Face</ion-select-option>
           <ion-select-option value="both">Both (Online & F2F)</ion-select-option>
         </ion-select>
+      </div>
+
+      <!-- 🔥 MEETING LINK (Online/Both) -->
+      <div class="input-group" *ngIf="form.value.delivery_mode === 'online' || form.value.delivery_mode === 'both'">
+        <label>Meeting Link (Google Meet, Zoom, etc.)</label>
+        <ion-input fill="outline" type="url" placeholder="e.g. https://meet.google.com/abc-defg-hij" formControlName="meeting_link" class="custom-input"></ion-input>
+      </div>
+
+      <!-- 🔥 LOCATION (Face to Face/Both) -->
+      <div class="input-group" *ngIf="form.value.delivery_mode === 'face_to_face' || form.value.delivery_mode === 'both'">
+        <label>Location (Barangay, City, or Exact Address)</label>
+        <ion-input fill="outline" type="text" placeholder="e.g. Cabanatuan City, Nueva Ecija" formControlName="location" class="custom-input"></ion-input>
       </div>
 
       <!-- DESCRIPTION -->

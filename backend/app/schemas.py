@@ -32,6 +32,18 @@ class UserUpdate(BaseModel):
     current_password: Optional[str] = None
     new_password: Optional[str] = Field(default=None, min_length=8, max_length=72)
 
+    @field_validator('gcash_number')
+    @classmethod
+    def validate_gcash(cls, v):
+        if v is None or v == "":
+            return v
+        v = v.strip()
+        if not v.isdigit():
+            raise ValueError("GCash number must contain only numbers.")
+        if len(v) != 11:
+            raise ValueError("GCash number must be exactly 11 digits.")
+        return v
+
 class UserOut(BaseModel):
     id: int
     email: str
@@ -76,6 +88,20 @@ class TutorPostCreate(BaseModel):
     gcash_number: Optional[str] = None
     gcash_qr_code: Optional[str] = None
     delivery_mode: Optional[str] = "online"
+    meeting_link: Optional[str] = Field(default=None, max_length=500) # 🔥 BAGONG DAGDAG
+    location: Optional[str] = Field(default=None, max_length=255)  
+
+    @field_validator('gcash_number')
+    @classmethod
+    def validate_gcash(cls, v):
+        if v is None or v == "":
+            return v
+        v = v.strip()
+        if not v.isdigit():
+            raise ValueError("GCash number must contain only numbers.")
+        if len(v) != 11:
+            raise ValueError("GCash number must be exactly 11 digits.")
+        return v
 
 class TutorPostUpdate(BaseModel):
     subject: Optional[str] = Field(default=None, min_length=2, max_length=150)
@@ -88,6 +114,21 @@ class TutorPostUpdate(BaseModel):
     gcash_number: Optional[str] = None
     gcash_qr_code: Optional[str] = None
     delivery_mode: Optional[str] = "online"
+    meeting_link: Optional[str] = Field(default=None, max_length=500) # 🔥 BAGONG DAGDAG
+    location: Optional[str] = Field(default=None, max_length=255) 
+
+    @field_validator('gcash_number')
+    @classmethod
+    def validate_gcash(cls, v):
+        if v is None or v == "":
+            return v
+        v = v.strip()
+        if not v.isdigit():
+            raise ValueError("GCash number must contain only numbers.")
+        if len(v) != 11:
+            raise ValueError("GCash number must be exactly 11 digits.")
+        return v
+
 
 class TutorPostOut(BaseModel):
     id: int
@@ -105,6 +146,8 @@ class TutorPostOut(BaseModel):
     gcash_number: Optional[str] = None
     gcash_qr_code: Optional[str] = None
     delivery_mode: Optional[str] = "online"
+    meeting_link: Optional[str] = None # 🔥 BAGONG DAGDAG
+    location: Optional[str] = None
     rating: float
     status: str
     disabled_reason: Optional[str] = None # 🔥 BAGONG DAGDAG
@@ -178,6 +221,9 @@ class LessonOut(BaseModel):
     status: Optional[str] = "active"      # 🔥 BAGONG DAGDAG
     disabled_reason: Optional[str] = None # 🔥 BAGONG DAGDAG
     model_config = ConfigDict(from_attributes=True)
+    total_amount: Optional[float] = None         # 🔥 BAGONG DAGDAG
+    downpayment_amount: Optional[float] = None   # 🔥 BAGONG DAGDAG
+    remaining_balance: Optional[float] = None
 
 class LessonMessageCreate(BaseModel):
     content: str = Field(min_length=1, max_length=10000000)
@@ -295,6 +341,7 @@ class TutorAvailabilityBase(BaseModel):
     specific_date: Optional[str] = Field(default=None, example="2026-11-17") # 🔥 BAGONG DAGDAG
     start_time: str = Field(..., example="14:00")
     end_time: str = Field(..., example="16:00")
+    notes: Optional[str] = Field(default=None, max_length=255)
 
 class TutorAvailabilityCreate(TutorAvailabilityBase):
     pass

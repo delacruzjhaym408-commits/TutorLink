@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-// Ginagawang mensaheng mababasa ng user ang error mula sa API
+// Converts the error from the API into a message that the user can read.
 export function apiErrorMessage(
   error: unknown,
   fallback = 'Something went wrong. Please try again.',
@@ -13,7 +13,7 @@ export function apiErrorMessage(
     if (typeof detail === 'string') {
       return detail;
     }
-    // 422 mula sa FastAPI: listahan ng mga error sa isinumiteng datos
+    // 422 from FastAPI: list of errors in the submitted data
     if (Array.isArray(detail) && typeof detail[0]?.msg === 'string') {
       return String(detail[0].msg).replace(/^Value error, /, '');
     }

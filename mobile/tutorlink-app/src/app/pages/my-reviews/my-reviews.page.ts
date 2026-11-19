@@ -34,38 +34,42 @@ export class MyReviewsPage implements OnInit {
     this.loadReviews();
   }
 
-    doRefresh(event: any) {
+  doRefresh(event: any) {
     this.tutorPostService.getMyReviews().subscribe({
-      next: (data) => {
+      next: (data: any[]) => {
         this.reviews.set(data);
         if (data.length > 0) {
           const total = data.reduce((sum: number, r: any) => sum + r.rating, 0);
           this.averageRating.set(Number((total / data.length).toFixed(1)));
+        } else {
+          this.averageRating.set(0);
         }
         this.cdr.detectChanges();
         event.target.complete();
       },
-      error: () => {
+      error: (err: any) => {
+        console.error(err);
         event.target.complete();
       }
     });
   }
 
-
   loadReviews() {
     this.loading.set(true);
     this.tutorPostService.getMyReviews().subscribe({
-      next: (data) => {
+      next: (data: any[]) => {
         this.reviews.set(data);
         this.loading.set(false);
         
         if (data.length > 0) {
           const total = data.reduce((sum: number, r: any) => sum + r.rating, 0);
           this.averageRating.set(Number((total / data.length).toFixed(1)));
+        } else {
+          this.averageRating.set(0);
         }
         this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error(err);
         this.loading.set(false);
         this.cdr.detectChanges();

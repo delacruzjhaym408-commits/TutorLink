@@ -28,8 +28,7 @@ export interface StartConversationOptions {
 })
 export class MessageService {
   private http = inject(HttpClient);
-  private apiUrl = API_BASE_URL; // 🔥 Dapat naka-set sa Render URL sa config.ts
-
+  private apiUrl = API_BASE_URL; // 🔥 It should be set to Render URL in config.ts
   getMyConversations(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/conversations`);
   }
@@ -52,7 +51,7 @@ export class MessageService {
   }
 
   sendMessage(conversationId: number, content: string): Observable<Message> {
-    // 🔥 IDINAGDAG: Headers para payagan ang malaking Base64 string
+    // 🔥 ADDED: Headers to allow large Base64 strings
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     return this.http.post<Message>(
       `${this.apiUrl}/conversations/${conversationId}/messages`,

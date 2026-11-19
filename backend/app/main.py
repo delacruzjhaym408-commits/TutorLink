@@ -61,6 +61,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
     # 🔥 I-SET NA ONLINE
     user.is_online = True
+    user.last_seen_at = datetime.now()
     db.commit()
     db.close()
 
@@ -73,6 +74,17 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         manager.disconnect(user_id, websocket)
         
         # 🔥 I-SET NA OFFLINE PAG NAG-DISCONNECT
+        db = SessionLocal()
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            user.is_online = False
+            user.last_seen_at = datetime.now()
+            db.commit()
+        db.close()
+    except Exception as e:
+        # 🔥 Handle unexpected errors (e.g., network crash)
+        print(f"WebSocket error: {e}")
+        manager.disconnect(user_id, websocket)
         db = SessionLocal()
         user = db.query(User).filter(User.id == user_id).first()
         if user:

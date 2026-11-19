@@ -9,8 +9,8 @@ export interface Lesson {
   gc_name: string;
   description: string | null;
   photo: string | null;
-  gcash_number: string | null; // <-- IDINAGDAG
-  monthly_rate: number | null; // <-- IDINAGDAG
+  gcash_number: string | null; // <-- ADDED
+  monthly_rate: number | null; // <-- ADDED
   next_meeting_date: string | null;
   next_meeting_time: string | null;
   created_at: string;
@@ -26,7 +26,7 @@ export interface Enrollment {
   payment_status: string;
   payment_proof: string | null;
   payment_reference: string | null;
-  rejection_reason: string | null; // <-- IDINAGDAG
+  rejection_reason: string | null; // <-- ADDED
   enrolled_at: string;
   last_read_at: string | null;
   unread_count: number;
@@ -125,7 +125,18 @@ export class LessonService {
     );
   }
 
-  // Idagdag ito sa loob ng class:
+  markAsCompleted(enrollmentId: number) {
+    return this.http.put(`${API_BASE_URL}/enrollments/${enrollmentId}/complete`, {});
+  }
+
+  cancelSessionWithReason(enrollmentId: number, reason: string, refundProof?: string) {
+    return this.http.put(`${API_BASE_URL}/enrollments/${enrollmentId}/cancel`, {
+      reason: reason,
+      refund_proof: refundProof || null
+    });
+  }
+
+  // Add this inside the class:
   apply1v1Session(data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/sessions/apply`, data, { headers: this.getAuthHeaders() });
   }

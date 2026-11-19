@@ -80,8 +80,10 @@ class TutorPost(Base):
     delivery_mode = Column(String(50), nullable=False, default="online")
     rating = Column(Numeric(2, 1), nullable=False, default=5.0)
     status = Column(String(20), nullable=False, default="published")
-    disabled_reason = Column(String(255), nullable=True) # 🔥 BAGONG DAGDAG
+    disabled_reason = Column(String(255), nullable=True) 
     created_at = Column(DateTime, nullable=False, server_default=func.now())
+    meeting_link = Column(String(500), nullable=True) 
+    location = Column(String(255), nullable=True)  
     updated_at = Column(
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
@@ -163,8 +165,11 @@ class Lesson(Base):
     gc_start_time = Column(String(10), nullable=True)
     gc_end_time = Column(String(10), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-    status = Column(String(20), nullable=False, default="active") # 🔥 BAGONG DAGDAG
-    disabled_reason = Column(String(255), nullable=True)           # 🔥 BAGONG DAGDAG
+    status = Column(String(20), nullable=False, default="active")
+    disabled_reason = Column(String(255), nullable=True)     
+    total_amount = Column(Numeric(10, 2), nullable=True)
+    downpayment_amount = Column(Numeric(10, 2), nullable=True)
+    remaining_balance = Column(Numeric(10, 2), nullable=True)
 
     tutor = relationship("User", foreign_keys=[tutor_id])
     messages = relationship("LessonMessage", back_populates="lesson", cascade="all, delete-orphan")
@@ -196,6 +201,8 @@ class Enrollment(Base):
     payment_proof = Column(Text, nullable=True)
     payment_reference = Column(String(100), nullable=True)
     rejection_reason = Column(String(255), nullable=True)
+    cancel_reason = Column(String(255), nullable=True)
+    refund_proof = Column(Text, nullable=True)
     enrolled_at = Column(DateTime, nullable=False, server_default=func.now())
     last_read_at = Column(DateTime, nullable=True)
 
@@ -265,6 +272,7 @@ class TutorAvailability(Base):
     specific_date = Column(String(20), nullable=True) # 🔥 BAGONG DAGDAG PARA SA PETSA
     start_time = Column(String(10), nullable=False)
     end_time = Column(String(10), nullable=False)
+    notes = Column(String(255), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
@@ -318,3 +326,11 @@ class LessonMessageDeletion(Base):
 
     message = relationship("LessonMessage", foreign_keys=[message_id])
     user = relationship("User", foreign_keys=[user_id])
+
+    # ---------- Search Logs (Para sa Trending Subjects) ----------
+class SearchLog(Base):
+    __tablename__ = "search_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    query = Column(String(150), nullable=False)
+    searched_at = Column(DateTime, nullable=False, server_default=func.now())

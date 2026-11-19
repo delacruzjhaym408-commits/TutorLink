@@ -8,7 +8,7 @@ import {
   ToastController, IonMenu, IonAvatar, MenuController, IonSpinner,
   IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent, IonToggle
 } from '@ionic/angular';
-import { personOutline, callOutline, lockClosedOutline, cameraOutline, menuOutline, homeOutline, chatbubbleOutline, bookOutline, settingsOutline, logOutOutline, mailOutline } from 'ionicons/icons';
+import { personOutline, callOutline, lockClosedOutline, cameraOutline, menuOutline, homeOutline, chatbubbleOutline, bookOutline, settingsOutline, logOutOutline, mailOutline, cashOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Router } from '@angular/router';
@@ -47,6 +47,7 @@ export class SettingsPage implements OnInit {
   form = this.fb.nonNullable.group({
     full_name: ['', [Validators.required, Validators.minLength(2)]],
     phone_number: [''],
+    gcash_number: ['', [Validators.pattern(/^\d{0,11}$/)]], // 🔥 GCash input
     description: [''],
     current_password: [''],
     new_password: [''],
@@ -54,25 +55,34 @@ export class SettingsPage implements OnInit {
   });
 
   constructor() {
-    addIcons({ personOutline, callOutline, lockClosedOutline, cameraOutline, menuOutline, homeOutline, chatbubbleOutline, bookOutline, settingsOutline, logOutOutline, mailOutline });
+    addIcons({ personOutline, callOutline, lockClosedOutline, cameraOutline, menuOutline, homeOutline, chatbubbleOutline, bookOutline, settingsOutline, logOutOutline, mailOutline, cashOutline });
   }
 
   ngOnInit() {
     const currentUser = this.session.user();
     if (currentUser) {
       this.user.set(currentUser);
-      
       this.selectedImage.set(this.getFullImageUrl(currentUser.profile_picture));
       this.selectedDescImage.set(this.getFullImageUrl(currentUser.description_picture));
       
       this.form.patchValue({
         full_name: currentUser.full_name,
         phone_number: currentUser.phone_number || '',
+        gcash_number: currentUser.gcash_number || '', // 🔥 I-load ang GCash
         description: currentUser.description || '',
       });
       
       this.hideLowRatings = currentUser.hide_low_ratings || false;
     }
+  }
+
+  // 🔥 GCASH INPUT VALIDATION
+  onGcashInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let value = input.value.replace(/[^0-9]/g, '');
+    value = value.substring(0, 11);
+    input.value = value;
+    this.form.controls.gcash_number.setValue(value);
   }
 
   toggleHideLowRatings(event: any) {
@@ -115,37 +125,28 @@ export class SettingsPage implements OnInit {
         this.user.set(user);
         this.session.currentUser.set(user);
         localStorage.setItem('user', JSON.stringify(user));
-        
         this.selectedImage.set(this.getFullImageUrl(user.profile_picture));
         this.selectedDescImage.set(this.getFullImageUrl(user.description_picture));
         
         this.form.patchValue({
           full_name: user.full_name,
           phone_number: user.phone_number || '',
+          gcash_number: user.gcash_number || '',
           description: user.description || '',
         });
         
         this.hideLowRatings = user.hide_low_ratings || false;
-        
         event.target.complete();
       },
-      error: () => {
-        event.target.complete();
-      }
+      error: () => event.target.complete()
     });
   }
 
   getFullImageUrl(pic: string | null | undefined): string | null {
     if (!pic) return null;
-    if (pic.startsWith('/uploads/')) {
-      return `${API_BASE_URL}${pic}`;
-    }
-    if (!pic.startsWith('http')) {
-      return `${API_BASE_URL}/uploads/${pic}`;
-    }
-    if (pic.includes('localhost')) {
-      return pic.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
-    }
+    if (pic.startsWith('/uploads/')) return `${API_BASE_URL}${pic}`;
+    if (!pic.startsWith('http')) return `${API_BASE_URL}/uploads/${pic}`;
+    if (pic.includes('localhost')) return pic.replace(/http:\/\/localhost:\d+/, API_BASE_URL);
     return pic;
   }
 
@@ -165,7 +166,7 @@ export class SettingsPage implements OnInit {
     } catch (e) {}
   }
 
-  showError(name: 'full_name'): boolean {
+  showError(name: 'full_name' | 'gcash_number'): boolean {
     const control = this.form.controls[name];
     return control.invalid && (control.dirty || control.touched);
   }
@@ -186,6 +187,7 @@ export class SettingsPage implements OnInit {
     const formData = new FormData();
     formData.append('full_name', value.full_name.trim());
     formData.append('phone_number', value.phone_number?.trim() || '');
+    formData.append('gcash_number', value.gcash_number?.trim() || ''); // 🔥 Isama sa payload
     formData.append('description', value.description?.trim() || '');
     
     if (value.new_password) {
@@ -202,7 +204,6 @@ export class SettingsPage implements OnInit {
         localStorage.setItem('user', JSON.stringify(updatedUser));
         this.session.currentUser.set(updatedUser);
         this.user.set(updatedUser);
-        
         this.selectedImage.set(this.getFullImageUrl(updatedUser.profile_picture));
         this.selectedDescImage.set(this.getFullImageUrl(updatedUser.description_picture));
 

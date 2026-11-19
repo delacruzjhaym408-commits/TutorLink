@@ -60,7 +60,7 @@ export class AppComponent implements OnInit, OnDestroy {
       if (event instanceof NavigationEnd) {
         const url = event.urlAfterRedirects;
         
-        // 🔥 ITAGO ANG TABS KAPAG NASA LOOB NG CHAT
+        // 🔥 HIDE TABS WHEN INSIDE A CHAT
         const isChatPage = url.includes('/chat/') || url.includes('/lesson-chat/');
         const isAuthPage = url.includes('/login') || url.includes('/register');
         const isAdminPage = url.startsWith('/admin');

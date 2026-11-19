@@ -9,11 +9,11 @@ export const routes: Routes = [
   { path: 'home', canActivate: [authGuard], loadComponent: () => import('./home/home.page').then((m) => m.HomePage) },
   { path: 'create-post', canActivate: [authGuard], loadComponent: () => import('./pages/create-post/create-post.page').then((m) => m.CreatePostPage) },
   
-  // 🔥 MGA RUTA PARA SA POST AT TUTOR DETAILS
+  // 🔥 ROUTES FOR POST AND TUTOR DETAILS
   { path: 'tutor-details/:id', canActivate: [authGuard], loadComponent: () => import('./pages/tutor-details/tutor-details.page').then((m) => m.TutorDetailsPage) },
   { path: 'post-details/:id', canActivate: [authGuard], loadComponent: () => import('./pages/post-details/post-details.page').then((m) => m.PostDetailsPage) }, 
   
-  // 🔥 ITO YUNG INayos NATIN (Nilagyan ng comma sa dulo)
+  // 🔥 THIS IS THE ONE WE FIXED (Added a comma at the end)
   {
     path: 'view-post/:id',
     loadComponent: () => import('./pages/view-post/view-post.page').then(m => m.ViewPostPage)

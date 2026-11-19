@@ -5,7 +5,6 @@ import { firstValueFrom } from 'rxjs';
 import { AuthUser, RegisterData, TokenResponse } from '../models/user.model';
 
 const TOKEN_KEY = 'access_token';
-
 const API_BASE_URL = 'https://tutorlink-api-9lcu.onrender.com'; 
 
 @Injectable({ providedIn: 'root' })
@@ -81,6 +80,20 @@ export class SessionService {
       if (error instanceof HttpErrorResponse && error.status === 401) {
         this.removeToken();
       }
+    }
+  }
+
+  // 🔥 BAGONG METHOD PARA SA AUTO-REFRESH NG ROLE
+  async refreshUser(): Promise<void> {
+    try {
+      const user = await firstValueFrom(
+        this.http.get<AuthUser>(`${API_BASE_URL}/users/me`)
+      );
+      this.currentUser.set(user);
+      localStorage.setItem('user', JSON.stringify(user));
+      console.log('🔥 User refreshed:', user.role);
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
     }
   }
 }
