@@ -36,7 +36,6 @@
     </ion-buttons>
     <ion-title class="page-title">Tutor Details</ion-title>
     <ion-buttons slot="end">
-      <!-- 🔥 HIDE FLAG KUNG SARILING POST -->
       <ion-button *ngIf="post()?.user_id !== currentUserId" (click)="reportModal.present()" fill="clear" class="icon-btn">
         <ion-icon name="flag-outline" slot="icon-only"></ion-icon>
       </ion-button>
@@ -52,13 +51,11 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- LOADING -->
   <div *ngIf="loading()" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading details...</p>
   </div>
 
-  <!-- ERROR -->
   <div *ngIf="!loading() && errorMessage()" class="error-state">
     <div class="icon-circle danger-circle">
       <ion-icon name="warning-outline"></ion-icon>
@@ -66,10 +63,8 @@
     <p>{{ errorMessage() }}</p>
   </div>
 
-  <!-- DATA -->
   <div *ngIf="!loading() && post()" class="tutor-profile">
     
-    <!-- PROFILE CARD -->
     <div class="profile-card">
       <ion-avatar class="profile-avatar">
         <img [src]="getImageUrl(post()?.tutor_picture)" alt="Tutor" />
@@ -77,7 +72,6 @@
       <h2 class="tutor-name">{{ post()?.tutor_name || 'Tutor' }}</h2>
       <p class="tutor-subject">{{ post()?.subject }} Tutor</p>
       
-      <!-- RATING SECTION -->
       <div class="rating-badge" (click)="canReview() ? ratingModal.present() : showReviewBlockedMessage()">
         <div class="stars-row">
           <ion-icon *ngFor="let star of [1,2,3,4,5]" 
@@ -93,7 +87,6 @@
       </div>
     </div>
 
-    <!-- DETAILS CARD -->
     <div class="details-card">
       <div class="info-row">
         <ion-icon name="book-outline"></ion-icon>
@@ -109,7 +102,6 @@
       </div>
     </div>
 
-    <!-- DESCRIPTION CARD -->
     <div class="description-card">
       <h3 class="section-title">About the Tutor</h3>
       <p class="description-text">{{ post()?.tutor_description || post()?.description || 'No description provided.' }}</p>
@@ -119,7 +111,6 @@
       </div>
     </div>
 
-    <!-- GALLERY CARD -->
     <div class="description-card" *ngIf="post()?.post_pictures">
       <h3 class="section-title">Tutor's Posts</h3>
       <div class="gallery-scroll">
@@ -129,7 +120,6 @@
       </div>
     </div>
 
-    <!-- ACTION BUTTONS -->
     <div class="action-buttons">
       <ion-button fill="outline" class="message-btn" (click)="goToMessages()">
         <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Message
@@ -203,7 +193,6 @@
 
     <ion-content class="modal-content ion-padding">
       
-      <!-- 🔥 UPDATED LEGEND (Traffic Lights) -->
       <div class="legend-row" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px;">
         <div class="legend-item" style="display: flex; align-items: center; gap: 5px;">
           <div style="background-color: #10b981; width: 12px; height: 12px; border-radius: 50%;"></div>
@@ -258,19 +247,16 @@
         <ion-input fill="outline" [value]="post()?.delivery_mode === 'online' ? 'Online' : post()?.delivery_mode === 'face_to_face' ? 'Face to Face' : 'Both (Online & F2F)'" readonly="true" class="custom-input readonly-input"></ion-input>
       </div>
 
-      <!-- 🔥 MEETING LINK -->
       <div *ngIf="post()?.delivery_mode === 'online' || post()?.delivery_mode === 'both'" class="input-group">
         <label>Meeting Link</label>
         <ion-input fill="outline" [value]="post()?.meeting_link || 'Not provided'" readonly="true" class="custom-input readonly-input"></ion-input>
       </div>
 
-      <!-- 🔥 LOCATION -->
       <div *ngIf="post()?.delivery_mode === 'face_to_face' || post()?.delivery_mode === 'both'" class="input-group">
         <label>Location</label>
         <ion-input fill="outline" [value]="post()?.location || 'Not provided'" readonly="true" class="custom-input readonly-input"></ion-input>
       </div>
 
-      <!-- PAYMENT DETAILS -->
       <div class="payment-box">
         <h3 class="payment-title">Payment Details</h3>
         <p><strong>GCash Number:</strong> {{ post()?.gcash_number || 'Not provided' }}
@@ -281,16 +267,20 @@
         <p><strong>Rate:</strong> ₱{{ post()?.hourly_rate }} / hour</p>
       </div>
 
-<!-- 🔥 QR CODE (NAAYOS NA) -->
-<div *ngIf="post()?.gcash_qr_code" style="text-align: center; margin-top: 16px;">
-  <p style="font-size: 0.9rem; color: #666; margin-bottom: 4px;">Scan to Pay via GCash:</p>
-  <img [src]="getQrImageSrc(post()?.gcash_qr_code)" style="max-width: 200px; border-radius: 8px; border: 1px solid #ccc;" />
-</div>
+      <div *ngIf="post()?.gcash_qr_code" style="text-align: center; margin-top: 16px;">
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 4px;">Scan to Pay via GCash:</p>
+        <img [src]="getQrImageSrc(post()?.gcash_qr_code)" style="max-width: 200px; border-radius: 8px; border: 1px solid #ccc;" />
+      </div>
 
-      <!-- 🔥 DOWNPAYMENT -->
+      <!-- 🔥 BAGONG PAYMENT BREAKDOWN -->
       <div class="input-group" style="margin-top: 16px;">
-        <label>Downpayment Amount (50%)</label>
-        <ion-input fill="outline" type="number" [value]="bookingAmount()" readonly="true" class="custom-input amount-input"></ion-input>
+        <label>Total Amount (Rate × Hours)</label>
+        <ion-input fill="outline" type="number" [value]="bookingAmount()" readonly="true" class="custom-input" style="font-weight: bold; color: #2563eb;"></ion-input>
+      </div>
+
+      <div class="input-group">
+        <label>Downpayment to Pay Now (50%)</label>
+        <ion-input fill="outline" type="number" [value]="bookingAmount() * 0.5" readonly="true" class="custom-input amount-input" style="font-weight: bold; color: #059669;"></ion-input>
         <small style="color: #666; font-size: 0.75rem; margin-top: 4px; display: block;">
           Remaining 50% will be paid after the session.
         </small>
@@ -298,7 +288,7 @@
 
       <div class="input-group">
         <label>Remaining Balance (50%)</label>
-        <ion-input fill="outline" type="number" [value]="bookingAmount()" readonly="true" class="custom-input"></ion-input>
+        <ion-input fill="outline" type="number" [value]="bookingAmount() * 0.5" readonly="true" class="custom-input" style="color: #ef4444;"></ion-input>
       </div>
 
       <div class="input-group">

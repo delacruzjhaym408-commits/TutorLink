@@ -153,22 +153,24 @@ def apply_1v1_session(
     end_time = data.get("end_time")
     session_date = data.get("session_date")
 
+    if not all([post_id, reference, receipt, amount, start_time, end_time, session_date]):
+        raise HTTPException(status_code=400, detail="Missing required booking details.")
+
     # 🔥 1. DUPLICATE GCASH REFERENCE CHECK
-    if reference:
-        existing_ref = db.query(Enrollment).filter(
-            Enrollment.payment_reference == reference.strip()
-        ).first()
-        if existing_ref:
-            raise HTTPException(
-                status_code=400, 
-                detail="This GCash reference number has already been used."
-            )
+    existing_ref = db.query(Enrollment).filter(
+        Enrollment.payment_reference == reference.strip()
+    ).first()
+    if existing_ref:
+        raise HTTPException(
+            status_code=400, 
+            detail="This GCash reference number has already been used."
+        )
 
     post = db.query(TutorPost).filter(TutorPost.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
-    # 🔥 2. DOWNPAYMENT COMPUTATION
+    # 🔥 2. DOWNPAYMENT COMPUTATION (Ito ang total na ipinasa ng frontend)
     total_amount = float(amount)
     downpayment = total_amount * 0.50
     remaining = total_amount - downpayment

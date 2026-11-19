@@ -67,7 +67,7 @@ export class TutorDetailsPage implements OnInit {
   selectedStartTime = '';
   selectedEndTime = '';
   bookingSubject = '';
-  bookingAmount = signal<number>(0);
+  bookingAmount = signal<number>(0); // 🔥 ITO NA ANG TOTAL AMOUNT
   bookingRef = '';
   bookingReceipt = signal<string | null>(null); 
 
@@ -87,8 +87,6 @@ export class TutorDetailsPage implements OnInit {
 
   tutorLessons = signal<Lesson[]>([]);
   selectedLesson: Lesson | null = null;
-  paymentRef = '';
-  paymentReceipt = signal<string | null>(null);
 
   getImageUrl(pic: string | null | undefined): string {
     if (!pic) return 'https://ionicframework.com/docs/img/demos/avatar.svg';
@@ -276,7 +274,6 @@ export class TutorDetailsPage implements OnInit {
       }
     }
 
-    // 🔥 GREY BACKGROUND
     const today = new Date();
     for (let m = 0; m < 3; m++) {
         const year = today.getFullYear();
@@ -303,6 +300,7 @@ export class TutorDetailsPage implements OnInit {
     this.highlightedDates.set(dates);
   }
 
+  // 🔥 INAYOS: Kinukuha ang Total Amount, hindi ang 50%
   computeBookingAmount() {
     const currentPost = this.post();
     if (!currentPost || !this.selectedStartTime || !this.selectedEndTime) {
@@ -319,8 +317,7 @@ export class TutorDetailsPage implements OnInit {
     } else {
       if (diffHours < 1) diffHours = 1;
       const total = currentPost.hourly_rate * diffHours;
-      const downpayment = total * 0.50;
-      this.bookingAmount.set(downpayment);
+      this.bookingAmount.set(total); // 🔥 TOTAL ITO
     }
   }
 
@@ -344,7 +341,6 @@ export class TutorDetailsPage implements OnInit {
     } catch (e) { this.showToast('Failed to pick image.'); }
   }
 
-  // 🔥 IDINAGDAG ANG TIME CONFLICT CHECK DITO
   book1v1Session() {
     const currentPost = this.post();
     if (!currentPost) return;
@@ -359,7 +355,6 @@ export class TutorDetailsPage implements OnInit {
       this.showToast('Please enter reference number and upload receipt.'); return;
     }
 
-    // 🔥 CHECK TIME CONFLICT
     const dateStr = this.selectedDate().split('T')[0];
     const bookedInfo = this.currentBookedDates().find(b => b.date === dateStr);
 
@@ -376,13 +371,12 @@ export class TutorDetailsPage implements OnInit {
       }
     }
 
-    const totalAmount = this.bookingAmount() * 2;
-
+    // 🔥 IPAPASA NA ANG TOTAL AMOUNT
     this.lessonService.apply1v1Session({
       post_id: currentPost.id,
       reference: this.bookingRef.trim(),
       receipt: this.bookingReceipt(),
-      amount: totalAmount,
+      amount: this.bookingAmount(), 
       session_date: this.selectedDate().split('T')[0],
       start_time: this.selectedStartTime,
       end_time: this.selectedEndTime
@@ -396,13 +390,11 @@ export class TutorDetailsPage implements OnInit {
     });
   }
 
-  // 🔥 IN-UPDATE NA LOGIC (WALA NANG ALERT SA YELLOW/ORANGE)
   async onBookingDateChange(event: any) {
     const val = event.detail.value;
     if (typeof val === 'string') {
       const dateStr = val.split('T')[0];
       
-      // Check kung grey (walang schedule at walang booking)
       const hasAvail = this.tutorAvailabilities().some(a => a.specific_date === dateStr);
       const bookedInfo = this.currentBookedDates().find(b => b.date === dateStr);
 
