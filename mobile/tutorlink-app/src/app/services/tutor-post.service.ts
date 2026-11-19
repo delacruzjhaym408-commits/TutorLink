@@ -110,11 +110,12 @@ export class TutorPostService {
     });
   }
 
+  // 🔥 INAYOS: Dapat `/uploads` lang, walang `/post-image`
   uploadPostImage(file: File): Observable<{ url: string }> {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<{ url: string }>(
-      `${API_BASE_URL}/uploads/post-image`,
+      `${API_BASE_URL}/uploads`, 
       formData,
       { headers: this.getAuthHeaders() }
     );
@@ -139,7 +140,6 @@ export class TutorPostService {
     );
   }
 
-  // 🔥 IDINAGDAG NA METHOD PARA SA MY REVIEWS
   getMyReviews(): Observable<any[]> {
     return this.http.get<any[]>(`${API_BASE_URL}/reviews/my-reviews`, {
       headers: this.getAuthHeaders()
