@@ -110,7 +110,7 @@ export class TutorPostService {
     });
   }
 
-  // 🔥 INAYOS: Dapat `/uploads` lang, walang `/post-image`
+  //  `/uploads`
   uploadPostImage(file: File): Observable<{ url: string }> {
     const formData = new FormData();
     formData.append('file', file);
