@@ -33,9 +33,10 @@
   <!-- MESSAGES -->
   <div class="messages-container" *ngIf="!loading()">
     <div 
-      *ngFor="let msg of messages()" 
+      *ngFor="let msg of messages(); let i = index" 
       class="message-row"
-      [class.mine]="isMine(msg)">
+      [class.mine]="isMine(msg)"
+      (contextmenu)="deleteMessage(msg)">
       
       <!-- SENDER AVATAR (NOT MINE) -->
       <ion-avatar class="sender-avatar" *ngIf="!isMine(msg)">
@@ -45,9 +46,9 @@
       <div class="message-bubble">
         <span class="sender-name" *ngIf="!isMine(msg)">{{ msg.sender_name }}</span>
         
-        <!-- EMBEDDED POST -->
+        <!-- 🔥 SHARED POST: IPAPAKITA LANG SA PINAKA-UNANG MESSAGE (INDEX 0) -->
         <div 
-          *ngIf="msg.post_subject" 
+          *ngIf="msg.post_subject && i === 0" 
           class="embedded-post" 
           (click)="goToPost(msg.post_id)">
           <img 

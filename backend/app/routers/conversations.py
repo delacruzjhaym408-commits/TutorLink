@@ -168,7 +168,7 @@ def list_my_conversations(
             "updated_at": c.updated_at,
             "other_user_name": other_user.full_name if other_user else "Unknown User",
             "other_user_picture": other_user.profile_picture if other_user else None,
-            "other_user_is_online": other_user.is_online if other_user else False, # 🔥 IDINAGDAG
+            "other_user_is_online": other_user.is_online if other_user else False, 
             "lastMessage": last_msg.content if last_msg else "No messages yet",
             "last_sender_id": last_msg.sender_id if last_msg else None,
             "unread_count": unread_count,
@@ -293,23 +293,17 @@ async def send_message(
         raise HTTPException(status_code=403, detail="This user is currently disabled. You cannot send messages to them.")
 
     # 🔥 FIX: I-un-delete ang conversation para sa DALAWANG parties
-    # Para kapag may nag-message, babalik ang chat sa Messages list ninyong dalawa.
     conversation.is_deleted_by_p1 = False
     conversation.is_deleted_by_p2 = False
 
-    # 🔥 Kunin ang post_id ng unang message sa conversation (kung meron)
-    first_msg_with_post = db.query(Message).filter(
-        Message.conversation_id == conversation_id,
-        Message.post_id.isnot(None)
-    ).first()
-
+    # 🔥 BAGONG MESSAGE: WALANG KASAMANG POST ID (Dahil reply lang ito)
     message = Message(
         conversation_id=conversation_id,
         sender_id=current_user.id,
         content=data.content,
-        post_id=first_msg_with_post.post_id if first_msg_with_post else None,
-        post_subject=first_msg_with_post.post_subject if first_msg_with_post else None,
-        post_picture=first_msg_with_post.post_picture if first_msg_with_post else None,
+        post_id=None,           # 🔥 PALITAN
+        post_subject=None,      # 🔥 PALITAN
+        post_picture=None,      # 🔥 PALITAN
     )
     db.add(message)
     db.commit()
@@ -390,10 +384,6 @@ def delete_message_for_me(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Delete a message FOR THE CURRENT USER ONLY.
-    The other participant still sees the message.
-    """
     conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
