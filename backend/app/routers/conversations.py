@@ -297,10 +297,19 @@ async def send_message(
     conversation.is_deleted_by_p1 = False
     conversation.is_deleted_by_p2 = False
 
+    # 🔥 Kunin ang post_id ng unang message sa conversation (kung meron)
+    first_msg_with_post = db.query(Message).filter(
+        Message.conversation_id == conversation_id,
+        Message.post_id.isnot(None)
+    ).first()
+
     message = Message(
         conversation_id=conversation_id,
         sender_id=current_user.id,
         content=data.content,
+        post_id=first_msg_with_post.post_id if first_msg_with_post else None,
+        post_subject=first_msg_with_post.post_subject if first_msg_with_post else None,
+        post_picture=first_msg_with_post.post_picture if first_msg_with_post else None,
     )
     db.add(message)
     db.commit()

@@ -16,6 +16,12 @@ export interface Lesson {
   created_at: string;
   status: string;
   disabled_reason: string | null;
+
+    tutor?: { 
+    id: number; 
+    full_name: string; 
+    profile_picture: string | null; 
+  };
 }
 
 export interface Enrollment {

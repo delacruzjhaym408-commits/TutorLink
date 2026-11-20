@@ -12,6 +12,7 @@ import { addIcons } from 'ionicons';
 import { API_BASE_URL } from '../../config';
 import { SessionService } from '../../services/session.service';
 import { CalendarService } from '../../services/calendar.service';
+import { LessonService, Enrollment } from '../../services/lesson.service';
 
 @Component({
   selector: 'app-calendar',
@@ -32,11 +33,15 @@ export class CalendarPage implements OnInit {
   private toastCtrl = inject(ToastController);
   private session = inject(SessionService);
   private calendarService = inject(CalendarService);
+  private lessonService = inject(LessonService);
 
   role = signal<'student' | 'tutor' | 'admin' | null>(null);
   availabilities = signal<any[]>([]);
   highlightedDates = signal<any[]>([]);
-  bookedDatesData = signal<any[]>([]); 
+  
+  // 🔥 SEPARATE SIGNALS PARA SA TUTOR AT STUDENT
+  tutorBookedDates = signal<any[]>([]);
+  studentEnrollments = signal<Enrollment[]>([]); 
   
   loading = signal(true);
   
@@ -45,7 +50,7 @@ export class CalendarPage implements OnInit {
   startTime = '09:00';
   endTime = '17:00';
   notes = '';
-  editingId = signal<number | null>(null); // 🔥 PARA SA EDIT
+  editingId = signal<number | null>(null);
 
   constructor() {
     addIcons({ addOutline, trashOutline, timeOutline, createOutline });
@@ -65,16 +70,16 @@ export class CalendarPage implements OnInit {
     }
     this.selectedDate.set(new Date().toISOString());
 
-    this.loadAvailability();
+    this.loadData();
     this.updateSelectedDate();
 
     window.addEventListener('refreshCalendar', () => {
-      this.loadAvailability();
+      this.loadData();
     });
   }
 
   ionViewWillEnter() {
-    this.loadAvailability();
+    this.loadData();
     this.updateSelectedDate();
   }
 
@@ -82,48 +87,142 @@ export class CalendarPage implements OnInit {
     return new HttpHeaders({ Authorization: `Bearer ${localStorage.getItem('access_token')}` });
   }
 
-  loadAvailability() {
+  loadData() {
     this.loading.set(true);
-    this.http.get<any[]>(`${API_BASE_URL}/calendar/availability`, { headers: this.getHeaders() }).subscribe({
-      next: (data) => { 
-        this.availabilities.set(data || []); 
-        this.loading.set(false); 
-        this.loadBookedDates(); 
-      },
-      error: () => this.loading.set(false)
-    });
+    
+    if (this.role() === 'tutor') {
+      // 🔥 TUTOR: Load availability + booked dates
+      this.http.get<any[]>(`${API_BASE_URL}/calendar/availability`, { headers: this.getHeaders() }).subscribe({
+        next: (data) => { 
+          this.availabilities.set(data || []); 
+          this.loadTutorBookedDates(); 
+        },
+        error: () => this.loading.set(false)
+      });
+    } else if (this.role() === 'student') {
+      // 🔥 STUDENT: Load only their enrollments
+      this.lessonService.getMyEnrollments().subscribe({
+        next: (enrollments) => {
+          this.studentEnrollments.set(enrollments || []);
+          this.loading.set(false);
+          this.generateStudentCalendarMarkings();
+        },
+        error: () => this.loading.set(false)
+      });
+    } else {
+      this.loading.set(false);
+    }
   }
 
-  loadBookedDates() {
+  loadTutorBookedDates() {
     const userJson = localStorage.getItem('user');
     if (!userJson) {
-      this.generateHighlightedDates([]);
+      this.loading.set(false);
       return;
     }
     
     const user = JSON.parse(userJson);
-    if (user.role !== 'tutor') {
-      this.generateHighlightedDates([]);
-      return;
-    }
-
     this.calendarService.getTutorBookedDates(user.id).subscribe({
       next: (booked) => {
-        console.log('🔥 Booked Dates from Backend:', booked); // 🔥 DEBUG
-        this.bookedDatesData.set(booked || []); 
-        this.generateHighlightedDates(booked || []);
+        this.tutorBookedDates.set(booked || []); 
+        this.generateTutorCalendarMarkings(booked || []);
+        this.loading.set(false);
       },
-      error: (err) => {
-        console.error('Failed to load booked dates:', err);
-        this.bookedDatesData.set([]);
-        this.generateHighlightedDates([]); 
+      error: () => {
+        this.tutorBookedDates.set([]);
+        this.generateTutorCalendarMarkings([]); 
+        this.loading.set(false);
       }
     });
   }
 
+  // 🔥 STUDENT: Green lang kung may naka-book na session
+  generateStudentCalendarMarkings() {
+    const dates: any[] = [];
+    const enrollments = this.studentEnrollments();
+
+    for (const e of enrollments) {
+      if (e.lesson && e.lesson.next_meeting_date) {
+        dates.push({
+          date: e.lesson.next_meeting_date,
+          backgroundColor: '#10b981', // Green
+          textColor: '#ffffff'
+        });
+      }
+    }
+
+    const today = new Date();
+    for (let m = 0; m < 3; m++) {
+        const year = today.getFullYear();
+        const month = today.getMonth() + m;
+        const maxDay = new Date(year, month + 1, 0).getDate();
+
+        for (let day = 1; day <= maxDay; day++) {
+            const y = new Date(year, month, day).getFullYear();
+            const mo = String(new Date(year, month, day).getMonth() + 1).padStart(2, '0');
+            const da = String(day).padStart(2, '0');
+            const dateStr = `${y}-${mo}-${da}`;
+
+            const hasSession = dates.some(d => d.date === dateStr);
+            if (!hasSession) {
+                dates.push({
+                    date: dateStr,
+                    backgroundColor: '#e5e7eb',
+                    textColor: '#9ca3af'
+                });
+            }
+        }
+    }
+    
+    this.highlightedDates.set(dates);
+  }
+
+  // 🔥 TUTOR: Traffic lights (green/yellow/orange/red)
+  generateTutorCalendarMarkings(booked: any[] = []) {
+    const dates: any[] = [];
+    const today = new Date();
+    
+    for (const b of booked) {
+      let color = '';
+      if (b.count === 1) color = '#eab308'; 
+      else if (b.count === 2) color = '#f97316'; 
+      else if (b.count >= 3) color = '#ef4444'; 
+
+      dates.push({ date: b.date, backgroundColor: color, textColor: '#ffffff' });
+    }
+
+    for (const a of this.availabilities()) {
+      if (a.specific_date) {
+        const isBooked = booked.some(b => b.date === a.specific_date);
+        if (!isBooked) {
+          dates.push({ date: a.specific_date, backgroundColor: '#10b981', textColor: '#ffffff' });
+        }
+      } 
+    }
+
+    for (let m = 0; m < 3; m++) {
+        const year = today.getFullYear();
+        const month = today.getMonth() + m;
+        const maxDay = new Date(year, month + 1, 0).getDate();
+
+        for (let day = 1; day <= maxDay; day++) {
+            const y = new Date(year, month, day).getFullYear();
+            const mo = String(new Date(year, month, day).getMonth() + 1).padStart(2, '0');
+            const da = String(day).padStart(2, '0');
+            const dateStr = `${y}-${mo}-${da}`;
+
+            const hasColor = dates.some(d => d.date === dateStr);
+            if (!hasColor) {
+                dates.push({ date: dateStr, backgroundColor: '#e5e7eb', textColor: '#9ca3af' });
+            }
+        }
+    }
+    
+    this.highlightedDates.set(dates);
+  }
+
   onDateChange(event: any) {
     const dateValue = Array.isArray(event.detail.value) ? event.detail.value[0] : event.detail.value;
-    // 🔥 Siguraduhing tama ang format (YYYY-MM-DD)
     if (typeof dateValue === 'string') {
       this.selectedDate.set(dateValue);
       this.updateSelectedDate();
@@ -133,12 +232,13 @@ export class CalendarPage implements OnInit {
   updateSelectedDate() {
     const raw = this.selectedDate();
     if (!raw) return;
-    // 🔥 Safe string-based date extraction (no timezone shift)
     const formatted = raw.split('T')[0];
     this.selectedDateFormatted.set(formatted);
   }
 
+  // 🔥 TUTOR ONLY
   getAvailabilitiesForSelectedDay() {
+    if (this.role() !== 'tutor') return [];
     const selected = this.selectedDateFormatted();
     if (!selected) return [];
 
@@ -153,73 +253,27 @@ export class CalendarPage implements OnInit {
     });
   }
 
-  getBookedForSelectedDay() {
+  // 🔥 TUTOR ONLY
+  getTutorBookedForSelectedDay() {
+    if (this.role() !== 'tutor') return [];
     const selected = this.selectedDateFormatted();
     if (!selected) return [];
 
-    const bookedDay = this.bookedDatesData().find(b => b.date === selected);
+    const bookedDay = this.tutorBookedDates().find(b => b.date === selected);
     return bookedDay && bookedDay.details ? bookedDay.details : [];
   }
 
-  generateHighlightedDates(booked: any[] = []) {
-    const dates: any[] = [];
-    const today = new Date();
-    
-    // 1. BOOKED (Yellow, Orange, Red)
-    for (const b of booked) {
-      let color = '';
-      if (b.count === 1) color = '#eab308'; 
-      else if (b.count === 2) color = '#f97316'; 
-      else if (b.count >= 3) color = '#ef4444'; 
+  // 🔥 STUDENT ONLY
+  getStudentBookedForSelectedDay() {
+    if (this.role() !== 'student') return [];
+    const selected = this.selectedDateFormatted();
+    if (!selected) return [];
 
-      dates.push({ 
-        date: b.date, 
-        backgroundColor: color, 
-        textColor: '#ffffff' 
-      });
-    }
-
-    // 2. AVAILABLE (Green)
-    for (const a of this.availabilities()) {
-      if (a.specific_date) {
-        const isBooked = booked.some(b => b.date === a.specific_date);
-        if (!isBooked) {
-          dates.push({ 
-            date: a.specific_date, 
-            backgroundColor: '#10b981', 
-            textColor: '#ffffff' 
-          });
-        }
-      } 
-    }
-
-    // 3. GREY BACKGROUND (No Schedule)
-    for (let m = 0; m < 3; m++) {
-        const year = today.getFullYear();
-        const month = today.getMonth() + m;
-        const maxDay = new Date(year, month + 1, 0).getDate();
-
-        for (let day = 1; day <= maxDay; day++) {
-            const y = new Date(year, month, day).getFullYear();
-            const mo = String(new Date(year, month, day).getMonth() + 1).padStart(2, '0');
-            const da = String(day).padStart(2, '0');
-            const dateStr = `${y}-${mo}-${da}`;
-
-            const hasColor = dates.some(d => d.date === dateStr);
-            if (!hasColor) {
-                dates.push({
-                    date: dateStr,
-                    backgroundColor: '#e5e7eb', 
-                    textColor: '#9ca3af' 
-                });
-            }
-        }
-    }
-    
-    this.highlightedDates.set(dates);
+    return this.studentEnrollments().filter(e => {
+      return e.lesson && e.lesson.next_meeting_date === selected;
+    });
   }
 
-  // 🔥 BAGONG METHOD PARA SA EDIT
   editSchedule(item: any) {
     this.editingId.set(item.id);
     this.startTime = item.start_time;
@@ -241,7 +295,6 @@ export class CalendarPage implements OnInit {
       return;
     }
 
-    // Kung may editingId, i-update natin
     if (this.editingId()) {
       this.http.put(`${API_BASE_URL}/calendar/availability/${this.editingId()}`, {
         specific_date: this.selectedDateFormatted(),
@@ -253,16 +306,12 @@ export class CalendarPage implements OnInit {
           this.addModal.dismiss();
           this.editingId.set(null);
           this.notes = '';
-          this.loadAvailability(); 
+          this.loadData(); 
           this.showToast(`Schedule updated!`);
         },
-        error: (err) => { 
-          console.error(err);
-          this.showToast('Error updating schedule.');
-        }
+        error: () => this.showToast('Error updating schedule.')
       });
     } else {
-      // Bagong schedule
       this.http.post(`${API_BASE_URL}/calendar/availability`, {
         specific_date: this.selectedDateFormatted(),
         start_time: this.startTime, 
@@ -272,13 +321,10 @@ export class CalendarPage implements OnInit {
         next: () => { 
           this.addModal.dismiss();
           this.notes = ''; 
-          this.loadAvailability(); 
+          this.loadData(); 
           this.showToast(`Schedule added!`);
         },
-        error: (err) => { 
-          console.error(err);
-          this.showToast('Error adding schedule.');
-        }
+        error: () => this.showToast('Error adding schedule.')
       });
     }
   }
@@ -297,7 +343,7 @@ export class CalendarPage implements OnInit {
           handler: () => {
             this.http.delete(`${API_BASE_URL}/calendar/availability/${id}`, { headers: this.getHeaders() }).subscribe({
               next: () => {
-                this.loadAvailability();
+                this.loadData();
                 this.showToast('Schedule removed.');
               }
             });

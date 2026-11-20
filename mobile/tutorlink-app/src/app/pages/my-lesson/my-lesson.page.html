@@ -69,14 +69,16 @@
   </ion-refresher>
   
   <!-- MAIN TABS -->
-    <ion-segment [value]="activeTab()" (ionChange)="activeTab.set($any($event).detail.value)" color="primary" mode="md">
-      <ion-segment-button value="students">
-        <ion-label style="font-weight: 700; font-size: 1rem;">My Students</ion-label>
+  <div class="main-tabs-wrapper" style="padding: 10px;">
+    <ion-segment [value]="activeTab()" (ionChange)="activeTab.set($any($event).detail.value)" color="primary" mode="md" style="background: #f3f4f6; border-radius: 8px; padding: 4px;">
+      <ion-segment-button value="students" style="--color: #4b5563; --color-checked: #4f46e5; --indicator-color: #4f46e5;">
+        <ion-label style="font-weight: 700; font-size: 0.95rem; text-transform: uppercase;">My Students</ion-label>
       </ion-segment-button>
-      <ion-segment-button value="payments">
-        <ion-label style="font-weight: 700; font-size: 1rem;">Payments</ion-label>
+      <ion-segment-button value="payments" style="--color: #4b5563; --color-checked: #4f46e5; --indicator-color: #4f46e5;">
+        <ion-label style="font-weight: 700; font-size: 0.95rem; text-transform: uppercase;">Payments</ion-label>
       </ion-segment-button>
     </ion-segment>
+  </div>
 
   <div class="content-container">
     
@@ -91,28 +93,46 @@
       </div>
 
       <div class="sessions-list" *ngIf="getFilteredSessions('enrolled').length > 0">
-        <div class="session-card" *ngFor="let s of getFilteredSessions('enrolled')">
-          <ion-avatar class="session-avatar">
-            <img [src]="getImageUrl(s.profile_picture || s.lesson?.tutor?.profile_picture)" />
-          </ion-avatar>
+        <div class="session-card" *ngFor="let s of getFilteredSessions('enrolled')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #ffffff; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
           
-          <div class="session-info">
-            <h2 class="session-name">
-              {{ isTutor() ? s.full_name : (s.lesson?.tutor?.full_name || 'Tutor') }}
-            </h2>
-            <p class="session-status">1v1 Session Active</p>
-            <p class="session-subject">{{ isTutor() ? s.lesson_name : s.lesson?.gc_name }}</p>
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+            <ion-avatar class="session-avatar" style="width: 48px; height: 48px;">
+              <img [src]="getImageUrl(s.profile_picture || s.lesson?.tutor?.profile_picture)" />
+            </ion-avatar>
+            
+            <div class="session-info" style="display: flex; flex-direction: column; gap: 2px;">
+              <!-- PANGALAN -->
+              <h2 class="session-name" style="margin: 0; font-size: 1rem; font-weight: 700; color: #1f2937;">
+                {{ isTutor() ? s.full_name : (s.lesson?.tutor?.full_name || 'Tutor') }}
+              </h2>
+              
+              <!-- SUBJECT -->
+              <p class="session-subject" style="margin: 0; font-size: 0.85rem; color: #6b7280;">
+                {{ isTutor() ? s.lesson_name : s.lesson?.gc_name }}
+              </p>
+
+              <!-- 🔥 REMAINING BALANCE TAG -->
+              <div *ngIf="isTutor() && s.remaining_balance !== undefined && s.remaining_balance !== null" 
+                   style="display: inline-block; background: #fef2f2; color: #b91c1c; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; margin-top: 4px; width: fit-content;">
+                Remaining: ₱{{ s.remaining_balance }}
+              </div>
+              
+              <!-- FALLBACK KUNG WALANG remaining_balance SA DATA -->
+              <div *ngIf="isTutor() && (s.remaining_balance === undefined || s.remaining_balance === null) && s.monthly_rate" 
+                   style="display: inline-block; background: #fef2f2; color: #b91c1c; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; margin-top: 4px; width: fit-content;">
+                Remaining: ₱{{ s.monthly_rate * 0.5 }}
+              </div>
+            </div>
           </div>
           
-          <div class="session-actions">
-            <ion-button fill="solid" class="chat-btn" (click)="goToChat(s.conversation_id)">
-              <ion-icon name="chatbubble-outline"></ion-icon>
+          <div class="session-actions" style="display: flex; gap: 6px; align-items: center;">
+            <ion-button fill="solid" class="chat-btn" (click)="goToChat(s.conversation_id)" style="--background: #6366f1; --border-radius: 8px; width: 36px; height: 36px; margin: 0;">
+              <ion-icon name="chatbubble-outline" style="font-size: 1.2rem;"></ion-icon>
             </ion-button>
-            <!-- 🔥 IDINAGDAG NA MARK AS DONE (Tutor o Student pwede basta active) -->
-            <ion-button fill="outline" color="success" class="done-btn" (click)="markAsDone(s)">
+            <ion-button fill="outline" color="success" class="done-btn" (click)="markAsDone(s)" style="--border-radius: 8px; height: 36px; margin: 0; font-size: 0.8rem; font-weight: 600;">
               Done
             </ion-button>
-            <ion-button fill="outline" class="cancel-btn" (click)="openCancelModal(s)">
+            <ion-button fill="outline" class="cancel-btn" (click)="openCancelModal(s)" style="--border-radius: 8px; height: 36px; margin: 0; font-size: 0.8rem; font-weight: 600;">
               Cancel
             </ion-button>
           </div>
@@ -123,7 +143,7 @@
     <!-- TAB 2: PAYMENTS -->
     <div *ngIf="activeTab() === 'payments'">
       
-      <ion-segment [value]="paymentTab()" (ionChange)="paymentTab.set($any($event).detail.value)" class="sub-segment">
+      <ion-segment [value]="paymentTab()" (ionChange)="paymentTab.set($any($event).detail.value)" class="sub-segment" style="margin-bottom: 12px;">
         <ion-segment-button value="pending">
           <ion-label>Pending</ion-label>
         </ion-segment-button>
@@ -141,34 +161,37 @@
           No pending applications.
         </div>
 
-        <div class="payment-card" *ngFor="let s of getFilteredSessions('pending_payment')">
-          <div class="payment-header">
-            <ion-avatar class="payment-avatar">
+        <div class="payment-card" *ngFor="let s of getFilteredSessions('pending_payment')" style="background: #ffffff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+          <div class="payment-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <ion-avatar class="payment-avatar" style="width: 44px; height: 44px;">
               <img [src]="getImageUrl(s.profile_picture)" />
             </ion-avatar>
             <div class="payment-user">
-              <strong>{{ s.full_name }}</strong>
-              <p>{{ s.lesson_name }}</p>
+              <strong style="font-size: 1rem; color: #1f2937;">{{ s.full_name }}</strong>
+              <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">{{ s.lesson_name }}</p>
             </div>
           </div>
           
           <div class="payment-details">
-            <p><strong>Date & Time:</strong> {{ s.next_meeting_date || 'TBA' }} <span *ngIf="s.next_meeting_time">• {{ s.next_meeting_time }}</span></p>
-            <p><strong>Amount:</strong> <span class="amount-text">₱{{ s.monthly_rate || 0 }}</span></p>
-            <ion-button *ngIf="s.payment_proof" fill="outline" class="receipt-btn" (click)="openReceipt(s.payment_proof)">
+            <p style="margin: 0 0 6px 0; font-size: 0.9rem;"><strong>Date & Time:</strong> {{ s.next_meeting_date || 'TBA' }} <span *ngIf="s.next_meeting_time">• {{ s.next_meeting_time }}</span></p>
+            <p style="margin: 0 0 6px 0; font-size: 0.9rem;"><strong>Total Amount:</strong> <span class="amount-text" style="color: #4f46e5; font-weight: 700;">₱{{ s.monthly_rate || 0 }}</span></p>
+            <!-- 🔥 REMAINING BALANCE SA PAYMENT CARD -->
+            <p style="margin: 0 0 12px 0; font-size: 0.9rem;"><strong>Remaining Balance (50%):</strong> <span class="amount-text" style="color: #b91c1c; font-weight: 700;">₱{{ s.remaining_balance || (s.monthly_rate * 0.5) }}</span></p>
+            
+            <ion-button *ngIf="s.payment_proof" fill="outline" class="receipt-btn" (click)="openReceipt(s.payment_proof)" style="--border-radius: 8px; height: 32px; font-size: 0.8rem; margin-bottom: 12px;">
               View Receipt
             </ion-button>
 
-            <div *ngIf="isTutor()" class="payment-actions">
-              <ion-button expand="block" class="approve-btn" (click)="approveStudent(s.student_id, s.lesson_id)">
+            <div *ngIf="isTutor()" class="payment-actions" style="display: flex; gap: 10px;">
+              <ion-button expand="block" class="approve-btn" (click)="approveStudent(s.student_id, s.lesson_id)" style="flex: 1; --border-radius: 8px; font-size: 0.85rem;">
                 Approve
               </ion-button>
-              <ion-button expand="block" class="reject-btn" (click)="rejectStudent(s.student_id, s.lesson_id)">
+              <ion-button expand="block" class="reject-btn" (click)="rejectStudent(s.student_id, s.lesson_id)" style="flex: 1; --border-radius: 8px; font-size: 0.85rem;" color="danger">
                 Reject
               </ion-button>
             </div>
 
-            <div *ngIf="!isTutor()" class="waiting-badge">
+            <div *ngIf="!isTutor()" class="waiting-badge" style="background: #fef3c7; color: #b45309; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; text-align: center; font-weight: 600;">
               ⏳ Waiting for Tutor Approval
             </div>
           </div>
@@ -181,16 +204,16 @@
           No approved applications.
         </div>
         
-        <div class="payment-card" *ngFor="let s of getFilteredSessions('enrolled')">
-          <div class="payment-header">
-            <ion-avatar class="payment-avatar">
+        <div class="payment-card" *ngFor="let s of getFilteredSessions('enrolled')" style="background: #ffffff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+          <div class="payment-header" style="display: flex; align-items: center; gap: 12px;">
+            <ion-avatar class="payment-avatar" style="width: 44px; height: 44px;">
               <img [src]="getImageUrl(s.profile_picture)" />
             </ion-avatar>
-            <div class="payment-user">
-              <strong>{{ s.full_name }}</strong>
-              <p class="success-text">Approved</p>
+            <div class="payment-user" style="flex: 1;">
+              <strong style="font-size: 1rem; color: #1f2937;">{{ s.full_name }}</strong>
+              <p class="success-text" style="margin: 0; font-size: 0.85rem; color: #10b981;">Approved</p>
             </div>
-            <ion-button fill="solid" class="chat-btn" (click)="goToChat(s.conversation_id)">
+            <ion-button fill="solid" class="chat-btn" (click)="goToChat(s.conversation_id)" style="--border-radius: 8px; height: 32px; font-size: 0.8rem;">
               <ion-icon name="chatbubble-outline" slot="start"></ion-icon> Chat
             </ion-button>
           </div>
@@ -203,14 +226,14 @@
           No rejected applications.
         </div>
         
-        <div class="payment-card" *ngFor="let s of getFilteredSessions('rejected')">
-          <div class="payment-header">
-            <ion-avatar class="payment-avatar">
+        <div class="payment-card" *ngFor="let s of getFilteredSessions('rejected')" style="background: #ffffff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+          <div class="payment-header" style="display: flex; align-items: center; gap: 12px;">
+            <ion-avatar class="payment-avatar" style="width: 44px; height: 44px;">
               <img [src]="getImageUrl(s.profile_picture)" />
             </ion-avatar>
             <div class="payment-user">
-              <strong>{{ s.full_name }}</strong>
-              <p class="danger-text">Rejected</p>
+              <strong style="font-size: 1rem; color: #1f2937;">{{ s.full_name }}</strong>
+              <p class="danger-text" style="margin: 0; font-size: 0.85rem; color: #ef4444;">Rejected</p>
             </div>
           </div>
         </div>

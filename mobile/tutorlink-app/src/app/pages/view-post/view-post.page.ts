@@ -74,6 +74,18 @@ export class ViewPostPage implements OnInit {
     return pic;
   }
 
+  // 🔥 ITO ANG BAGONG FUNCTION PARA SA APPLY LESSON
+  goToTutorDetailsWithApply() {
+    const currentPost = this.post();
+    if (!currentPost) return;
+
+    // Pumunta sa tutor details page at i-trigger ang apply modal
+    this.router.navigate(['/tutor-details', currentPost.id], { 
+      queryParams: { apply: 'true' } 
+    });
+  }
+
+  // (Optional) Kung gusto mo pang i-retain ang message function
   goToMessages() {
     const currentPost = this.post();
     if (!currentPost) return;

@@ -48,7 +48,7 @@ export class ChatPage implements OnInit, OnDestroy {
   
   otherUserName = signal<string>('Chat');
   otherUserPicture = signal<string | null>(null);
-  otherUserIsOnline = signal<boolean>(false); // 🔥 SIGNAL PARA SA GREEN DOT
+  otherUserIsOnline = signal<boolean>(false);
 
   private wsSubscription!: Subscription;
 
@@ -103,7 +103,7 @@ export class ChatPage implements OnInit, OnDestroy {
       if (currentConv) {
         this.otherUserName.set(currentConv.other_user_name);
         this.otherUserPicture.set(currentConv.other_user_picture);
-        this.otherUserIsOnline.set(currentConv.other_user_is_online || false); // 🔥 SET ONLINE STATUS
+        this.otherUserIsOnline.set(currentConv.other_user_is_online || false);
         this.cdr.detectChanges();
       }
     });
@@ -192,9 +192,18 @@ export class ChatPage implements OnInit, OnDestroy {
     }
   }
 
+  // 🔥 IDINAGDAG NA FALLBACK PARA MAHANAP ANG post_id SA MESSAGES
+  private getFirstPostId(): number | null {
+    const postMsg = this.messages().find(m => m.post_id);
+    return postMsg && postMsg.post_id !== undefined ? postMsg.post_id : null;
+  }
+
+  // 🔥 GO TO VIEW POST
   goToPost(postId: number | null | undefined) {
     if (postId) {
       this.router.navigate(['/view-post', postId]);
+    } else {
+      this.showToast('This message is not linked to any post.');
     }
   }
 
@@ -202,19 +211,19 @@ export class ChatPage implements OnInit, OnDestroy {
     return Number(msg.sender_id) === Number(this.currentUser?.id);
   }
 
-goToTutorDetails() {
-  console.log('🔥 goToTutorDetails clicked');
-  const postMsg = this.messages().find(m => m.post_id);
-  
-  if (postMsg && postMsg.post_id) {
-    this.router.navigate(['/tutor-details', postMsg.post_id]);
-  } else {
-    this.showToast('Tutor profile is not linked to this chat.');
+  // 🔥 GO TO TUTOR DETAILS
+  goToTutorDetails() {
+    const postId = this.getFirstPostId();
+    
+    if (postId) {
+      this.router.navigate(['/tutor-details', postId]);
+    } else {
+      this.showToast('Tutor profile is not linked to this chat.');
+    }
   }
-}
 
-async showToast(msg: string) {
-  const toast = await this.toastCtrl.create({ message: msg, duration: 2000, color: 'primary' });
-  await toast.present();
-}
+  async showToast(msg: string) {
+    const toast = await this.toastCtrl.create({ message: msg, duration: 2000, color: 'primary' });
+    await toast.present();
+  }
 }
