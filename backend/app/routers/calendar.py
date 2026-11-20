@@ -124,10 +124,10 @@ def get_tutor_booked_dates(
 
     grouped_bookings = {}
     for lesson in booked_lessons:
-        # Check if there's an active enrollment (pending or enrolled)
+        # 🔥 ENROLLED LANG ANG BILANGIN AS CONFIRMED BOOKING
         enrollment = db.query(Enrollment).filter(
             Enrollment.lesson_id == lesson.id,
-            Enrollment.status.in_(["enrolled", "pending_payment"])
+            Enrollment.status == "enrolled"
         ).first()
 
         if not enrollment:

@@ -170,7 +170,27 @@ def apply_1v1_session(
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
-    # 🔥 2. DOWNPAYMENT COMPUTATION (Ito ang total na ipinasa ng frontend)
+    # 🔥 2. TIME CONFLICT CHECK (BACKEND VALIDATION)
+    existing_bookings = db.query(Lesson).join(Enrollment).filter(
+        Lesson.tutor_id == post.user_id,
+        Lesson.next_meeting_date == session_date,
+        Enrollment.status == "enrolled"  # Siguraduhing approved lang ang iche-check
+    ).all()
+
+    for booking in existing_bookings:
+        if not booking.next_meeting_time or ' - ' not in booking.next_meeting_time:
+            continue
+            
+        b_start, b_end = [t.strip() for t in booking.next_meeting_time.split(' - ')]
+        
+        # Check for overlap
+        if (start_time < b_end and end_time > b_start):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Time conflict: Tutor already has a session from {b_start} to {b_end} on this date."
+            )
+
+    # 🔥 3. DOWNPAYMENT COMPUTATION (Ito ang total na ipinasa ng frontend)
     total_amount = float(amount)
     downpayment = total_amount * 0.50
     remaining = total_amount - downpayment
@@ -265,7 +285,6 @@ def get_my_enrollments(
                 LessonMessage.sender_id != current_user.id,
             ).count()
 
-        # 🔥 FIX: Hanapin lang gamit ang lesson_id at conversation_type
         conv = db.query(Conversation).filter(
             Conversation.conversation_type == "session",
             Conversation.lesson_id == e.lesson_id
@@ -291,7 +310,6 @@ def get_my_enrollments(
 @router.post("/enrollments/apply-payment", response_model=EnrollmentOut)
 def apply_with_payment(data: EnrollmentApplyRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     
-    # 🔥 2. DUPLICATE GCASH REFERENCE CHECK
     existing_ref = db.query(Enrollment).filter(
         Enrollment.payment_reference == data.reference_number.strip()
     ).first()
@@ -349,7 +367,6 @@ async def approve_payment(
     enrollment.status = "enrolled"
     enrollment.payment_status = "paid"
     
-    # 🔥 FIX: HANAPIN ANG EXISTING PRIVATE CHAT PARA DITO I-SEND ANG MESSAGE
     existing_conv = db.query(Conversation).filter(
         or_(
             and_(Conversation.participant1_id == current_user.id, Conversation.participant2_id == student_id),
@@ -358,7 +375,6 @@ async def approve_payment(
     ).first()
 
     if existing_conv:
-        # I-update ang existing chat para maging session
         existing_conv.conversation_type = "session"
         existing_conv.lesson_id = lesson_id
         existing_conv.is_deleted_by_p1 = False
@@ -366,7 +382,6 @@ async def approve_payment(
         session_conv = existing_conv
         db.commit()
     else:
-        # Kung wala talagang existing chat (bihira mangyari), gumawa ng bago
         session_conv = Conversation(
             participant1_id=current_user.id,
             participant2_id=student_id,
@@ -377,7 +392,6 @@ async def approve_payment(
         db.commit()
         db.refresh(session_conv)
     
-    # 🔥 I-SEND ANG APPROVAL MESSAGE SA EXISTING CHAT
     initial_msg = Message(
         conversation_id=session_conv.id,
         sender_id=current_user.id,
@@ -461,7 +475,6 @@ async def reject_payment(
     enrollment.rejection_reason = reason_data.get("reason", "No reason provided")
     db.commit()
     
-    # 🔥 GUMAWA NG BAGONG SESSION CONVERSATION PARA SA REJECTION NOTICE
     conv = Conversation(
         participant1_id=current_user.id,
         participant2_id=student_id,
@@ -583,14 +596,12 @@ async def mark_as_completed(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Hinahanap natin gamit ang ID ng mismong enrollment
     enrollment = db.query(Enrollment).filter(Enrollment.id == enrollment_id).first()
     if not enrollment:
         raise HTTPException(status_code=404, detail="Enrollment not found")
 
     lesson = db.query(Lesson).filter(Lesson.id == enrollment.lesson_id).first()
     
-    # Siguraduhin na Student o Tutor ka sa lesson na 'to
     if enrollment.student_id != current_user.id and lesson.tutor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to update this session.")
 

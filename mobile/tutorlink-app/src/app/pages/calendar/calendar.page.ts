@@ -2,10 +2,12 @@ import { Component, OnInit, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Router } from '@angular/router'; // 🔥 IDINAGDAG
 import { 
   IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, 
   IonLabel, IonButton, IonIcon, IonSpinner, IonModal, IonInput, 
-  AlertController, ToastController, IonButtons, IonBackButton, IonDatetime 
+  AlertController, ToastController, IonButtons, IonBackButton, IonDatetime,
+  MenuController, IonMenu, IonMenuToggle // 🔥 IDINAGDAG
 } from '@ionic/angular';
 import { addOutline, trashOutline, timeOutline, createOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
@@ -22,7 +24,8 @@ import { LessonService, Enrollment } from '../../services/lesson.service';
   imports: [
     CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent,
     IonList, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonModal,
-    IonInput, IonButtons, IonBackButton, IonDatetime
+    IonInput, IonButtons, IonBackButton, IonDatetime,
+    IonMenu, IonMenuToggle // 🔥 IDINAGDAG
   ],
 })
 export class CalendarPage implements OnInit {
@@ -34,12 +37,12 @@ export class CalendarPage implements OnInit {
   private session = inject(SessionService);
   private calendarService = inject(CalendarService);
   private lessonService = inject(LessonService);
+  private router = inject(Router); // 🔥 IDINAGDAG
 
   role = signal<'student' | 'tutor' | 'admin' | null>(null);
   availabilities = signal<any[]>([]);
   highlightedDates = signal<any[]>([]);
   
-  // 🔥 SEPARATE SIGNALS PARA SA TUTOR AT STUDENT
   tutorBookedDates = signal<any[]>([]);
   studentEnrollments = signal<Enrollment[]>([]); 
   
@@ -52,7 +55,8 @@ export class CalendarPage implements OnInit {
   notes = '';
   editingId = signal<number | null>(null);
 
-  constructor() {
+  // 🔥 IDINAGDAG NA CONSTRUCTOR PARA SA MENU CONTROLLER
+  constructor(public menuController: MenuController) {
     addIcons({ addOutline, trashOutline, timeOutline, createOutline });
   }
 
@@ -91,7 +95,6 @@ export class CalendarPage implements OnInit {
     this.loading.set(true);
     
     if (this.role() === 'tutor') {
-      // 🔥 TUTOR: Load availability + booked dates
       this.http.get<any[]>(`${API_BASE_URL}/calendar/availability`, { headers: this.getHeaders() }).subscribe({
         next: (data) => { 
           this.availabilities.set(data || []); 
@@ -100,7 +103,6 @@ export class CalendarPage implements OnInit {
         error: () => this.loading.set(false)
       });
     } else if (this.role() === 'student') {
-      // 🔥 STUDENT: Load only their enrollments
       this.lessonService.getMyEnrollments().subscribe({
         next: (enrollments) => {
           this.studentEnrollments.set(enrollments || []);
@@ -136,7 +138,6 @@ export class CalendarPage implements OnInit {
     });
   }
 
-  // 🔥 STUDENT: Green lang kung may naka-book na session
   generateStudentCalendarMarkings() {
     const dates: any[] = [];
     const enrollments = this.studentEnrollments();
@@ -145,7 +146,7 @@ export class CalendarPage implements OnInit {
       if (e.lesson && e.lesson.next_meeting_date) {
         dates.push({
           date: e.lesson.next_meeting_date,
-          backgroundColor: '#10b981', // Green
+          backgroundColor: '#10b981',
           textColor: '#ffffff'
         });
       }
@@ -177,7 +178,6 @@ export class CalendarPage implements OnInit {
     this.highlightedDates.set(dates);
   }
 
-  // 🔥 TUTOR: Traffic lights (green/yellow/orange/red)
   generateTutorCalendarMarkings(booked: any[] = []) {
     const dates: any[] = [];
     const today = new Date();
@@ -236,7 +236,7 @@ export class CalendarPage implements OnInit {
     this.selectedDateFormatted.set(formatted);
   }
 
-  // 🔥 TUTOR ONLY
+  // 🔥 TUTOR ONLY (MAY FILTER NA LABAN SA CONFLICT)
   getAvailabilitiesForSelectedDay() {
     if (this.role() !== 'tutor') return [];
     const selected = this.selectedDateFormatted();
@@ -246,10 +246,24 @@ export class CalendarPage implements OnInit {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const selectedDayName = dayNames[d.getDay()];
 
-    return this.availabilities().filter(a => {
+    let availableSlots = this.availabilities().filter(a => {
       if (a.specific_date) return a.specific_date === selected;
       if (a.day_of_week) return a.day_of_week === selectedDayName;
       return false;
+    });
+
+    const bookedDay = this.tutorBookedDates().find(b => b.date === selected);
+    if (!bookedDay || !bookedDay.times || bookedDay.times.length === 0) {
+      return availableSlots;
+    }
+
+    return availableSlots.filter(slot => {
+      const hasConflict = bookedDay.times.some((bookedTime: string) => {
+        if (!bookedTime || !bookedTime.includes(' - ')) return false;
+        const [bStart, bEnd] = bookedTime.split(' - ').map((t: string) => t.trim());
+        return (slot.start_time < bEnd && slot.end_time > bStart);
+      });
+      return !hasConflict;
     });
   }
 
@@ -358,4 +372,12 @@ export class CalendarPage implements OnInit {
     const toast = await this.toastCtrl.create({ message: msg, duration: 2000, color: 'primary' });
     await toast.present();
   }
+
+  // 🔥 IDINAGDAG NA NAVIGATION FUNCTIONS
+  goToHome() { this.menuController.close('main-menu'); this.router.navigate(['/home']); }
+  goToProfile() { this.menuController.close('main-menu'); this.router.navigate(['/profile']); }
+  goToMessagesPage() { this.menuController.close('main-menu'); this.router.navigate(['/messages']); }
+  goToMyLesson() { this.menuController.close('main-menu'); this.router.navigate(['/my-lesson']); }
+  goToSettings() { this.menuController.close('main-menu'); this.router.navigate(['/settings']); }
+  logout() { this.menuController.close('main-menu'); this.session.logout(); this.router.navigate(['/login']); }
 }

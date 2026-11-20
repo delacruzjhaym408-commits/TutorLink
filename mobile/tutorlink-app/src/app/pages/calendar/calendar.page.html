@@ -1,13 +1,70 @@
+<!-- SIDE MENU -->
+<ion-menu id="main-menu" contentId="main-content" side="end" class="modern-menu">
+  <ion-header class="menu-header">
+    <ion-toolbar class="menu-toolbar">
+      <ion-title class="menu-title">Menu</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content class="menu-content">
+    <ion-list lines="none" class="menu-list">
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToHome()" button class="menu-item">
+          <ion-icon name="home-outline" slot="start"></ion-icon>
+          <ion-label>Home</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToProfile()" button class="menu-item">
+          <ion-icon name="person-outline" slot="start"></ion-icon>
+          <ion-label>Profile</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToMessagesPage()" button class="menu-item">
+          <ion-icon name="chatbubble-outline" slot="start"></ion-icon>
+          <ion-label>Messages</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToMyLesson()" button class="menu-item">
+          <ion-icon name="book-outline" slot="start"></ion-icon>
+          <ion-label>Tutor Dashboard</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="goToSettings()" button class="menu-item">
+          <ion-icon name="settings-outline" slot="start"></ion-icon>
+          <ion-label>Settings</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+      <div class="menu-divider"></div>
+      <ion-menu-toggle auto-hide="false">
+        <ion-item (click)="logout()" button class="menu-item logout-item">
+          <ion-icon name="log-out-outline" slot="start" color="danger"></ion-icon>
+          <ion-label color="danger">Log Out</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+    </ion-list>
+  </ion-content>
+</ion-menu>
+
+<!-- HEADER -->
 <ion-header [translucent]="true" class="modern-header">
   <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" class="back-btn"></ion-back-button>
     </ion-buttons>
     <ion-title class="page-title">My Schedule</ion-title>
+    <ion-buttons slot="end">
+      <!-- 🔥 BURGER MENU -->
+      <ion-button (click)="menuController.open('main-menu')" class="menu-btn">
+        <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="page-content ion-padding">
+<ion-content id="main-content" class="page-content ion-padding">
   
   <!-- LOADING STATE -->
   <div *ngIf="loading()" class="loading-container">
@@ -139,7 +196,7 @@
                 Subject: <strong>{{ e.lesson.gc_name }}</strong>
               </p>
               <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #666;">
-                Tutor: <strong>{{ e.lesson?.tutor?.full_name || 'Tutor' }}</strong>
+                Tutor: <strong>{{ $any(e.lesson).tutor?.full_name || 'Tutor' }}</strong>
               </p>
             </div>
           </div>
