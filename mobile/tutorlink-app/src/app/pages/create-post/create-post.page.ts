@@ -117,9 +117,16 @@ export class CreatePostPage implements OnInit {
     } catch (e) {}
   }
 
+// Sa loob ng onSubmit() function:
   async onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    // 🔥 BAGONG VALIDATION: Dapat may thumbnail
+    if (this.uploadedImageUrls().length === 0) {
+      this.errorMessage.set('Please upload at least one post picture (thumbnail).');
       return;
     }
 
@@ -132,9 +139,8 @@ export class CreatePostPage implements OnInit {
     this.errorMessage.set('');
     try {
       const value = this.form.getRawValue();
-      const imagesJson = this.uploadedImageUrls().length > 0 
-        ? JSON.stringify(this.uploadedImageUrls()) 
-        : null;
+      // 🔥 I-ENSURE NA JSON ARRAY ANG IPAPASA
+      const imagesJson = JSON.stringify(this.uploadedImageUrls()); 
 
       await new Promise<void>((resolve, reject) => {
         this.tutorPostService
@@ -144,8 +150,8 @@ export class CreatePostPage implements OnInit {
             education_level: value.education_level.trim(),
             gcash_number: value.gcash_number?.trim() || null,
             delivery_mode: value.delivery_mode,
-            meeting_link: value.meeting_link?.trim() || null, // 🔥 IDINAGDAG
-            location: value.location?.trim() || null,         // 🔥 IDINAGDAG
+            meeting_link: value.meeting_link?.trim() || null,
+            location: value.location?.trim() || null,
             description: value.description?.trim() || null,
             post_pictures: imagesJson,
             tutor_picture: null,
@@ -165,4 +171,5 @@ export class CreatePostPage implements OnInit {
       this.submitting.set(false);
     }
   }
+
 }

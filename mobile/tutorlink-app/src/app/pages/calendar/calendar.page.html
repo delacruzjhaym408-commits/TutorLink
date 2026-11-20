@@ -65,18 +65,27 @@
         <span style="font-size: 1.2rem;">🔔</span> You have {{ getBookedForSelectedDay().length }} tutoring session(s) on this date.
       </div>
 
-      <!-- BOOKED SESSIONS LIST -->
+      <!-- 🔥 BOOKED SESSIONS LIST -->
       <div *ngIf="getBookedForSelectedDay().length > 0" style="margin-bottom: 16px;">
-        <h4 style="color: #ef4444; margin-bottom: 8px; font-size: 0.9rem; font-weight: bold;">Booked Sessions:</h4>
+        <h4 style="color: #ef4444; margin-bottom: 8px; font-size: 0.9rem; font-weight: bold;">
+          🔴 Booked Sessions ({{ getBookedForSelectedDay().length }}):
+        </h4>
         <div *ngFor="let b of getBookedForSelectedDay()" class="time-card" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 8px; margin-bottom: 8px;">
           <div class="time-info" style="display: flex; flex-direction: column; align-items: flex-start;">
-            <h2 class="time-text" style="margin: 0; font-size: 1rem; color: #b91c1c; font-weight: bold;">{{ b.time }}</h2>
-            <p style="margin: 0; font-size: 0.8rem; color: #666;">Student: {{ b.student_name }}</p>
+            <h2 class="time-text" style="margin: 0; font-size: 1rem; color: #b91c1c; font-weight: bold;">
+              ⏰ {{ b.time }}
+            </h2>
+            <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #666;">
+              Student: <strong>{{ b.student_name }}</strong>
+            </p>
+            <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #666;">
+              📚 {{ b.lesson_name }}
+            </p>
           </div>
         </div>
       </div>
 
-      <!-- AVAILABLE SLOTS LIST -->
+      <!-- 🔥 AVAILABLE SLOTS LIST -->
       <div *ngIf="getAvailabilitiesForSelectedDay().length > 0">
         <h4 style="color: #10b981; margin-bottom: 8px; font-size: 0.9rem; font-weight: bold;">Available Slots:</h4>
         <div *ngFor="let a of getAvailabilitiesForSelectedDay()" class="time-card" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 8px; margin-bottom: 8px;">
@@ -121,7 +130,7 @@
     <ng-template>
       <ion-header class="modern-header">
         <ion-toolbar class="header-toolbar">
-          <ion-title class="page-title">Add Schedule</ion-title>
+          <ion-title class="page-title">{{ editingId() ? 'Edit Schedule' : 'Add Schedule' }}</ion-title>
           <ion-buttons slot="end">
             <ion-button (click)="addModal.dismiss()" class="close-btn">Close</ion-button>
           </ion-buttons>
@@ -140,7 +149,6 @@
           <ion-input type="time" [(ngModel)]="endTime" class="custom-input"></ion-input>
         </div>
 
-        <!-- 🔥 TINANGGAL ANG DUPLICATE NA NOTES DITO -->
         <div class="input-group">
           <label>Notes (Optional)</label>
           <ion-input type="text" [(ngModel)]="notes" placeholder="e.g., Bring calculator" class="custom-input"></ion-input>

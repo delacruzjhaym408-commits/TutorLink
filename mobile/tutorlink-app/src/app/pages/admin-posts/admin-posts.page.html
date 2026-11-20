@@ -12,12 +12,10 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
   
-  <!-- LOADING STATE -->
   <div *ngIf="loading()" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>
   </div>
 
-  <!-- EMPTY STATE -->
   <div *ngIf="!loading() && posts().length === 0" class="empty-state">
     <div class="icon-circle">
       <ion-icon name="document-text-outline"></ion-icon>
@@ -26,20 +24,19 @@
     <p>There are no posts to manage right now.</p>
   </div>
 
-  <!-- POSTS LIST -->
   <div class="posts-list" *ngIf="!loading() && posts().length > 0">
+    <!-- 🔥 IDINAGDAG ANG (click) PARA PUMUNTA SA TUTOR DETAILS -->
     <ion-card 
       *ngFor="let post of posts()" 
       class="admin-post-card" 
-      [class.post-disabled]="post.status === 'disabled'">
+      [class.post-disabled]="post.status === 'disabled'"
+      (click)="goToTutorDetails(post)">
       
-      <!-- IMAGE -->
       <div *ngIf="post.post_pictures" class="post-image-wrapper">
         <img [src]="parseImages(post.post_pictures)[0]" alt="Course Cover" class="post-image" />
       </div>
 
       <div class="post-body">
-        <!-- SUBJECT + STATUS -->
         <div class="post-header">
           <h2 class="subject-title">{{ post.subject }}</h2>
           
@@ -63,7 +60,6 @@
           <strong>Reason:</strong> {{ post.disabled_reason }}
         </p>
 
-        <!-- STATS -->
         <div class="stats-row">
           <div class="rating">
             <ion-icon name="star"></ion-icon>
@@ -75,7 +71,6 @@
           </div>
         </div>
 
-        <!-- PRICE -->
         <div class="price-row">
           <h3 class="rate-text">
             ₱{{ post.hourly_rate }} <span class="rate-unit">/ hour</span>
@@ -85,32 +80,30 @@
           </span>
         </div>
 
-        <!-- DATE -->
         <p class="date-text">
           Posted: {{ post.created_at | date:'mediumDate' }} at {{ post.created_at | date:'shortTime' }}
         </p>
 
-        <!-- PENDING ACTIONS -->
+        <!-- 🔥 IDINAGDAG ANG $event.stopPropagation() PARA HINDI MAG-REDIRECT PAG PININDOT ANG BUTTONS -->
         <div class="action-row pending-actions" *ngIf="post.status === 'pending'">
-          <ion-button expand="block" fill="solid" class="action-btn approve-btn" (click)="approvePost(post.id)">
+          <ion-button expand="block" fill="solid" class="action-btn approve-btn" (click)="$event.stopPropagation(); approvePost(post.id)">
             Approve
           </ion-button>
-          <ion-button expand="block" fill="solid" class="action-btn reject-btn" (click)="rejectPost(post.id)">
+          <ion-button expand="block" fill="solid" class="action-btn reject-btn" (click)="$event.stopPropagation(); rejectPost(post.id)">
             Reject
           </ion-button>
         </div>
 
-        <!-- OTHER ACTIONS -->
         <div class="action-row main-actions">
-          <ion-button expand="block" fill="solid" class="action-btn disable-btn" *ngIf="post.status === 'published'" (click)="confirmDisable(post)">
+          <ion-button expand="block" fill="solid" class="action-btn disable-btn" *ngIf="post.status === 'published'" (click)="$event.stopPropagation(); confirmDisable(post)">
             <ion-icon name="ban-outline" slot="start"></ion-icon> Disable
           </ion-button>
           
-          <ion-button expand="block" fill="solid" class="action-btn enable-btn" *ngIf="post.status === 'disabled'" (click)="confirmEnable(post)">
+          <ion-button expand="block" fill="solid" class="action-btn enable-btn" *ngIf="post.status === 'disabled'" (click)="$event.stopPropagation(); confirmEnable(post)">
             <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon> Enable
           </ion-button>
 
-          <ion-button expand="block" fill="solid" class="action-btn delete-btn" (click)="confirmDelete(post)">
+          <ion-button expand="block" fill="solid" class="action-btn delete-btn" (click)="$event.stopPropagation(); confirmDelete(post)">
             <ion-icon name="trash-outline" slot="start"></ion-icon> Delete
           </ion-button>
         </div>

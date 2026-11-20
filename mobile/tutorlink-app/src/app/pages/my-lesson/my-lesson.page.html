@@ -69,16 +69,14 @@
   </ion-refresher>
   
   <!-- MAIN TABS -->
-  <div class="main-tabs-wrapper">
-    <ion-segment [value]="activeTab()" (ionChange)="activeTab.set($any($event).detail.value)" class="modern-segment">
+    <ion-segment [value]="activeTab()" (ionChange)="activeTab.set($any($event).detail.value)" color="primary" mode="md">
       <ion-segment-button value="students">
-        <ion-label>My Students (1v1)</ion-label>
+        <ion-label style="font-weight: 700; font-size: 1rem;">My Students</ion-label>
       </ion-segment-button>
       <ion-segment-button value="payments">
-        <ion-label>Payments</ion-label>
+        <ion-label style="font-weight: 700; font-size: 1rem;">Payments</ion-label>
       </ion-segment-button>
     </ion-segment>
-  </div>
 
   <div class="content-container">
     

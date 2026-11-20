@@ -4,7 +4,7 @@ from typing import List
 from datetime import datetime
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models import User, TutorAvailability
+from app.models import User, TutorAvailability, Lesson, Enrollment
 from app.schemas import TutorAvailabilityCreate, TutorAvailabilityResponse
 
 router = APIRouter(prefix="/calendar", tags=["Calendar"])
@@ -56,7 +56,6 @@ def add_availability(
         day_of_week=day_of_week,
         start_time=data.start_time,
         end_time=data.end_time,
-        notes=data.notes
     )
     db.add(new_avail)
     db.commit()
@@ -64,7 +63,7 @@ def add_availability(
     return new_avail
 
 
-# 🔥 4. TUTOR: I-update ang schedule (Para gumana ang Edit button)
+# 🔥 4. TUTOR: I-update ang schedule
 @router.put("/availability/{id}", response_model=TutorAvailabilityResponse)
 def update_availability(
     id: int,
@@ -83,7 +82,6 @@ def update_availability(
     avail.specific_date = data.specific_date
     avail.start_time = data.start_time
     avail.end_time = data.end_time
-    avail.notes = data.notes
     
     db.commit()
     db.refresh(avail)
@@ -109,6 +107,7 @@ def delete_availability(
     db.commit()
     return None
 
+
 # 🔥 6. Kunin ang mga BOOKED dates at COUNT
 @router.get("/booked-dates/{tutor_id}")
 def get_tutor_booked_dates(
@@ -118,14 +117,22 @@ def get_tutor_booked_dates(
 ):
     from app.models import Lesson, Enrollment, User
     
-    booked_lessons = db.query(Lesson).join(Enrollment).filter(
+    booked_lessons = db.query(Lesson).filter(
         Lesson.tutor_id == tutor_id,
-        Enrollment.status == "enrolled", 
         Lesson.next_meeting_date.isnot(None)
     ).all()
 
     grouped_bookings = {}
     for lesson in booked_lessons:
+        # Check if there's an active enrollment (pending or enrolled)
+        enrollment = db.query(Enrollment).filter(
+            Enrollment.lesson_id == lesson.id,
+            Enrollment.status.in_(["enrolled", "pending_payment"])
+        ).first()
+
+        if not enrollment:
+            continue
+
         date = lesson.next_meeting_date
         if date not in grouped_bookings:
             grouped_bookings[date] = {
@@ -137,12 +144,7 @@ def get_tutor_booked_dates(
         
         grouped_bookings[date]["count"] += 1
         
-        enrollment = db.query(Enrollment).filter(
-            Enrollment.lesson_id == lesson.id,
-            Enrollment.status == "enrolled"
-        ).first()
-        
-        student = db.query(User).filter(User.id == enrollment.student_id).first() if enrollment else None
+        student = db.query(User).filter(User.id == enrollment.student_id).first()
         student_name = student.full_name if student else "Unknown Student"
 
         time_str = lesson.next_meeting_time or "TBA"

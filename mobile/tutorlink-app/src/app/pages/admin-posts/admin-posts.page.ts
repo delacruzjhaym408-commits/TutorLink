@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router'; // 🔥 IDINAGDAG
 import {
   IonHeader, IonToolbar, IonTitle, IonContent,
   IonButton, IonIcon, IonBackButton, IonButtons,
@@ -25,6 +26,7 @@ export class AdminPostsPage implements OnInit {
   private alertCtrl = inject(AlertController);
   private toastCtrl = inject(ToastController);
   private cdr = inject(ChangeDetectorRef);
+  private router = inject(Router); // 🔥 IDINAGDAG PARA SA NAVIGATION
 
   posts = signal<any[]>([]);
   loading = signal(true);
@@ -35,6 +37,13 @@ export class AdminPostsPage implements OnInit {
 
   ngOnInit() {
     this.loadPosts();
+  }
+
+  // 🔥 BAGONG FUNCTION: Papunta sa Tutor Details
+  goToTutorDetails(post: any) {
+    if (post.id) {
+      this.router.navigate(['/tutor-details', post.id]);
+    }
   }
 
   doRefresh(event: any) {
@@ -109,10 +118,13 @@ export class AdminPostsPage implements OnInit {
     });
   }
 
-  async confirmEnable(post: any) {
+  // 🔥 INAYOS ANG BUG DITO (post.id === post.id naging postItem.id === post.id)
+  confirmEnable(post: any) {
     this.adminService.enablePost(post.id).subscribe({
       next: () => {
-        this.posts.update(p => p.map(post => post.id === post.id ? { ...post, status: 'published', disabled_reason: null } : post));
+        this.posts.update(p => p.map(postItem => 
+          postItem.id === post.id ? { ...postItem, status: 'published', disabled_reason: null } : postItem
+        ));
         this.cdr.detectChanges();
         this.showToast('Post enabled', 'success');
       }
@@ -146,10 +158,10 @@ export class AdminPostsPage implements OnInit {
     await toast.present();
   }
 
-    approvePost(id: number) {
+  approvePost(id: number) {
     this.adminService.approvePost(id).subscribe(() => {
       this.showToast('Post approved', 'success');
-      this.loadPosts(); // I-reload ang listahan
+      this.loadPosts(); 
     });
   }
 

@@ -60,6 +60,12 @@ export class MyLessonPage implements OnInit {
   
   isTutor = computed(() => this.currentUser()?.role === 'tutor' || this.tutorStudents().length > 0); 
 
+  // 🔥 COMPUTED SIGNAL PARA SA BADGE
+  pendingPaymentCount = computed(() => {
+    if (!this.isTutor()) return 0;
+    return this.tutorStudents().filter(s => s.status === 'pending_payment').length;
+  });
+
   // 🔥 CANCEL MODAL SIGNALS
   isCancelModalOpen = signal(false);
   cancelReason = '';
@@ -128,7 +134,6 @@ export class MyLessonPage implements OnInit {
     return pic;
   }
 
-  // 🔥 MARK AS DONE
   async markAsDone(s: any) {
     const alert = await this.alertCtrl.create({
       header: 'Mark as Done',
@@ -143,8 +148,6 @@ export class MyLessonPage implements OnInit {
                 this.showToast('Session marked as completed!');
                 this.loadLessons();
                 this.loadStudents();
-                
-                // 🔥 I-TRIGGER ANG REFRESH SA CALENDAR
                 window.dispatchEvent(new CustomEvent('refreshCalendar'));
               },
               error: (err) => this.showToast(err.error?.detail || 'Failed to mark as done.')
@@ -156,7 +159,6 @@ export class MyLessonPage implements OnInit {
     await alert.present();
   }
 
-  // 🔥 CANCEL WITH REASON
   openCancelModal(s: any) {
     this.selectedSessionToCancel = s;
     this.cancelReason = '';
@@ -187,15 +189,12 @@ export class MyLessonPage implements OnInit {
         this.isCancelModalOpen.set(false);
         this.loadLessons();
         this.loadStudents();
-
-        // 🔥 I-TRIGGER ANG REFRESH SA CALENDAR
         window.dispatchEvent(new CustomEvent('refreshCalendar'));
       },
       error: (err) => this.showToast(err.error?.detail || 'Failed to cancel session.')
     });
   }
 
-  // Old cancel (para sa Delete button)
   async cancelSession(s: any) {
     const alert = await this.alertCtrl.create({
       header: 'Cancel Session',
@@ -211,7 +210,7 @@ export class MyLessonPage implements OnInit {
                 this.showToast('Session Cancelled.');
                 this.loadLessons();
                 this.loadStudents();
-                window.dispatchEvent(new CustomEvent('refreshCalendar')); // 🔥 Idinagdag
+                window.dispatchEvent(new CustomEvent('refreshCalendar'));
               },
               error: () => this.showToast('Failed to cancel session.')
             });
@@ -229,7 +228,7 @@ export class MyLessonPage implements OnInit {
         this.loadStudents();
         this.loadLessons();
         this.appState.triggerRefreshBadges(); 
-        window.dispatchEvent(new CustomEvent('refreshCalendar')); // 🔥 Idinagdag
+        window.dispatchEvent(new CustomEvent('refreshCalendar'));
       },
       error: () => this.showToast('Error approving student.')
     });
@@ -256,7 +255,7 @@ export class MyLessonPage implements OnInit {
                 this.loadStudents();
                 this.loadLessons();
                 this.appState.triggerRefreshBadges(); 
-                window.dispatchEvent(new CustomEvent('refreshCalendar')); // 🔥 Idinagdag
+                window.dispatchEvent(new CustomEvent('refreshCalendar'));
               },
               error: () => this.showToast('Error rejecting student.')
             });

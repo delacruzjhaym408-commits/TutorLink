@@ -282,6 +282,7 @@ def trigger_automatic_disable(current_user: User = Depends(require_admin), db: S
     try:
         one_month_ago = datetime.now() - timedelta(days=30)
         
+        # 🔥 I-check kung may inactive tutors
         inactive_tutors = db.query(User).filter(
             User.role == UserRole.tutor,
             User.is_active == True,
@@ -294,18 +295,21 @@ def trigger_automatic_disable(current_user: User = Depends(require_admin), db: S
             tutor.disabled_reason = "Automatically disabled: Inactive for 1 month."
             tutor.disabled_at = datetime.now()
             
+            # Auto-disable posts
             posts = db.query(TutorPost).filter(TutorPost.user_id == tutor.id).all()
             for post in posts:
                 post.status = "disabled"
                 post.disabled_reason = "Tutor automatically disabled"
                 
+            # Auto-disable lessons
             lessons = db.query(Lesson).filter(Lesson.tutor_id == tutor.id).all()
             for lesson in lessons:
                 lesson.status = "disabled"
                 lesson.disabled_reason = "Tutor automatically disabled"
 
             disabled_count += 1
-            
+
+        # 🔥 I-check din ang mga users na may 3+ reports
         reported_users = db.query(Report.reported_user_id, func.count(Report.id).label('count')).group_by(Report.reported_user_id).having(func.count(Report.id) >= 3).all()
         
         for user_id, count in reported_users:

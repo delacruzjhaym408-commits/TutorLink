@@ -15,7 +15,8 @@ import {
   personOutline, homeOutline, chatbubbleOutline, bookOutline,
   settingsOutline, logOutOutline, menuOutline, flagOutline,
   cameraOutline, cashOutline, checkmarkCircle, copyOutline,
-  send, sendOutline, chatbubblesOutline, closeCircleOutline
+  send, sendOutline, chatbubblesOutline, closeCircleOutline, bulbOutline,
+  checkmarkCircleOutline
 } from 'ionicons/icons';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -44,6 +45,7 @@ export class TutorDetailsPage implements OnInit {
   @ViewChild('ratingModal') ratingModal!: IonModal;
   @ViewChild('reportModal') reportModal!: IonModal;
   @ViewChild('paymentModal') paymentModal!: IonModal;
+  @ViewChild('scheduleModal') scheduleModal!: IonModal; // 🔥 BAGONG MODAL
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -58,11 +60,16 @@ export class TutorDetailsPage implements OnInit {
   private calendarService = inject(CalendarService);
   
   currentUserId: number | null = null;
-  todayDate: string = new Date().toISOString(); // 🔥 MIN DATE PARA SA CALENDAR
+  todayDate: string = new Date().toISOString();
 
   tutorAvailabilities = signal<TutorAvailability[]>([]);
   highlightedDates = signal<any[]>([]);
   currentBookedDates = signal<any[]>([]);
+  
+  // 🔥 SCHEDULE MODAL VARIABLES
+  availableStartTime = '';
+  availableEndTime = '';
+  selectedDateBookedTimes = signal<{ start: string; end: string }[]>([]);
   
   selectedDate = signal<string>(new Date().toISOString());
   selectedStartTime = '';
@@ -113,16 +120,15 @@ export class TutorDetailsPage implements OnInit {
       personOutline, homeOutline, chatbubbleOutline, bookOutline,
       settingsOutline, logOutOutline, menuOutline, flagOutline,
       cameraOutline, cashOutline, checkmarkCircle, copyOutline,
-      send, sendOutline, chatbubblesOutline, closeCircleOutline
+      send, sendOutline, chatbubblesOutline, closeCircleOutline, bulbOutline,
+      checkmarkCircleOutline
     });
   }
 
   ngOnInit() {
     const userJson = localStorage.getItem('user');
     if (userJson) {
-      try {
-        this.currentUserId = JSON.parse(userJson).id || null;
-      } catch (e) {}
+      try { this.currentUserId = JSON.parse(userJson).id || null; } catch (e) {}
     }
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -246,32 +252,23 @@ export class TutorDetailsPage implements OnInit {
     this.paymentModal.present();
   }
 
-  // 🔥 BAGONG LOGIC PARA SA CALENDAR MARKINGS
   generateStudentCalendarMarkings(avails: TutorAvailability[], booked: any[]) {
     const dates: any[] = [];
     
     for (const b of booked) {
       let color = '';
-      if (b.count === 1) color = '#eab308'; 
-      else if (b.count === 2) color = '#f97316'; 
-      else if (b.count >= 3) color = '#ef4444'; 
+      if (b.count === 1) color = '#eab308';
+      else if (b.count === 2) color = '#f97316';
+      else if (b.count >= 3) color = '#ef4444';
       
-      dates.push({ 
-        date: b.date, 
-        backgroundColor: color,
-        textColor: '#ffffff' 
-      });
+      dates.push({ date: b.date, backgroundColor: color, textColor: '#ffffff' });
     }
 
     for (const a of avails) {
       if (a.specific_date) {
-        const bookedData = booked.find(b => b.date === a.specific_date);
-        if (!bookedData) {
-          dates.push({ 
-            date: a.specific_date, 
-            backgroundColor: '#10b981', 
-            textColor: '#ffffff' 
-          });
+        const isBooked = booked.some(b => b.date === a.specific_date);
+        if (!isBooked) {
+          dates.push({ date: a.specific_date, backgroundColor: '#10b981', textColor: '#ffffff' });
         }
       }
     }
@@ -290,12 +287,7 @@ export class TutorDetailsPage implements OnInit {
 
             const hasColor = dates.some(d => d.date === dateStr);
             if (!hasColor) {
-                // 🔥 GRAY BACKGROUND PARA SA WALANG SCHEDULE
-                dates.push({
-                    date: dateStr,
-                    backgroundColor: '#e5e7eb', 
-                    textColor: '#9ca3af' 
-                });
+                dates.push({ date: dateStr, backgroundColor: '#e5e7eb', textColor: '#9ca3af' });
             }
         }
     }
@@ -319,7 +311,7 @@ export class TutorDetailsPage implements OnInit {
     } else {
       if (diffHours < 1) diffHours = 1;
       const total = currentPost.hourly_rate * diffHours;
-      this.bookingAmount.set(total); 
+      this.bookingAmount.set(total);
     }
   }
 
@@ -350,34 +342,6 @@ export class TutorDetailsPage implements OnInit {
     if (!this.selectedDate() || !this.selectedStartTime || !this.selectedEndTime) {
       this.showToast('Please select date, start time, and end time.'); return;
     }
-
-    // Check past date
-    const selectedDateOnly = new Date(this.selectedDate()).setHours(0,0,0,0);
-    const today = new Date().setHours(0,0,0,0);
-    if (selectedDateOnly < today) {
-      this.showToast('🚫 Cannot book a past date.'); return;
-    }
-
-    // Check time duration
-    const start = new Date(`1970-01-01T${this.selectedStartTime}:00`);
-    const end = new Date(`1970-01-01T${this.selectedEndTime}:00`);
-    let diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    
-    if (diffHours < 1) {
-      this.showToast('🚫 Session must be at least 1 hour.'); return;
-    }
-
-    // Check availability
-    const dateStr = this.selectedDate().split('T')[0];
-    const availableDay = this.tutorAvailabilities().find(a => a.specific_date === dateStr);
-    if (!availableDay) {
-      this.showToast('🚫 Tutor is not available for this day.'); return;
-    }
-
-    if (this.selectedStartTime < availableDay.start_time || this.selectedEndTime > availableDay.end_time) {
-      this.showToast(`🚫 Tutor is only available from ${availableDay.start_time} to ${availableDay.end_time}.`); return;
-    }
-
     if (!this.bookingAmount() || this.bookingAmount() <= 0) {
       this.showToast('Please select a valid time to compute the amount.'); return;
     }
@@ -385,11 +349,21 @@ export class TutorDetailsPage implements OnInit {
       this.showToast('Please enter reference number and upload receipt.'); return;
     }
 
+    const dateStr = this.selectedDate().split('T')[0];
+
+    const availableDay = this.tutorAvailabilities().find(a => a.specific_date === dateStr);
+    if (!availableDay) {
+      this.showToast('🚫 Tutor is not available for this day.'); return;
+    }
+    if (this.selectedStartTime < availableDay.start_time || this.selectedEndTime > availableDay.end_time) {
+      this.showToast(`🚫 Tutor is only available from ${availableDay.start_time} to ${availableDay.end_time}.`); return;
+    }
+
     const bookedInfo = this.currentBookedDates().find(b => b.date === dateStr);
     if (bookedInfo) {
       const hasConflict = bookedInfo.times.some((bookedTime: string) => {
         if (!bookedTime || !bookedTime.includes(' - ')) return false;
-        const [bStart, bEnd] = bookedTime.split(' - ');
+        const [bStart, bEnd] = bookedTime.split(' - ').map((t: string) => t.trim());
         return (this.selectedStartTime < bEnd && this.selectedEndTime > bStart);
       });
 
@@ -403,8 +377,8 @@ export class TutorDetailsPage implements OnInit {
       post_id: currentPost.id,
       reference: this.bookingRef.trim(),
       receipt: this.bookingReceipt(),
-      amount: this.bookingAmount() * 0.5, 
-      session_date: this.selectedDate().split('T')[0],
+      amount: this.bookingAmount(),
+      session_date: dateStr,
       start_time: this.selectedStartTime,
       end_time: this.selectedEndTime
     }).subscribe({
@@ -417,29 +391,53 @@ export class TutorDetailsPage implements OnInit {
     });
   }
 
+  // 🔥 FORMAT TIME: 08:00 -> 8:00 AM
+  formatTimeDisplay(time: string): string {
+    if (!time) return 'TBA';
+    const parts = time.split(':');
+    const hour = parseInt(parts[0], 10);
+    const minute = parts[1] || '00';
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minute} ${ampm}`;
+  }
+
+  // 🔥 ON DATE CHANGE (Gagamit ng Custom Modal)
   async onBookingDateChange(event: any) {
     const val = event.detail.value;
     if (typeof val === 'string') {
       const dateStr = val.split('T')[0];
       
-      const hasAvail = this.tutorAvailabilities().some(a => a.specific_date === dateStr);
+      const hasAvail = this.tutorAvailabilities().find(a => a.specific_date === dateStr);
       const bookedInfo = this.currentBookedDates().find(b => b.date === dateStr);
 
-      // 🔥 ITONG MENSAHE ANG LALABAS KAPAG GRAY/NO SCHEDULE
-      if (!hasAvail && !bookedInfo) {
+      if (!hasAvail) {
         this.showToast('🚫 Tutor is not available for this day.');
-        this.selectedDate.set(new Date().toISOString());
-        return;
-      }
-
-      if (bookedInfo && bookedInfo.count >= 3) {
-        this.showToast('🚫 Sorry, this date is already full (Max 3 students).');
         this.selectedDate.set(new Date().toISOString());
         return;
       }
 
       this.selectedDate.set(val);
       this.computeBookingAmount(); 
+
+      // 🔥 SET VARIABLES PARA SA MODAL
+      this.availableStartTime = hasAvail.start_time;
+      this.availableEndTime = hasAvail.end_time;
+
+      if (bookedInfo && bookedInfo.times.length > 0) {
+        const parsedTimes = bookedInfo.times
+          .filter((t: string) => t && t.includes(' - '))
+          .map((t: string) => {
+            const [start, end] = t.split(' - ').map((s: string) => s.trim());
+            return { start, end };
+          });
+        this.selectedDateBookedTimes.set(parsedTimes);
+      } else {
+        this.selectedDateBookedTimes.set([]);
+      }
+
+      // 🔥 BUKSAN ANG CUSTOM MODAL
+      await this.scheduleModal.present();
     }
   }
 
@@ -464,22 +462,14 @@ export class TutorDetailsPage implements OnInit {
       next: async () => {
         this.ratingModal.dismiss(); 
         this.reviewComment = '';
-        const toast = await this.toastCtrl.create({ 
-          message: 'Thank you for your review!', 
-          duration: 2500, 
-          color: 'success' 
-        });
+        const toast = await this.toastCtrl.create({ message: 'Thank you for your review!', duration: 2500, color: 'success' });
         await toast.present(); 
         
         this.loadPost(currentPost.id);
         this.checkCanReview(currentPost.user_id);
       },
       error: async (err) => {
-        const toast = await this.toastCtrl.create({ 
-          message: err.error?.detail || 'Error submitting review', 
-          duration: 2500, 
-          color: 'danger' 
-        });
+        const toast = await this.toastCtrl.create({ message: err.error?.detail || 'Error submitting review', duration: 2500, color: 'danger' });
         await toast.present();
       }
     });
@@ -487,11 +477,7 @@ export class TutorDetailsPage implements OnInit {
 
   async showReviewBlockedMessage() {
     const reason = this.canReviewReason() || 'You cannot review this tutor yet.';
-    const toast = await this.toastCtrl.create({ 
-      message: reason, 
-      duration: 2500, 
-      color: 'warning' 
-    });
+    const toast = await this.toastCtrl.create({ message: reason, duration: 2500, color: 'warning' });
     await toast.present();
   }
 

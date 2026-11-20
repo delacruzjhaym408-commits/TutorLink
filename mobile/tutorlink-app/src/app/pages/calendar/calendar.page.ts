@@ -109,10 +109,12 @@ export class CalendarPage implements OnInit {
 
     this.calendarService.getTutorBookedDates(user.id).subscribe({
       next: (booked) => {
-        this.bookedDatesData.set(booked); 
-        this.generateHighlightedDates(booked);
+        console.log('🔥 Booked Dates from Backend:', booked); // 🔥 DEBUG
+        this.bookedDatesData.set(booked || []); 
+        this.generateHighlightedDates(booked || []);
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load booked dates:', err);
         this.bookedDatesData.set([]);
         this.generateHighlightedDates([]); 
       }
@@ -121,14 +123,18 @@ export class CalendarPage implements OnInit {
 
   onDateChange(event: any) {
     const dateValue = Array.isArray(event.detail.value) ? event.detail.value[0] : event.detail.value;
-    this.selectedDate.set(dateValue);
-    this.updateSelectedDate();
+    // 🔥 Siguraduhing tama ang format (YYYY-MM-DD)
+    if (typeof dateValue === 'string') {
+      this.selectedDate.set(dateValue);
+      this.updateSelectedDate();
+    }
   }
 
   updateSelectedDate() {
     const raw = this.selectedDate();
     if (!raw) return;
-    const formatted = raw.split('T')[0]; 
+    // 🔥 Safe string-based date extraction (no timezone shift)
+    const formatted = raw.split('T')[0];
     this.selectedDateFormatted.set(formatted);
   }
 
@@ -152,7 +158,7 @@ export class CalendarPage implements OnInit {
     if (!selected) return [];
 
     const bookedDay = this.bookedDatesData().find(b => b.date === selected);
-    return bookedDay ? bookedDay.details : [];
+    return bookedDay && bookedDay.details ? bookedDay.details : [];
   }
 
   generateHighlightedDates(booked: any[] = []) {

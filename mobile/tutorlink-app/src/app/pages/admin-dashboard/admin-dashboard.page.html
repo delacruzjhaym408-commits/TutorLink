@@ -21,7 +21,6 @@
 
   <ion-grid class="dashboard-grid">
     <ion-row>
-      <!-- MANAGE USERS -->
       <ion-col size="12" size-md="4">
         <ion-card (click)="goToUsers()" class="admin-card card-users">
           <ion-card-header>
@@ -35,7 +34,6 @@
         </ion-card>
       </ion-col>
 
-      <!-- MANAGE POSTS -->
       <ion-col size="12" size-md="4">
         <ion-card (click)="goToPosts()" class="admin-card card-posts">
           <ion-badge color="danger" *ngIf="pendingPostsCount() > 0" class="pending-badge">
@@ -52,7 +50,6 @@
         </ion-card>
       </ion-col>
 
-      <!-- REPORTS -->
       <ion-col size="12" size-md="4">
         <ion-card (click)="goToReports()" class="admin-card card-reports">
           <ion-badge color="danger" *ngIf="pendingReportsCount() > 0" class="pending-badge">
@@ -69,7 +66,6 @@
         </ion-card>
       </ion-col>
 
-      <!-- APPEALS -->
       <ion-col size="12" size-md="4">
         <ion-card (click)="goToAppeals()" class="admin-card card-appeals">
           <ion-badge color="danger" *ngIf="pendingAppealsCount() > 0" class="pending-badge">
@@ -87,11 +83,10 @@
     </ion-row>
   </ion-grid>
 
-  <!-- AUTO DISABLE BUTTON -->
+  <!-- 🔥 PINALITAN ANG BUTTON NAME -->
   <div class="action-section">
-    <ion-button expand="block" class="auto-disable-btn" (click)="runAutoDisable()">
-      <ion-icon name="warning-outline" slot="start"></ion-icon>
-      Run Automatic Disable Check
-    </ion-button>
+<ion-button (click)="runDisableCheck()" expand="block" color="danger">
+  Run Disable Check
+</ion-button>
   </div>
 </ion-content>

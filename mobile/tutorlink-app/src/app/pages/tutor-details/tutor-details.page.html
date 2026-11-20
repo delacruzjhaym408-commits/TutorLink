@@ -1,4 +1,3 @@
-<!-- SIDE MENU -->
 <ion-menu id="main-menu" contentId="main-content" side="end" class="modern-menu">
   <ion-header class="menu-header">
     <ion-toolbar class="menu-toolbar">
@@ -28,7 +27,6 @@
   </ion-content>
 </ion-menu>
 
-<!-- HEADER -->
 <ion-header [translucent]="true" class="modern-header">
   <ion-toolbar class="header-toolbar">
     <ion-buttons slot="start">
@@ -131,7 +129,6 @@
   </div>
 </ion-content>
 
-<!-- RATING MODAL -->
 <ion-modal #ratingModal class="modern-modal">
   <ng-template>
     <ion-header class="modern-header">
@@ -160,7 +157,6 @@
   </ng-template>
 </ion-modal>
 
-<!-- REPORT MODAL -->
 <ion-modal #reportModal class="modern-modal">
   <ng-template>
     <ion-header class="modern-header">
@@ -179,7 +175,58 @@
   </ng-template>
 </ion-modal>
 
-<!-- 🔥 PAYMENT MODAL (1v1 Booking) -->
+<!-- 🔥 SCHEDULE DETAILS MODAL (BAGONG DESIGN) -->
+<ion-modal #scheduleModal class="modern-modal">
+  <ng-template>
+    <ion-header class="modern-header">
+      <ion-toolbar class="header-toolbar">
+        <ion-title class="page-title">Tutor Schedule</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="scheduleModal.dismiss()" class="close-btn">Close</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="modal-content ion-padding">
+      
+      <!-- 🔥 AVAILABLE TIME -->
+      <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+        <p style="margin: 0; font-size: 0.85rem; color: #065f46; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Available Schedule</p>
+        <h2 style="margin: 4px 0 0 0; font-size: 1.2rem; color: #047857; font-weight: 700;">
+          {{ formatTimeDisplay(availableStartTime) }} - {{ formatTimeDisplay(availableEndTime) }}
+        </h2>
+      </div>
+
+      <!-- 🔥 BOOKED TIMES -->
+      <div *ngIf="selectedDateBookedTimes().length > 0" style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+        <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: #991b1b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Already Booked</p>
+        <div *ngFor="let bt of selectedDateBookedTimes()" style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <ion-icon name="close-circle" style="color: #ef4444; font-size: 1rem;"></ion-icon>
+          <span style="color: #7f1d1d; font-weight: 500;">
+            {{ formatTimeDisplay(bt.start) }} - {{ formatTimeDisplay(bt.end) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- 🔥 NO BOOKINGS -->
+      <div *ngIf="selectedDateBookedTimes().length === 0" style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+        <p style="margin: 0; font-size: 0.9rem; color: #166534; font-weight: 500;">
+          ✅ No bookings yet. You can book any time within this schedule.
+        </p>
+      </div>
+
+      <!-- 🔥 TIP -->
+      <div style="background: #eff6ff; padding: 12px; border-radius: 8px; display: flex; gap: 8px; align-items: start;">
+        <ion-icon name="bulb-outline" style="color: #3b82f6; font-size: 1.2rem; margin-top: 2px;"></ion-icon>
+        <p style="margin: 0; font-size: 0.85rem; color: #1e40af; line-height: 1.4;">
+          <strong>Tip:</strong> You can only book the remaining free hours. Avoid conflicting with the times above.
+        </p>
+      </div>
+
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
 <ion-modal #paymentModal class="modern-modal">
   <ng-template>
     <ion-header class="modern-header">
@@ -273,7 +320,6 @@
         <img [src]="getQrImageSrc(post()?.gcash_qr_code)" style="max-width: 200px; border-radius: 8px; border: 1px solid #ccc;" />
       </div>
 
-      <!-- 🔥 PAYMENT BREAKDOWN -->
       <div class="input-group" style="margin-top: 16px;">
         <label>Total Amount (Rate × Hours)</label>
         <ion-input fill="outline" type="number" [value]="bookingAmount()" readonly="true" class="custom-input" style="font-weight: bold; color: #2563eb;"></ion-input>
@@ -309,7 +355,7 @@
       </div>
 
       <ion-button expand="block" class="book-submit-btn" (click)="book1v1Session()">
-        Book 1v1 Session & Submit Payment
+        Submit Payment
       </ion-button>
     </ion-content>
   </ng-template>

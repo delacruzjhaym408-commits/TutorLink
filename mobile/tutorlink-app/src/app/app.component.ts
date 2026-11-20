@@ -54,12 +54,14 @@ export class AppComponent implements OnInit, OnDestroy {
   
   totalUnreadMessages = signal(0);
   totalUnreadLessons = signal(0);
+  totalPendingPayments = signal(0); // 🔥 BADGE PARA SA PENDING PAYMENTS
   unreadReviews = signal(0);
   hasScheduleToday = signal(false);
   hasSystemMessage = signal(false);
 
   private wsSubscription!: Subscription;
   private appStateSubscription!: Subscription;
+  private pollingInterval: any; // 🔥 10-SECOND POLLING FALLBACK
 
   constructor() {
     addIcons({
@@ -93,18 +95,8 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
-  // 🔥 GINAWANG ASYNC PARA MA-AWAIT ANG RESTORE
   async ngOnInit() {
-    // I-reset muna ang lahat ng signals
-    this.hasApprovedPost.set(false);
-    this.hasSystemMessage.set(false);
-    this.totalUnreadMessages.set(0);
-    this.totalUnreadLessons.set(0);
-    this.hasScheduleToday.set(false);
-    this.unreadReviews.set(0);
-    this.userName.set('');
-
-    // 🔥 I-RESTORE ANG SESSION BAGO MAG-CHECK
+    this.resetSignals();
     await this.session.restore();
 
     if (this.isAuthenticated()) {
@@ -115,21 +107,12 @@ export class AppComponent implements OnInit, OnDestroy {
         this.zone.run(() => {
           if (data.type === 'new_message') {
             this.fetchAllBadges();
-            const currentUrl = this.router.url;
-            if (!currentUrl.includes(`/chat/${data.conversation_id}`)) {
-              this.showNewMessageToast(data.message.sender_name);
-            }
           } 
           else if (data.type === 'new_lesson_message') {
             this.fetchAllBadges();
-            const currentUrl = this.router.url;
-            if (!currentUrl.includes(`/lesson-chat/${data.lesson_id}`)) {
-              this.showNewLessonToast(data.message.sender_name);
-            }
           }
           else if (data.type === 'post_approved') {
             this.checkApprovedPosts();
-            this.showPostApprovedToast(); 
           }
         });
       });
@@ -142,6 +125,13 @@ export class AppComponent implements OnInit, OnDestroy {
       });
 
       this.fetchAllBadges();
+
+      // 🔥 10-SECOND POLLING FALLBACK
+      this.pollingInterval = setInterval(() => {
+        if (this.isAuthenticated()) {
+          this.fetchAllBadges();
+        }
+      }, 10000);
     }
   }
 
@@ -197,7 +187,15 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
 
+    // 🔥 BILANGIN ANG PENDING PAYMENTS PARA SA BADGE
     if (user.role === 'tutor') {
+      this.lessonService.getTutorStudents().subscribe({
+        next: (students) => {
+          const pending = students.filter(s => s.status === 'pending_payment').length;
+          this.totalPendingPayments.set(pending);
+        }
+      });
+
       this.tutorPostService.getUnreadReviewsCount().subscribe({
         next: (res) => this.unreadReviews.set(res.unread_reviews),
         error: () => {}
@@ -220,56 +218,27 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
-  private handleUnauthorized() {
-    if (this.router.url.includes('/login')) return;
-    this.wsService.disconnect();
-    this.session.logout();
-    this.router.navigate(['/login']);
-  }
-
-  async showNewMessageToast(senderName: string) {
-    const toast = await this.toastCtrl.create({
-      message: `New message from ${senderName}`,
-      duration: 3000,
-      position: 'top',
-      color: 'primary',
-      buttons: [{ text: 'View', handler: () => this.router.navigate(['/messages']) }]
-    });
-    await toast.present();
-  }
-
-  async showNewLessonToast(senderName: string) {
-    const toast = await this.toastCtrl.create({
-      message: `New message in Lesson Chat from ${senderName}`,
-      duration: 3000,
-      position: 'top',
-      color: 'secondary',
-      buttons: [{ text: 'View', handler: () => this.router.navigate(['/my-lesson']) }]
-    });
-    await toast.present();
-  }
-
-  async showPostApprovedToast() {
-    const toast = await this.toastCtrl.create({
-      message: '🎉 Your tutor post has been approved! You now have access to Tutor Dashboard.',
-      duration: 4000,
-      position: 'top',
-      color: 'success'
-    });
-    await toast.present();
+  private resetSignals() {
+    this.hasApprovedPost.set(false);
+    this.hasSystemMessage.set(false);
+    this.totalUnreadMessages.set(0);
+    this.totalUnreadLessons.set(0);
+    this.totalPendingPayments.set(0);
+    this.hasScheduleToday.set(false);
+    this.unreadReviews.set(0);
+    this.userName.set('');
   }
 
   ngOnDestroy() {
     if (this.wsSubscription) this.wsSubscription.unsubscribe();
     if (this.appStateSubscription) this.appStateSubscription.unsubscribe();
+    if (this.pollingInterval) clearInterval(this.pollingInterval);
     this.wsService.disconnect();
   }
 
-  goTo(path: string) {
-    this.router.navigate([path]);
-  }
+  goTo(path: string) { this.router.navigate([path]); }
 
-  loadUser() {
+    loadUser() {
     const userJson = localStorage.getItem('user');
     if (userJson) {
       try {
@@ -287,17 +256,7 @@ export class AppComponent implements OnInit, OnDestroy {
     await this.menuController.close();
     this.wsService.disconnect();
     this.session.logout();
-    
-    this.hasApprovedPost.set(false);
-    this.hasSystemMessage.set(false);
-    this.totalUnreadMessages.set(0);
-    this.totalUnreadLessons.set(0);
-    this.hasScheduleToday.set(false);
-    this.unreadReviews.set(0);
-    this.userName.set('');
-
-    this.router.navigate(['/login']).then(() => {
-      window.location.reload();
-    });
+    this.resetSignals();
+    this.router.navigate(['/login']).then(() => { window.location.reload(); });
   }
 }

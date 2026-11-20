@@ -40,3 +40,50 @@ Thumbs.db
 *.pyc
 *.pyo
 __pycache__/
+
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
+
+# Node
+node_modules/
+
+# Angular / Ionic Builds
+dist/
+www/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Environment
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Mobile
+android/app/build/
+ios/App/build/
+*.keystore
+google-services.json

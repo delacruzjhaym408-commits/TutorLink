@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol,
   IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonIcon, IonButton,
-  IonButtons, IonRefresher, IonRefresherContent, IonBadge, ViewWillEnter
+  IonButtons, IonRefresher, IonRefresherContent, IonBadge, ViewWillEnter, ToastController
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { peopleOutline, documentTextOutline, warningOutline, logOutOutline, mailOutline } from 'ionicons/icons';
@@ -27,6 +27,7 @@ export class AdminDashboardPage implements OnInit, ViewWillEnter {
   private session = inject(SessionService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private toastCtrl = inject(ToastController);
 
   totalUsers = signal(0);
   totalPosts = signal(0);
@@ -89,18 +90,31 @@ export class AdminDashboardPage implements OnInit, ViewWillEnter {
     });
   }
 
-  runAutoDisable() {
-    this.adminService.triggerAutoDisable().subscribe({
-      next: (res) => {
-        alert(res.message + ' Please refresh to see changes.');
-        this.loadStats();
-      },
-      error: (err) => {
-        alert('Error: ' + (err.error?.detail || 'Something went wrong'));
-      }
-    });
-  }
-
+async runDisableCheck() {
+  this.adminService.triggerAutoDisable().subscribe({
+    next: async (res) => {
+      // 🔥 GAMITIN ANG TOAST IMBES NA ALERT
+      const toast = await this.toastCtrl.create({
+        message: res.message,
+        duration: 3000,
+        color: res.message.includes('0 users') ? 'warning' : 'success',
+        position: 'top'
+      });
+      await toast.present();
+      
+      this.loadStats(); // I-refresh ang stats
+    },
+    error: async (err) => {
+      const toast = await this.toastCtrl.create({
+        message: 'Error: ' + (err.error?.detail || 'Something went wrong'),
+        duration: 3000,
+        color: 'danger',
+        position: 'top'
+      });
+      await toast.present();
+    }
+  });
+}
   goToUsers() { this.router.navigate(['/admin/users']); }
   goToPosts() { this.router.navigate(['/admin/posts']); }
   goToReports() { this.router.navigate(['/admin/reports']); }

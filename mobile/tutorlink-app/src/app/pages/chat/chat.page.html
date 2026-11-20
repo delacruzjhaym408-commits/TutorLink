@@ -14,21 +14,15 @@
       </div>
     </ion-title>
 
-    <!-- 🔥 TINANGGAL ANG *ngIf PARA LAGING LUMALABAS -->
     <ion-buttons slot="end">
       <!-- 🔥 PERSON ICON (Laging lumalabas) -->
       <ion-button fill="clear" (click)="goToTutorDetails()" style="color: white;">
         <ion-icon name="person-outline" slot="icon-only"></ion-icon>
       </ion-button>
-      
-      <!-- 🔥 BOOK BUTTON (Student lang) -->
-      <ion-button *ngIf="currentUser?.role === 'student'" (click)="bookSession()" fill="solid" color="light" class="book-btn" style="margin-left: 4px;">
-        <ion-icon name="calendar-outline" slot="start"></ion-icon>
-        Book
-      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
+
 <ion-content class="page-content" #content>
   
   <!-- LOADING STATE -->
